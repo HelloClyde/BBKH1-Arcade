@@ -3,6 +3,7 @@ from pathlib import Path, PurePosixPath
 import hashlib
 import io
 import json
+import posixpath
 import subprocess
 import zipfile
 from dependencies import ROOT, verify_dependencies
@@ -14,12 +15,13 @@ def git(repo,*args):
                                     '-C',str(repo),*args])
 
 def tracked_sources(repo,ref,upstream=False):
-    rows=[];excluded=[]
+    rows=[];excluded=[];modes={};symlinks={}
     for row in git(repo,'ls-tree','-r','-z',ref).split(b'\0'):
         if not row:continue
         head,name=row.split(b'\t',1);mode,kind,blob=head.decode().split();name=name.decode('utf-8')
         if mode=='160000':continue
-        assert kind=='blob' and mode in ('100644','100755'),name
+        assert kind=='blob' and mode in ('100644','100755','120000'),name
+        modes[name]=mode
         assert not PurePosixPath(name).is_absolute() and '..' not in PurePosixPath(name).parts,name
         suffix=PurePosixPath(name).suffix.lower()
         if suffix in ('.bin','.exe','.dll','.o','.a','.lib','.elf','.bda','.h1neo','.rom','.nand','.raw','.tgz'):
@@ -33,7 +35,17 @@ def tracked_sources(repo,ref,upstream=False):
         actual,kind,size=stream.readline().decode().split()
         assert actual==blob and kind=='blob'
         entries[name]=stream.read(int(size));assert stream.read(1)==b'\n'
-    return entries,excluded
+    for name in list(entries):
+        if modes[name]!='120000':continue
+        target=name;body=entries[name]
+        symlinks[name]=body.decode('utf-8')
+        for _ in range(16):
+            target=posixpath.normpath(posixpath.join(posixpath.dirname(target),body.decode('utf-8')))
+            assert not target.startswith('../') and not target.startswith('/') and target in modes,target
+            body=git(repo,'show',ref+':'+target)
+            if modes[target]!='120000':entries[name]=body;break
+        else:raise AssertionError('Symbolic link loop: '+name)
+    return entries,excluded,symlinks
 
 def write_zip(path,entries,prefix=''):
     with zipfile.ZipFile(path,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as z:
@@ -54,10 +66,10 @@ def selected_driver_archive(data):
     return stream.getvalue()
 
 def complete_source(path,commit,tag):
-    deps=verify_dependencies();entries,_=tracked_sources(ROOT,commit)
+    deps=verify_dependencies();entries,_,_=tracked_sources(ROOT,commit)
     snapshots={}
     for key,info in deps.items():
-        files,excluded=tracked_sources(ROOT/info['path'],info['commit'],upstream=True)
+        files,excluded,symlinks=tracked_sources(ROOT/info['path'],info['commit'],upstream=True)
         transformations={}
         if key=='gngeo':
             name='gngeo.dat/gngeo_data.zip';original=files[name]
@@ -69,7 +81,7 @@ def complete_source(path,commit,tag):
         snapshots[key]={'url':info['url'],'commit':info['commit'],'path':info['path'],
                         'files':{name:sha(data) for name,data in files.items()},
                         'excluded_unlinked_binaries_or_optional_archives':excluded,
-                        'asset_transformations':transformations}
+                        'asset_transformations':transformations,'dereferenced_symlinks':symlinks}
     entries['UPSTREAM-SOURCE-MANIFEST.json']=(json.dumps({'dependencies':snapshots},indent=2)+'\n').encode()
     manifest={'commit':commit,'tag':tag,'version':(ROOT/'VERSION').read_text().strip(),
               'files':{name:sha(data) for name,data in entries.items()},
