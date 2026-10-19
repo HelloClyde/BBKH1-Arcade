@@ -47,12 +47,12 @@ def gfx_library():
     code+='\n__declspec(dllexport) void sprites(uint8_t *data,unsigned n,uint32_t *usage){for(unsigned i=0;i<n/128;i++)usage[i/16]|=convert_roms_tile(data,i);}\n'
     code+='__declspec(dllexport) void chars(uint8_t *data,unsigned n,uint8_t *usage){convert_all_char(data,n,usage);}\n'
     src=build/'gfx.c';dll=build/'gfx.dll';stamp=build/'gfx.sha256'
-    digest=hashlib.sha256(code.encode()).hexdigest()
+    digest=hashlib.sha256(b'-O2 -shared -static-libgcc -Wl,--no-insert-timestamp\0'+code.encode()).hexdigest()
     if not dll.exists() or not stamp.exists() or stamp.read_text()!=digest:
         src.write_text(code)
         cc=Path(os.environ.get('HOST_CC',shutil.which('gcc') or 'gcc'))
         env=dict(os.environ);env['PATH']=str(cc.parent)+os.pathsep+env.get('PATH','')
-        subprocess.run([str(cc),'-O2','-shared','-static-libgcc',str(src),'-o',str(dll)],env=env,check=True)
+        subprocess.run([str(cc),'-O2','-shared','-static-libgcc','-Wl,--no-insert-timestamp',str(src),'-o',str(dll)],env=env,check=True)
         stamp.write_text(digest)
     lib=ctypes.CDLL(str(dll));lib.sprites.argtypes=[ctypes.c_void_p,ctypes.c_uint,ctypes.c_void_p]
     lib.chars.argtypes=[ctypes.c_void_p,ctypes.c_uint,ctypes.c_void_p]

@@ -1,0 +1,164 @@
+/*---------------------------------------------------------------
+ * Motorola 68000 32 Bit emulator
+ *
+ * Make68K for x86
+ *   Copyright (c) 1998-2001 Mike Coates, Darren Olafson
+ *
+ * MIPS Make68K for PSP
+ *   Copyright (c) 2005 Manuel Geran
+ *
+ * MIPS Make68K for OpenDingux
+ *   Copyright (c) 2012-2013 Dmitry Smagin
+ *---------------------------------------------------------------
+ *
+ * Thanks to ...
+ *
+ * Neil Bradley	 (lots of optimisation help & ideas)
+ *
+ *---------------------------------------------------------------
+ * Changelog for OpenDingux
+ *
+ * 2013-11-28 - Fix setting Carry Flag for LSL.L #imm, Dreg. It was being
+                always zeroed for long shift. This fixes ddonpach.zip
+ * 2013-11-27 - Save $gp around calls to memory callbacks. This fixes kov.zip
+ *              In rare occasions $gp is changed inside callbacks and accessing
+ *              variables via $gp becomes invalid. Save 
+ * 2013-11-26 - Fix setting N flag in asl.b #1,reg / bpl #addr combo.
+ *              If reg was 0x80 after shifting N received 2 (should have 0/1)
+ *              and the following bpl failed. Now always discard higher bits for N.
+ *              This fixes aurail.zip
+ * 2013-11-25 - Save real PC reg to M68000_regs.pc before calling memory
+ *              callbacks, because PC could be changed from them.
+ *              This fixes hangon.zip
+ * 2013-11-21 - Fix m_seh/m_seb macros (thanks Nebuleon), now a68k-mips works!
+ *              Use both mips32r2 and r1 opcodes, define USE_MIPS32r1 to use r1.
+ *              Add debugging callbacks, now define FBA_DEBUG to activate.
+ *              $gp is saved inside M68000_RUN and reloaded with .cpload $gp
+ * 2012-11-03 - Replace mips32r2 opcodes seh, seb, ror, rorv with macros to
+ *              make it work on mips32 revision 1 (soc jz4740/jz4750)
+ *              Also replace direct jal and j with macros.
+ *              Fix M68000_regs and a68k_memory_intf structures to correspond
+ *              to their definitions in sek.h (struct A68KContext).
+ *              Now a68k-mips doesn't segfault but the emulation is incorrect.
+ *---------------------------------------------------------------
+ * History (so we know what bugs have been fixed)
+ *
+ * 02.11.98 MJC	- CMPM bug, overwriting first value
+ * 04.11.98 MJC	- Debug timing - same as C core
+ *						save PC on calls to C memory routines
+ * 05.11.98 NS	 - Re-insert changes to make work on OS/2
+ * 06.11.98 MJC	- Flags saved on ADDA commands
+ *						X set on ADD commands
+ * 23.11.98 MJC	- Alternate Memory Read/Write for non DOS ports
+ * 24.11.98 CK	 - Add WIN32 specific stuff
+ * 25.11.98 DEO	- ABCD Size not initialised
+ * 21.12.98 MJC	- Change register saving on Memory Banking
+ * 13.01.99 M/D	- Change to new C core disassembler
+ * 19.01.99 MJC	- Proper? support for new Interrupt System
+ * 17.02.99 MJC	- TRACE68K define added
+ *                ABCD,SBCD not keeping Z flag
+ *                JMP, JSR for some EA combo's damaging flags
+ *                DIVU - Overflow not being set correctly
+ *                ASL/ASR - Flag Handling now correct
+ *                some minor optimisations
+ * 13.03.99 DEO	- Added new cycle timing
+ * 24.03.99 MJC	- TRACE68K define removed
+ *                NEW INTERRUPT SYSTEM only
+ *                interrupt check sped up (when not taken)
+ *                STOP checks for interrupt
+ * 01.04.99 MJC	- OS2 specifics added
+ *                MOVEM reference point moved
+ *                Data and Address register mode combined for :-
+ *					 	movecodes
+ *                dumpx
+ * 04.05.99 MJC	- Add Previous PC support to MOVE.B #X,XXXXXX.L (F1 Dream)
+ *                ABCD/SBCD could corrupt zero flag
+ *                DIVS/DIVU overflow should not update register
+ * 22.05.99 MJC	- Complete support of Previous PC on C calls
+ *                Some optional bits now selected by DEFINES
+ * 27.05.99 MJC	- Interrupt system changed
+ * 28.05.99 MJC	- Use DEFINES in more places
+ *                Interrupt check running one opcode when taken
+ * 16.07.99 MJC	- Reset - Preload next opcode / external call
+ *                68010 commands almost complete
+ *                more compression on jump table (16k smaller)
+ *                Some optimising
+ *					 	  shl reg,1 -> add reg,reg
+ *                  or ecx,ecx:jz -> jecxz
+ * 22.08.99 DEO	- SBCD/ABCD sets N flag same as carry
+ * 19.10.99 MJC	- Change DOS memory routines
+ *                Change DOS Clobber flags (ESI no longer safe)
+ *                Save EAX around memory write where needed
+ *                bit commands optimised
+ * 25.10.99  MJC  - Was keeping masked register on read/write
+ *                if register was preserved over call
+ *                ESI assumed 'safe' again
+ * 25.10.99  MJC  - Bank ID moved to CPU context
+ * 03.11.99 KENJO - VC++6.0 seems not to preserve EDI. Fixed "ABCD -(A0), -(A0)" crash / "roxr (A0)"-type shift crash
+ * 13.11.99 KENJO - Fixed "NABC"
+ *                Now Win32 uses FASTCALL type call for interrupt callback
+ * 09.02.00  MJC  - Check CPU type before allowing 68010/68020 instructions
+ *                remove routines for 5 non existant opcodes
+ * 05.03.00  MJC  - not command decrement A7 by 1 for bytes
+ * 10.03.00  MJC  - as did btst,cmpm and nbcd
+ * 22.03.00  MJC  - Divide by zero should not decrement PC by 2 before push
+ *                Move memory banking into exception routine
+ * 14.04.00 Dave  - BTST missing Opcode
+ *                ASL.L > 31 shift
+ * 20.04.00  MJC  - TST.B Also missing A7 specific routine
+ *                - Extra Define A7ROUTINE to switch between having seperate
+ *                routines for +-(A7) address modes.
+ * 24.06.00  MJC  - ADDX/SUBX +-(A7) routines added.
+ *                TAS should not touch X flag
+ *                LSL/LSR EA not clearing V flag
+ *                CHK not all opcodes in jump table
+ *                Add define to mask status register
+ * 04.07.00  MJC  - Keep high byte of Program Counter on Bxx and Jxx
+ *                Fix flag handling on NEGX
+ *                Really fix ADDX/SUBX +-(A7)
+ *                PC could be set wrong after CHK.W instruction
+ *                DIVS/DIVU always clear C flag
+ *                ABCD/SBCD missing +-(A7) Routine
+ *                TAS missing +-(A7) Routine
+ *                Bitwise Static missing +-(A7) Routine
+ *                CMPM missing +-(A7) Routine
+ * 30.09.00 DEO	- added mull, divl, bfextu
+ *                added '020 addressing modes
+ *                fixed $6xff branching
+ * 23.01.01 MJC	- Spits out seperate code for 68000 & 68020
+ *                allows seperate optimising!
+ * 17.02.01 MJC	- Support for encrypted PC relative fetch calls
+ * 11.03.01 GUTI  - change some cmp reg,0 and or reg,reg with test
+ * 13.03.01 MJC	- Single Icount for Asm & C cores
+ * 16.05.01 ASG	- use push/pop around mem calls instead of store to safe_REG
+ *                optimized a bit the 020 extension word decoder
+ *                removed lots of unnecessary code in branches
+ *---------------------------------------------------------------
+ * Known Problems / Bugs
+ *
+ * 68000
+ * None - Let us know if you find any!
+ *
+ * 68010
+ * Instructions that are supervisor only as per 68000 spec.
+ * move address space not implemented.
+ *
+ * 68020
+ * only long Bcc instruction implemented.
+ *---------------------------------------------------------------
+ * Notes
+ *
+ * STALLCHECK should be defined for Pentium Class
+ *							 undefined for P2/Celerons
+ *
+ * ALIGNMENT is normally 4, but seems faster on my P2 as 0 !
+ *
+ *---------------------------------------------------------------
+ *
+ * Future Changes
+ *
+ * 68020 instructions to be completed
+ * assembler memory routines												+
+ *
+ * and anything else that takes our fancy!
+ *---------------------------------------------------------------*/

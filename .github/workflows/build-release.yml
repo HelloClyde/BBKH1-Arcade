@@ -1,4 +1,4 @@
-name: Build and source release
+name: Build and release H1 Arcade
 
 on:
   push:
@@ -67,6 +67,36 @@ jobs:
           python tools/build_release.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           if ((Get-FileHash dist/H1Arcade.bda -Algorithm SHA256).Hash -ne $first) { throw 'BDA changed on repeat build' }
+      - name: Package BDA, installer, converter and complete sources
+        env:
+          IS_VERSION_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if ($env:IS_VERSION_TAG -eq 'true') {
+            python tools/package_release.py --tag "$env:RELEASE_TAG"
+          } else {
+            python tools/package_release.py
+          }
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tests/packaging_host.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Rebuild the complete source ZIP without git or network
+        run: |
+          python tests/source_archive_build.py --output "$env:RUNNER_TEMP/arcade-source-check"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Require reproducible release files
+        env:
+          IS_VERSION_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $first = Get-Content -Raw dist/release/SHA256SUMS.txt
+          if ($env:IS_VERSION_TAG -eq 'true') {
+            python tools/package_release.py --tag "$env:RELEASE_TAG"
+          } else {
+            python tools/package_release.py
+          }
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if ((Get-Content -Raw dist/release/SHA256SUMS.txt) -cne $first) { throw 'Release files changed on repeat packaging' }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: verification-json-only
@@ -79,19 +109,9 @@ jobs:
           if-no-files-found: error
           archive: true
           retention-days: 14
-      - name: Package original H1 sources only
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          python tools/verify_release.py --check-tag "$env:RELEASE_TAG"
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          python tools/package_source.py --tag "$env:RELEASE_TAG"
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: startsWith(github.ref, 'refs/tags/v')
         with:
-          name: original-h1-source-release
+          name: H1-Arcade-release
           path: dist/release/*
           if-no-files-found: error
           archive: true
@@ -110,29 +130,15 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: original-h1-source-release
+          name: H1-Arcade-release
           path: dist/release
           digest-mismatch: error
-      - name: Verify source artifact and create source prerelease
+      - name: Verify downloaded assets and create prerelease
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           test "$(git rev-parse "refs/tags/${RELEASE_TAG}^{commit}")" = "$GITHUB_SHA"
-          cd dist/release
-          sha256sum --check SHA256SUMS.txt
-          python - <<'PY'
-          import json, os, zipfile
-          from pathlib import Path
-          files=list(Path('.').glob('*'))
-          assert sorted(p.suffix for p in files)==['.md','.txt','.zip']
-          with zipfile.ZipFile(next(Path('.').glob('*.zip'))) as z:
-              assert not z.testzip()
-              assert not any(n.endswith(('.bda','.dll','.exe','.h1neo','.bin','.elf','.o')) for n in z.namelist())
-              manifests=[n for n in z.namelist() if n.endswith('/SOURCE-MANIFEST.json')]
-              assert len(manifests)==1
-              m=json.loads(z.read(manifests[0]))
-              assert m['commit']==os.environ['GITHUB_SHA'] and m['tag']==os.environ['RELEASE_TAG']
-          PY
-          gh release create "$RELEASE_TAG" *.zip SHA256SUMS.txt --verify-tag --prerelease --title "街机游戏 $RELEASE_TAG（源码预览）" --notes-file RELEASE-NOTES.md
+          python tools/verify_packages.py --directory dist/release --tag "$RELEASE_TAG" --commit "$GITHUB_SHA"
+          gh release create "$RELEASE_TAG" dist/release/*.bda dist/release/*.zip dist/release/BUILD-INFO.json dist/release/SHA256SUMS.txt --verify-tag --prerelease --title "街机游戏 $RELEASE_TAG" --notes-file dist/release/RELEASE-NOTES.md

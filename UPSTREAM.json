@@ -18,6 +18,6 @@
     "url": "https://github.com/dmitrysmagin/fba-a320.git",
     "commit": "68af7cc0065757c688595adc409f5d47977793ae",
     "path": "third_party/fba-a320",
-    "license_status": "Full redistribution permission for the pinned MIPS generator was not located; no A68K binary release."
+    "license_note": "Original upstream copyright notices retained; not relabelled as GPL. See docs/licensing.md."
   }
 }

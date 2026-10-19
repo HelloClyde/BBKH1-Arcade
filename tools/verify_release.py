@@ -38,7 +38,7 @@ def main():
             'payload_sha256':sha(data[PAYLOAD_OFFSET:]),'exact_physical_bda_match':True,
             'runtime_source_match':True,'sdk_commit':m['sdk_commit'],
             'scope':'Local static checks and byte equality to recorded hardware image; this invocation does not run a device or CPU emulator.',
-            'distribution':'Source-only public release pending A68K MIPS licensing clarification.'}
+            'distribution':'BDA, installation ZIP and complete corresponding source snapshots, with original third-party notices.'}
     out=ROOT/'build/verification';out.mkdir(parents=True,exist_ok=True)
     (out/'release-verification.json').write_text(json.dumps(report,indent=2)+'\n')
     bda.with_suffix('.bda.sha256').write_text(sha(data)+'  '+bda.name+'\n')

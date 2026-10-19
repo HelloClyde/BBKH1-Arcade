@@ -1,19 +1,22 @@
 # 街机游戏 · BBKH1-Arcade
 
-作者：**HelloClyde**。面向步步高 **H1 / Y100 V1.41、JZ4740、480×272 屏幕**的 Neo Geo MVS 模拟器，版本 **0.1.0**，开发预览。
+作者：**HelloClyde**。面向步步高 **H1 / Y100 V1.41、JZ4740、480×272 屏幕**的 Neo Geo MVS 模拟器，版本 **0.1.1**，开发预览。
 
 公开 H1 移植层、A68K/MXU/HLE 优化、触屏菜单和 PC 转换工具，固定所有上游提交。
 默认采用 **408 MHz、4:3 放大、固定跳1帧（目标约30显示帧/秒）、8 kHz 声音合成**。
-完整组合包含第三方非商业条款；A68K MIPS 的完整再分发许可仍有缺项，**当前 Release 只提供源码，不提供 BDA 或安装包**，见[许可说明](docs/licensing.md)。
+完整组合保留第三方各自条款与非商业限制，见[许可说明](docs/licensing.md)。
+[GitHub Releases 下载](https://github.com/HelloClyde/BBKH1-Arcade/releases)提供 BDA、安装包、完整对应源码及 SHA256 校验文件。
 
 ## 快速开始
 
-成品使用：本版尚无公开 BDA 下载。先按下方命令构建，输出 `dist/H1Arcade.bda`。
+下载 Release 的 `H1Arcade-v0.1.1-install.zip`，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
+也可以只下载 `H1Arcade.bda`；本地构建输出为 `dist/H1Arcade.bda`。
 通过 USB U 盘把它复制到设备 **`A:\应用\程序\H1Arcade.bda`**，刷新桌面后打开“**街机游戏**”。
 游戏文件放在 **`A:\ARCADE\`**，在原生文件选择器打开 `.h1neo` 文件。
 商业游戏、商业 BIOS、原机固件和个人存档均不随仓库或源码包分发。
 
-PC 转换工具只处理本地提供的原始 ZIP，不下载游戏：
+安装包的“PC工具”目录自带 Windows x64 图形解码 DLL，只需 Python 3.12+，无需 GCC；
+在该目录运行下列命令时，将 `tools/convert.py` 换成 `convert.py`。工具只处理本地提供的原始 ZIP：
 
 ```powershell
 python -X utf8 tools/convert.py "你的/kof97.zip" --set kof97 --bios "你的/neogeo.zip" --output "你的/kof97.h1neo"
@@ -51,10 +54,12 @@ python -X utf8 tools/build_release.py
 python -X utf8 tools/verify_release.py
 ```
 
-已有检出或解压后的源码 ZIP 运行 `python -X utf8 tools/fetch.py` 初始化固定依赖。
+Git 检出运行 `python -X utf8 tools/fetch.py` 初始化固定依赖。
+完整源码 ZIP 已包含全部构建所需的固定源码快照，该命令仅验证快照，不下载上游。
 若已安装工具链，可用 `--toolchain "你的工具链/bin" --host-cc "你的/gcc.exe"`，
 或设置 `H1_GNU_BIN` 与 `HOST_CC`。脚本不依赖开发者用户名或本机 SDK 路径。
-构建需要取得上游源码；这些源码的许可状态不会因本地构建而改变，不能据此自行公开再分发 A68K 二进制。
+打包命令为 `python -X utf8 tools/package_release.py`，输出在 `dist/release/`；
+正式版本标签由 CI 构建后生成同一套 BDA、安装包、完整源码、构建信息和校验文件。
 
 ## 截图
 
@@ -105,7 +110,7 @@ MXU 指令本身由真机启动自检验证；主机测试中的标量替身仅�
 | --- | --- | --- |
 | [H1 BDA SDK](https://github.com/MrDefinition1999/bbk-h1-bda-sdk) | `067fe072477861dfc8949d7b1a55279fb92d2548` | 原生 ABI、BDA 头与图标打包；`sdk/` 子模块 |
 | [GnGeo / Apaczer](https://github.com/Apaczer/gngeo) | `6fa682e06b60df0ec42e99f00ffc196b52cfa780` | Neo Geo 图形、总线、Z80、YM2610 与驱动信息 |
-| [fba-a320 / A68K](https://github.com/dmitrysmagin/fba-a320) | `68af7cc0065757c688595adc409f5d47977793ae` | MIPS32r1 68000 代码生成器；再分发许可缺项见许可说明 |
+| [fba-a320 / A68K](https://github.com/dmitrysmagin/fba-a320) | `68af7cc0065757c688595adc409f5d47977793ae` | MIPS32r1 68000 代码生成器；原始作者与上游声明见许可说明 |
 | [Musashi](https://github.com/kstenerud/Musashi) | `313ebf1bd9f4d0d93341eb5ce21fd8a119e9dbdd` | 可选 C 68000 核心，构建生成器 |
 | GNU MIPS bare-metal | 15.2.0，安装包 SHA 固定在脚本 | 仅开发构建需要 |
 | 原生 MinGW GCC、Git、Python | x64 GCC；Python 3.12+ | 仅开发构建与 PC 转换需要 |
@@ -119,7 +124,7 @@ MXU 指令本身由真机启动自检验证；主机测试中的标量替身仅�
 
 H1 原创代码采用 **GPL-2.0-or-later 加独立模块链接例外**，见 [LICENSE](LICENSE)、[LICENSE-EXCEPTION](LICENSE-EXCEPTION)。
 上游核心、SDK 和字体保留各自许可，完整组合不是统一 GPL，历史 MAME 组件包含非商业限制。
-固定 A68K MIPS 版本的完整再分发授权未找到，当前只发布本项目源码，详见 [docs/licensing.md](docs/licensing.md)。
+A68K 的原始作者声明与来源完整保留；H1 移植层的 GPL 不替代上游组件自己的条款，见 [docs/licensing.md](docs/licensing.md)。
 
 感谢 Peponas Mathieu、Steward Fu、GnGeo / Apaczer 贡献者；A68K 的 Mike Coates、Darren Olafson、Manuel Geran、Dmitry Smagin；
 Z80 的 Juergen Buchmueller，YM2610 的 Tatsuyuki Satoh、Jarek Burczynski 及 MAME 贡献者；

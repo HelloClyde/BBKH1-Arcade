@@ -19,5 +19,4 @@ The GnGeo linking exception is retained for its H1 modifications as described
 in assets/licenses/GnGeo-linking-exception.txt. This additional permission does
 not relicense GnGeo, A68K, MAME-derived code, Musashi, the H1 SDK, font data or
 other third-party materials, and grants no missing third-party permissions.
-In particular it does not authorize redistribution of the A68K MIPS generator
-or an executable containing it where the applicable grant has not been found.
+Upstream material continues to be governed by its own notices and terms.

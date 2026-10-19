@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import argparse,hashlib,json,os,re,shutil,subprocess,sys
 from prepare import prepare
 from fast_bus import generate_copy
+from dependencies import verify_dependencies
 ROOT=Path(__file__).resolve().parents[1]
 WORK=ROOT
 def run(args):
@@ -17,7 +18,7 @@ def main():
     ap.add_argument('--test-frames',type=int,default=0)
     ap.add_argument('--benchmark',action='store_true')
     ap.add_argument('--profile',action='store_true',help='coarse native tick partition; physical H1 profiling')
-    ap.add_argument('--core',choices=('musashi','a68k'),default='musashi',help='A68K is an optional local evaluation build with separate upstream terms')
+    ap.add_argument('--core',choices=('musashi','a68k'),default='musashi',help='CPU backend; the release preset selects the A68K MIPS32r1 core')
     ap.add_argument('--idle',action='store_true',help='batch verified RAM-polling TST/BEQ idle loops within one scanline')
     ap.add_argument('--dirty-present',action='store_true',help='preserve exact LCD pixels while eliding unchanged source rows')
     ap.add_argument('--cpu-selftest',action='store_true',help='run CPU batching differential checks on the physical H1 before opening game picker')
@@ -46,12 +47,7 @@ def main():
     if args.scale_output and not args.speed_core:ap.error('scale-output requires speed-core')
     if args.cpu_mhz!=336 and not args.scale_output:ap.error('cpu-mhz 408 requires the checked scale-output preset')
     if not 0<=args.test_frames<=36000 or (args.benchmark and not args.test_frames):ap.error('benchmark needs bounded frames')
-    deps=json.loads((ROOT/'UPSTREAM.json').read_text())
-    for key,info in deps.items():
-        target=(ROOT/info['path']).resolve() if 'path' in info else ROOT/'third_party'/key
-        git=['git','-c',f'safe.directory={target.as_posix()}','-C',target]
-        if run([*git,'rev-parse','HEAD']).strip()!=info['commit']:ap.error(key+' commit mismatch')
-        if run([*git,'status','--porcelain','--untracked-files=no']).strip():ap.error(key+' upstream modified')
+    deps=verify_dependencies()
     name='release' if not args.test_frames else f'test{args.test_frames}'+('-bench' if args.benchmark else '')
     if args.profile:name+='-profile'
     if args.core!='musashi':name+='-'+args.core
@@ -125,10 +121,8 @@ def main():
     if args.core=='musashi':sources += [musashi/'m68kcpu.c',musashi/'m68kops.c']
     else:
         upstream=ROOT/'third_party/fba-a320'
-        commit=run(['git','-c',f'safe.directory={upstream.as_posix()}','-C',upstream,'rev-parse','HEAD']).strip()
+        commit=deps['a68k']['commit']
         if commit!='68af7cc0065757c688595adc409f5d47977793ae':ap.error('A68K upstream commit mismatch')
-        if run(['git','-c',f'safe.directory={upstream.as_posix()}','-C',upstream,'status','--porcelain','--untracked-files=no']).strip():ap.error('A68K upstream modified')
-        deps['a68k']={'url':'https://github.com/dmitrysmagin/fba-a320.git','commit':commit,'local_evaluation_only':True}
         host=Path(os.environ['HOST_CC'])
         env=dict(os.environ);env['PATH']=str(host.parent)+os.pathsep+env.get('PATH','')
         exe=build/'make68k.exe'
@@ -177,7 +171,7 @@ def main():
           'title':'街机游戏','icon_sha256':hashlib.sha256(icon.read_bytes()).hexdigest(),
           'mxu_isa_audit':mxu_audit,
           'symbols':symbols,'dependencies':deps,'hardware_verified':False,'stats_words':20,
-          'sdk_commit':run(['git','-c',f'safe.directory={sdk.as_posix()}','-C',sdk,'rev-parse','HEAD']).strip(),
+          'sdk_commit':deps['h1_sdk']['commit'],
           'source_sha256':{p.relative_to(ROOT).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
              for directory in (ROOT/'src',ROOT/'tools') for p in sorted(directory.rglob('*')) if p.is_file() and p.suffix in ('.c','.h','.S','.ld','.py')}}
     bda.with_suffix('.build.json').write_text(json.dumps(meta,indent=2)+'\n')

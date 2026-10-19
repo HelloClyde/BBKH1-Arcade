@@ -25,18 +25,16 @@ Do not describe the complete combined executable as uniformly MIT or GPL-only.
   notices remain in `third_party/gngeo/src/ym2610/ym2610.c`.
 - Musashi: Karl Stenerud and contributors, MIT-style permission notice retained
   in upstream headers. This build enables only the 68000; no FPU/MMU is linked.
-- Optional local A68K evaluation: Mike Coates, Darren Olafson, Manuel Geran,
+- A68K MIPS core: Mike Coates, Darren Olafson, Manuel Geran,
   Dmitry Smagin and contributors. The MIPS32r1 generator is taken unmodified
   from `dmitrysmagin/fba-a320`, commit
   `68af7cc0065757c688595adc409f5d47977793ae`. Its full notices are retained in
   `third_party/fba-a320/src/cpu/a68k/mips32r1/fba_make68k.c` and emitted assembly.
-  The pinned generator has copyright notices but no complete redistribution
-  permission was located. See docs/licensing.md. Public releases of this project
-  contain original H1 sources only, not A68K binaries or generated assembly.
-  The optional fast-bus build
-  patches a build copy of this generator to emit inline work-RAM access; the
-  pinned source checkout is unchanged. This repository does not distribute the
-  earlier development workspace's Musashi installation archive.
+  The original author notices are included in assets/licenses/A68K-copyright.txt.
+  The fast-bus build patches a build copy to emit guarded work-RAM accesses;
+  the pinned upstream checkout is unchanged. The release source archive includes
+  the pinned upstream sources and our transformation scripts. Upstream code is
+  not relabelled under the H1 port's GPL license. See docs/licensing.md.
 - H1 SDK: MrDefinition1999 and contributors, Apache-2.0. Fixed commit is
   recorded in `UPSTREAM.json` and the BDA build metadata.
 

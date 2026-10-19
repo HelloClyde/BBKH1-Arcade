@@ -2,9 +2,14 @@
 import json
 import subprocess
 from pathlib import Path
+from dependencies import verify_dependencies
 
 ROOT=Path(__file__).resolve().parents[1]
 def main():
+    if (ROOT/'UPSTREAM-SOURCE-MANIFEST.json').exists():
+        verify_dependencies()
+        print('Bundled upstream source snapshots match the fixed commits and manifest')
+        return
     deps=json.loads((ROOT/'UPSTREAM.json').read_text())
     if (ROOT/'.git').exists():
         subprocess.run(['git','submodule','update','--init','--',*(d['path'] for d in deps.values())],cwd=ROOT,check=True)
