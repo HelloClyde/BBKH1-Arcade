@@ -63,6 +63,12 @@ int fstat(int fd,struct stat *st){FILE *f=fd>=3&&fd<35?files[fd-3]:0;if(!f||!st)
 int stat(const char *p,struct stat *st){FILE *f=fopen(p,"rb");if(!f)return -1;int r=fstat(fileno(f),st);fclose(f);return r;}
 int mkdir(const char *p,unsigned mode){(void)p;(void)mode;return -1;}
 int remove(const char *p){return h1_remove(p);}
+/* V1.41 FS+0x28: same-volume rename, refuses an existing destination. */
+int rename(const char *from,const char *to){
+ typedef int(*fn)(const char*,const char*);
+ fn f=(fn)h1_runtime_entry(h1_runtime_table(H1_RUNTIME_FS_TABLE_SLOT),0x28);
+ return f?f(from,to):-1;
+}
 void perror(const char *s){h1_arcade_log("IO_ERROR %s",s);}
 void exit(int e){h1_arcade_escape(e?e:101);}
 int abs(int n){return n<0?-n:n;}

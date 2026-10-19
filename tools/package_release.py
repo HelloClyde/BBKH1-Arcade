@@ -24,7 +24,8 @@ def main():
     bda=out/'H1Arcade.bda';bda.write_bytes(data)
     entries={
         '应用/程序/H1Arcade.bda':data,
-        'ARCADE/放置游戏文件.txt':'把自行转换的 .h1neo 游戏放在此目录。ROM、商业 BIOS 和个人存档不随安装包提供。\n'.encode(),
+        'ARCADE/放置游戏文件.txt':'把原始游戏 ZIP（如 kof97.zip）和自己的 neogeo.zip 放在此目录，H1 首次打开会自动转换；也可放已有 .h1neo。ROM、商业 BIOS 和个人存档不随安装包提供。\n'.encode(),
+        '设备端转换说明.md':(ROOT/'docs/device-import.md').read_bytes(),
         '使用说明.md':(ROOT/'README.md').read_bytes(),
         'NOTICE.md':(ROOT/'NOTICE.md').read_bytes(),
         '许可/H1-GPL-2.0.txt':(ROOT/'LICENSE').read_bytes(),
@@ -60,12 +61,14 @@ def main():
 默认 408 MHz、4:3、固定跳1帧、8 kHz 声音，带触屏暂停菜单、按键映射、显示与音量设置。
 
 下载 H1Arcade-v{version}-install.zip 后，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
-单独 BDA 放到 A:\\应用\\程序\\H1Arcade.bda。PC 转换工具在安装包 PC工具 目录，需要 Windows x64 和 Python。
+单独 BDA 放到 A:\\应用\\程序\\H1Arcade.bda。
+把自己的游戏 ZIP 与 neogeo.zip 复制到 ARCADE，直接选择游戏 ZIP，H1 首次转换、校验后进入游戏；之后复用缓存。
+转换有进度和取消按钮，保留原始 ZIP，兼容已有 .h1neo 和存档。PC 转换工具仍作为可选工具附带。
 源码 ZIP 包含固定 SDK、GnGeo、Musashi 和 A68K 源码快照，无需另取子模块即可重建。
 上游版权与各自条款保留在 NOTICE.md、docs/licensing.md 和安装包“许可”目录；完整组合不统一重标为 GPL。
 游戏 ROM、商业 BIOS、固件和个人存档不分发。
 
-本次发布只完善构建与打包，BDA 与已有真机验证版本逐字节相同：{sha(data)}。
+本版加入设备端 ZIP 首次转换。发布 BDA 与本版真机验收的构建逐字节相同：{sha(data)}。
 CI 做实际 C 函数测试和重建校验，没有运行真机或游戏 CPU 模拟器。
 历史实测窗口及限制见 README 和完整源码中的真机记录。
 

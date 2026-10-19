@@ -11,6 +11,8 @@
 #include "profile.h"
 #include "present.h"
 #include "arcade_menu.h"
+#include "import_game.h"
+#include "touch.h"
 #if H1_CPU_MHZ > 336
 #include "clock_control.h"
 #endif
@@ -61,6 +63,21 @@ static unsigned pace_start,pace_frames;
 static char logs[16384],path[240];
 static unsigned logsize;
 static unsigned clear_lcd=1;
+static uint32_t *lcd(void);
+volatile struct {unsigned magic,version,active,done,total,start,end,result;} h1_import_stats={0x31504d49,1};
+static unsigned import_last_tick;
+static const char *import_last_stage;
+static int import_notify(void *user,const char *stage,unsigned done,unsigned total){
+ (void)user;int code=-1,key=-1,x,y;h1_event_fetch(&code,&key);
+ if(code==H1_EVENT_KEY_DOWN&&(key==24||key==41))return 0;
+ if(h1_game_code_down(h1_game_key_code(24))||h1_game_code_down(h1_game_key_code(41)))return 0;
+ if(code==11&&h1_touch_position(&x,&y)&&x>=338&&x<442&&y>=236&&y<264)return 0;
+ unsigned tick=h1_raw_tick_80hz();h1_import_stats.done=done;h1_import_stats.total=total;
+ if(!import_last_stage||strcmp(stage,import_last_stage)||tick-import_last_tick>=4||done==total){
+  arcade_import_draw(lcd(),stage,done,total);import_last_stage=stage;import_last_tick=tick;
+ }
+ return 1;
+}
 #if H1_PALETTE32
 void h1_palette32_surface(unsigned enabled){
  void *pixels=enabled?(void*)framebuffer32:(void*)framebuffer;
@@ -268,11 +285,31 @@ static int select_game(void){
 #endif
  char output[512]={0};typedef void(*fn)(const char*,const char*,char*);
  fn f=(fn)h1_runtime_entry(h1_runtime_table(H1_RUNTIME_GUI_TABLE_SLOT),0x9ec);
- if(!f)return -1;f("A:\\ARCADE\\","h1neo",output);
+ if(!f)return -1;f("A:\\ARCADE\\","h1neo;zip",output);
  video_open();video_close();
  unsigned n=0;while(n<sizeof output&&output[n])++n;if(!n)return 0;
  if(n>=sizeof path||n<4||output[1]!=':'||(output[2]!='\\'&&output[2]!='/'))return -1;
- memcpy(path,output,n+1);return 1;
+ memcpy(path,output,n+1);
+ if(n>=4&&output[n-4]=='.'&&(output[n-3]=='z'||output[n-3]=='Z')&&(output[n-2]=='i'||output[n-2]=='I')&&(output[n-1]=='p'||output[n-1]=='P')){
+  char cache_path[240],bios_path[240],name[16],error[128];unsigned start=0;
+  for(unsigned i=0;i<n;i++)if(output[i]=='\\'||output[i]=='/')start=i+1;
+  unsigned length=n-start-4;
+  if(!length||length>15||n+3>=sizeof cache_path)return -1;
+  for(unsigned i=0;i<length;i++){unsigned ch=(uint8_t)output[start+i];name[i]=(char)(ch>='A'&&ch<='Z'?ch+32:ch);}name[length]=0;
+  memcpy(cache_path,output,n-4);strcpy(cache_path+n-4,".h1neo");
+  if(h1_import_cached(cache_path,name)){memcpy(path,cache_path,strlen(cache_path)+1);h1_arcade_log("IMPORT_CACHE path=%s",path);return 1;}
+  memcpy(bios_path,output,start);strcpy(bios_path+start,"neogeo.zip");
+  FILE *bios=fopen(bios_path,"rb");if(bios)fclose(bios);else strcpy(bios_path,"A:\\ARCADE\\neogeo.zip");
+  h1_import_stats.active=1;h1_import_stats.start=h1_raw_tick_80hz();import_last_stage=0;
+  h1_arcade_log("IMPORT_BEGIN game=%s bios=%s output=%s",output,bios_path,cache_path);h1_arcade_log_flush();
+  video_open();int result=h1_import_game(output,bios_path,cache_path,name,import_notify,0,error);video_close();
+  h1_import_stats.end=h1_raw_tick_80hz();h1_import_stats.result=(unsigned)result;h1_import_stats.active=0;
+  h1_arcade_log("IMPORT_RESULT result=%d ticks=%u error=%s",result,h1_import_stats.end-h1_import_stats.start,error);h1_arcade_log_flush();
+  if(result<0){h1_message_box(0,error,"Game ZIP",0);return 0;}
+  if(!result)return 0;
+  memcpy(path,cache_path,strlen(cache_path)+1);
+ }
+ return 1;
 }
 static void run_frames(void){
  unsigned fc=0,cartridge_started=0;int debt=0;

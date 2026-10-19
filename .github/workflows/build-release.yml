@@ -53,6 +53,8 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
       - name: Actual C function checks, no game CPU emulation
         run: |
+          python tests/import_host.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python tests/menu_host.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python tests/present_host.py --optimize 3 --mxu
@@ -103,6 +105,7 @@ jobs:
           path: |
             build/verification/*.json
             build/menu-host/verification.json
+            build/import-host/verification.json
             build/present-host/verification-mxu-o3.json
             build/render-host-mxu/verification.json
             build/audio-fast-host/verification.json

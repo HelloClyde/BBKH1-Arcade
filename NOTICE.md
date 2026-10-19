@@ -37,6 +37,11 @@ Do not describe the complete combined executable as uniformly MIT or GPL-only.
   not relabelled under the H1 port's GPL license. See docs/licensing.md.
 - H1 SDK: MrDefinition1999 and contributors, Apache-2.0. Fixed commit is
   recorded in `UPSTREAM.json` and the BDA build metadata.
+- Device ZIP inflater: miniz by Rich Geldreich / Tenacious Software,
+  RAD Game Tools and Valve Software, under its retained MIT notice.
+  The two unmodified files in `src/import_vendor/` are copied from
+  `rofl0r/gnuboy` commit `c367bb4ba96fb07cd62f72f5ecb43aeff7012564`.
+  See `assets/licenses/miniz-MIT.txt` and `docs/device-import.md`.
 
 `tools/prepare.py` applies documented changes only to build copies: H1 page
 cache hooks, bounds checks, odd-lane memory-card byte access, bounded Z80 flag

@@ -99,7 +99,7 @@ def main():
     # HAVE_CONFIG_H must be absent for legacy #ifdef users.
     flags.remove('-DHAVE_CONFIG_H=0')
     flags += [x for p in includes for x in ('-I',str(p))]
-    sources=[ROOT/'src'/p for p in ('entry.S','startup.c','jump.S','libc.c','libc_extra.c','audio.c','cpu.c','package.c','frontend.c','arcade_config.c','arcade_menu.c','profile.c','present.c','render.c')]
+    sources=[ROOT/'src'/p for p in ('entry.S','startup.c','jump.S','libc.c','libc_extra.c','audio.c','cpu.c','package.c','frontend.c','arcade_config.c','arcade_menu.c','profile.c','present.c','render.c','import_game.c','import_zip.c')]
     if args.mxu:
         mxu_source=ROOT/'src/mxu.S'
         if args.speed_core:

@@ -29,6 +29,19 @@ static void text(const char *s,int x,int y,uint32_t color){
   x+=advance;
  }
 }
+void arcade_import_draw(uint32_t *target,const char *stage,unsigned done,unsigned total){
+ const char *label=!strcmp(stage,"sprites")?"解码图形":!strcmp(stage,"sound")?"解压声音":
+  !strcmp(stage,"fixed")?"解码文字":!strcmp(stage,"verify")?"校验文件":
+  !strcmp(stage,"program")?"解压程序":!strcmp(stage,"padding")?"准备文件":!strcmp(stage,"done")?"准备完成":"检查游戏文件";
+ unsigned percent=total?(unsigned)((uint64_t)done*100/total):0;if(percent>100)percent=100;
+ char line[80];canvas=target;rect(0,0,480,272,0x00101818);
+ text("首次准备游戏",18,12,0x00ffffff);
+ text("首次需要等待，之后直接进入游戏",18,52,0x00b8bcbc);
+ snprintf(line,sizeof line,"%s  %u%%",label,percent);text(line,38,108,0x00ffffff);
+ rect(38,150,404,18,0x00202440);rect(38,150,404*percent/100,18,0x0000b4a0);
+ text("返回取消，原始文件会保留",18,202,0x00b8bcbc);
+ rect(338,236,104,28,0x00202440);text("取消",366,239,0x00ffffff);
+}
 static const char *key_names[45]={"未设置","Q","W","E","R","T","Y","U","A","S","D","F","G","H","J","上页",
  "Z","X","C","V","B","N","下页","空格","退出","回车","左ALT","下","右ALT","I","O","P","K","L","符号","右","M","上","删除","确认","左","返回","SHIFT","FN","电源"};
 static const char *button_names[10]={"上","下","左","右","A","B","C","D","投币","开始"};

@@ -41,6 +41,7 @@ int feof(FILE *);
 int ferror(FILE *);
 int fileno(FILE *);
 int remove(const char *);
+int rename(const char *,const char *);
 void rewind(FILE *);
 void perror(const char *);
 

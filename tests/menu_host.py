@@ -59,10 +59,18 @@ void menu_preview(uint32_t *p,arcade_settings *s,unsigned page,int capture){host
   assert all(canv[i]==0x1234abcd for i in list(range(4))+list(range(480*272+4,480*272+8)))
   image=Image.new('RGB',(480,272));image.putdata([((p>>16)&255,(p>>8)&255,p&255) for p in canv[4:-4]])
   dest=out/('page'+str(page)+'.png');image.save(dest);screens.append(str(dest))
+ d.arcade_import_draw.argtypes=[ctypes.POINTER(u),ctypes.c_char_p,u,u]
+ for stage in ('inspect','padding','program','sound','fixed','sprites','verify','done'):
+  for i in range(len(canv)):canv[i]=0x1234abcd
+  d.arcade_import_draw(ptr,stage.encode(),37,100)
+  assert all(canv[i]==0x1234abcd for i in list(range(4))+list(range(480*272+4,480*272+8)))
+  if stage=='sprites':
+   image=Image.new('RGB',(480,272));image.putdata([((p>>16)&255,(p>>8)&255,p&255) for p in canv[4:-4]])
+   dest=out/'import-progress.png';image.save(dest);screens.append(str(dest))
  report={'ok':True,'environment':'actual host C preferences and drawing only; no CPU/device emulation',
   'checks':['defaults','reserved key rejection','reassignment clears old key','native aliases cannot conflict',
    'two-slot roundtrip and independent CRC','bad newest slot falls back','checksummed invalid settings rejected',
-   'duplicate native code rejected','two corrupt slots preserve files','five menu pages draw within bounds'],
+   'duplicate native code rejected','two corrupt slots preserve files','five menu pages draw within bounds','eight import stages draw within bounds'],
   'source_sha256':{p:hashlib.sha256((ROOT/'src'/p).read_bytes()).hexdigest() for p in ('arcade_config.c','arcade_config.h','arcade_menu.c','arcade_menu.h','menu_font.h')},'screens':screens}
  (out/'verification.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
  for p in paths:p.unlink()
