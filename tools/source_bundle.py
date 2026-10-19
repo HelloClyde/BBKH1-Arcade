@@ -35,16 +35,26 @@ def tracked_sources(repo,ref,upstream=False):
         actual,kind,size=stream.readline().decode().split()
         assert actual==blob and kind=='blob'
         entries[name]=stream.read(int(size));assert stream.read(1)==b'\n'
-    for name in list(entries):
+    raw=entries.copy()
+    def resolve(name,seen=()):
+        assert name not in seen and not name.startswith('../') and not name.startswith('/'),name
+        if modes.get(name)=='120000':
+            target=raw[name].decode('utf-8')
+            target=posixpath.normpath(posixpath.join(posixpath.dirname(name),target))
+            return resolve(target,(*seen,name))
+        if name in raw:return {'':raw[name]}
+        prefix=name+'/'
+        children=[p for p in raw if p.startswith(prefix)]
+        assert children,'Link target has no bundled sources: '+name
+        result={}
+        for child in children:
+            for suffix,body in resolve(child,(*seen,name)).items():
+                result[child[len(prefix):]+('/'+suffix if suffix else '')]=body
+        return result
+    for name in raw:
         if modes[name]!='120000':continue
-        target=name;body=entries[name]
-        symlinks[name]=body.decode('utf-8')
-        for _ in range(16):
-            target=posixpath.normpath(posixpath.join(posixpath.dirname(target),body.decode('utf-8')))
-            assert not target.startswith('../') and not target.startswith('/') and target in modes,target
-            body=git(repo,'show',ref+':'+target)
-            if modes[target]!='120000':entries[name]=body;break
-        else:raise AssertionError('Symbolic link loop: '+name)
+        symlinks[name]=raw[name].decode('utf-8');del entries[name]
+        for suffix,body in resolve(name).items():entries[name+('/'+suffix if suffix else '')]=body
     return entries,excluded,symlinks
 
 def write_zip(path,entries,prefix=''):
