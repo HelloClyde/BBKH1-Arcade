@@ -120,7 +120,9 @@ static unsigned h1_timer_distance(double duration){
             '    z80_set_irq_callback(mame_z80_irq_callback);\n    h1_z80_hle_init();')
         p.write_text(s)
     # This port pads M1 to 512 KiB, matching the Z80 bank address range.
-    m=build/'musashi';shutil.copytree(ROOT/'third_party/musashi',m,dirs_exist_ok=True,ignore=shutil.ignore_patterns('.git'))
+    # Only the core/generator is built. Nested test/example trees also exceed
+    # Windows path limits in a source ZIP extracted under a longer folder.
+    m=build/'musashi';shutil.copytree(ROOT/'third_party/musashi',m,dirs_exist_ok=True,ignore=shutil.ignore_patterns('.git','test','example'))
     p=m/'m68kcpu.c';s=p.read_text()
     s=s.replace('#include "m68kfpu.c"','/* H1: 68000-only build, no FPU. */')
     s=s.replace('#include "m68kmmu.h"','/* H1: 68000-only build, no MMU. */')
