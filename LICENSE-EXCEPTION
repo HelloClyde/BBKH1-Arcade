@@ -1,0 +1,23 @@
+Independent-module linking exception for the original H1 port
+
+The original H1 frontend, adapters, optimization additions, build scripts and
+test code authored for this project by HelloClyde are licensed under the GNU
+General Public License, version 2 or (at your option) any later version, with
+the following additional permission:
+
+As a special exception, you have permission to link this original H1 port code
+with independent modules, regardless of the license terms of those independent
+modules, and to copy and distribute the resulting executable under terms of
+your choice, provided that you also meet, for each linked independent module,
+the terms and conditions of the license of that module. An independent module
+is a module which is not derived from or based on this original H1 port code.
+If you modify this code, you may extend this exception to your version, but you
+are not obligated to do so. If you do not wish to do so, delete this exception
+statement from your version.
+
+The GnGeo linking exception is retained for its H1 modifications as described
+in assets/licenses/GnGeo-linking-exception.txt. This additional permission does
+not relicense GnGeo, A68K, MAME-derived code, Musashi, the H1 SDK, font data or
+other third-party materials, and grants no missing third-party permissions.
+In particular it does not authorize redistribution of the A68K MIPS generator
+or an executable containing it where the applicable grant has not been found.

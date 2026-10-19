@@ -1,0 +1,15 @@
+/***************************************************************************
+
+ ym2610.c
+
+ Software emulation for YAMAHA YM-2610 sound generator
+
+ Copyright (C) 2001, 2002, 2003 Jarek Burczynski (bujar at mame dot net)
+ Copyright (C) 1998 Tatsuyuki Satoh, MultiArcadeMachineEmulator development
+
+ Version 1.4 (final beta)
+
+ Comming from NJ pspmvs emu comming from Mame
+
+ ***************************************************************************/
+

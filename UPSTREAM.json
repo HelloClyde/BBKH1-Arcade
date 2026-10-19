@@ -1,0 +1,23 @@
+{
+  "gngeo": {
+    "url": "https://github.com/Apaczer/gngeo.git",
+    "commit": "6fa682e06b60df0ec42e99f00ffc196b52cfa780",
+    "path": "third_party/gngeo"
+  },
+  "musashi": {
+    "url": "https://github.com/kstenerud/Musashi.git",
+    "commit": "313ebf1bd9f4d0d93341eb5ce21fd8a119e9dbdd",
+    "path": "third_party/musashi"
+  },
+  "h1_sdk": {
+    "url": "https://github.com/MrDefinition1999/bbk-h1-bda-sdk.git",
+    "commit": "067fe072477861dfc8949d7b1a55279fb92d2548",
+    "path": "sdk"
+  },
+  "a68k": {
+    "url": "https://github.com/dmitrysmagin/fba-a320.git",
+    "commit": "68af7cc0065757c688595adc409f5d47977793ae",
+    "path": "third_party/fba-a320",
+    "license_status": "Full redistribution permission for the pinned MIPS generator was not located; no A68K binary release."
+  }
+}

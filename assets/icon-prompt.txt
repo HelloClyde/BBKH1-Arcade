@@ -1,0 +1,9 @@
+Use case: stylized-concept.
+Asset type: a single finished raster launcher icon for the BBK H1 handheld application named 街机游戏机, ultimately displayed at 45x45 pixels.
+Input images: image 1 is a style reference (existing GBA icon); image 2 is a style/context reference (actual H1 desktop). These are references only, not edit targets. Generate a new arcade icon matching their early-2000s glossy embedded-device aesthetic.
+Primary request: ONE square app icon featuring a compact, instantly recognizable classic upright arcade cabinet with a large dark blue screen, a prominent red ball-top joystick and three broad colorful action buttons. Cabinet in warm red and orange with cream trim, viewed in a gentle three-quarter angle with the front clearly visible; chunky simple shapes and a strong silhouette. Screen has a very simple luminous cyan pixel-like motif, no game characters. Cabinet fills most of a glossy deep-blue rounded-square tile, balancing warm cabinet colors against the blue base.
+Style: polished dimensional illustration, softly beveled rounded tile edges, bright gradients, strong upper-left white specular highlight, tidy outlines, small tight shadow. Match the substantial shiny plastic/glass surfaces of the reference H1 icons, with broad readable shapes instead of fine detail.
+Composition: single centered icon, tile fills about 92 percent of square canvas, cabinet entirely inside tile. Genuine transparent background outside the rounded tile with clean alpha edges. No cast shadow extending far beyond the tile. Optimize the silhouette for downscaling to 45x45 and 57x57 pixels.
+Text: no text, letters or numbers anywhere.
+Avoid: flat modern corporate logos, photography, real game characters, branded logos, labels, mockups, desktop screenshots, multiple icons, tiny decorative details, checkerboard background.
+Output: one square RGBA PNG with true transparency.
