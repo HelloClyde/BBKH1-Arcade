@@ -291,14 +291,9 @@ static int select_game(void){
  if(n>=sizeof path||n<4||output[1]!=':'||(output[2]!='\\'&&output[2]!='/'))return -1;
  memcpy(path,output,n+1);
  if(n>=4&&output[n-4]=='.'&&(output[n-3]=='z'||output[n-3]=='Z')&&(output[n-2]=='i'||output[n-2]=='I')&&(output[n-1]=='p'||output[n-1]=='P')){
-  char cache_path[240],bios_path[240],name[16],error[128];unsigned start=0;
-  for(unsigned i=0;i<n;i++)if(output[i]=='\\'||output[i]=='/')start=i+1;
-  unsigned length=n-start-4;
-  if(!length||length>15||n+3>=sizeof cache_path)return -1;
-  for(unsigned i=0;i<length;i++){unsigned ch=(uint8_t)output[start+i];name[i]=(char)(ch>='A'&&ch<='Z'?ch+32:ch);}name[length]=0;
-  memcpy(cache_path,output,n-4);strcpy(cache_path+n-4,".h1neo");
+  char cache_path[240],bios_path[240],name[16],error[128];
+  if(!h1_import_paths(output,cache_path,bios_path,name)){h1_message_box(0,"Unsupported game ZIP name or path too long. See README.","Game ZIP",0);return 0;}
   if(h1_import_cached(cache_path,name)){memcpy(path,cache_path,strlen(cache_path)+1);h1_arcade_log("IMPORT_CACHE path=%s",path);return 1;}
-  memcpy(bios_path,output,start);strcpy(bios_path+start,"neogeo.zip");
   FILE *bios=fopen(bios_path,"rb");if(bios)fclose(bios);else strcpy(bios_path,"A:\\ARCADE\\neogeo.zip");
   h1_import_stats.active=1;h1_import_stats.start=h1_raw_tick_80hz();import_last_stage=0;
   h1_arcade_log("IMPORT_BEGIN game=%s bios=%s output=%s",output,bios_path,cache_path);h1_arcade_log_flush();

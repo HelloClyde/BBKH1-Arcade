@@ -20,6 +20,23 @@ typedef struct {
 static uint32_t read32(const uint8_t *p){return p[0]|p[1]<<8|p[2]<<16|(uint32_t)p[3]<<24;}
 static void put32(uint8_t *p,uint32_t v){p[0]=v;p[1]=v>>8;p[2]=v>>16;p[3]=v>>24;}
 static uint32_t checksum(const void *p,unsigned n){return ~h1_import_crc(~0u,p,n);}
+int h1_import_paths(const char *zip,char output[240],char bios[240],char set[16]){
+ unsigned n=(unsigned)strlen(zip),start=0;char name[16];
+ if(n<8||n+7>240||zip[1]!=':'||(zip[2]!='\\'&&zip[2]!='/'))return 0;
+ for(unsigned i=0;i<n;i++){
+  unsigned ch=(uint8_t)zip[i];
+  if(ch>=0x81&&ch<=0xfe){
+   unsigned trail=(uint8_t)zip[++i];if(i>=n||trail<0x40||trail>0xfe||trail==0x7f)return 0;
+  }else if(ch=='\\'||ch=='/')start=i+1;
+ }
+ if(n-start<5||zip[n-4]!='.'||(zip[n-3]!='z'&&zip[n-3]!='Z')||(zip[n-2]!='i'&&zip[n-2]!='I')||(zip[n-1]!='p'&&zip[n-1]!='P'))return 0;
+ unsigned length=n-start-4;if(length>15||start+sizeof "neogeo.zip">240)return 0;
+ for(unsigned i=0;i<length;i++){unsigned ch=(uint8_t)zip[start+i];name[i]=(char)(ch>='A'&&ch<='Z'?ch+32:ch);}name[length]=0;
+ unsigned supported=0;for(unsigned i=0;i<IMPORT_DRIVER_COUNT;i++)if(!strcmp(name,import_drivers[i].name))supported=1;
+ if(!supported)return 0;
+ memcpy(output,zip,n-4);strcpy(output+n-4,".h1neo");
+ memcpy(bios,zip,start);strcpy(bios+start,"neogeo.zip");strcpy(set,name);return 1;
+}
 static int progress(context *c,const char *stage,unsigned done,unsigned total){
  if(c->notify&&!c->notify(c->user,stage,done,total)){c->canceled=1;return 0;}return 1;
 }

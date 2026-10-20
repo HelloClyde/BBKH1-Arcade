@@ -1,6 +1,6 @@
 """Exercise the actual device importer C on generated, non-game ROM fixtures."""
 from pathlib import Path
-import argparse, hashlib, io, json, os, shutil, struct, subprocess, sys, zipfile, zlib
+import argparse, ctypes, hashlib, io, json, os, shutil, struct, subprocess, sys, zipfile, zlib
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools'))
 import convert
@@ -47,6 +47,18 @@ def main():
     env=dict(os.environ);env['PATH']=str(cc.parent)+os.pathsep+env.get('PATH','')
     exe=build/'import.exe'
     subprocess.run([str(cc),'-O3','-Isrc','tests/import_cli.c','src/import_game.c','src/import_zip.c','-o',str(exe)],cwd=ROOT,env=env,check=True)
+    paths_dll=build/'import-paths.dll'
+    subprocess.run([str(cc),'-O3','-shared','-Isrc','src/import_game.c','src/import_zip.c','-o',str(paths_dll)],cwd=ROOT,env=env,check=True)
+    lib=ctypes.CDLL(str(paths_dll));lib.h1_import_paths.argtypes=[ctypes.c_char_p]*4
+    for path in (b'A:\\ARCADE\\kof97.zip',b'A:\\KOF97.ZIP',b'A:\\\x81\x5c\\kof97.zip',b'A:/games/kof97.zip'):
+        dest=ctypes.create_string_buffer(240);bios_path=ctypes.create_string_buffer(240);game_set=ctypes.create_string_buffer(16)
+        assert lib.h1_import_paths(path,dest,bios_path,game_set)==1
+        assert game_set.value==b'kof97' and dest.value==path[:-4]+b'.h1neo'
+        assert bios_path.value==path[:-9]+b'neogeo.zip'
+    for path in (b'A:\\'+b'x'*226+b'\\kof97.zip',b'A:\\foo.zip',b'A:\\kof98.zip',b'A:\\\x81',b'kof97.zip'):
+        guard=(ctypes.c_ubyte*256)(*([0xa5]*256));p=ctypes.cast(ctypes.byref(guard,8),ctypes.c_char_p)
+        assert lib.h1_import_paths(path,p,p,ctypes.create_string_buffer(16))==0
+        assert bytes(guard[:8])==b'\xa5'*8 and bytes(guard[-8:])==b'\xa5'*8
     def invoke(game,bios,out,name,cancel=None,expect=0):
         cmd=[str(exe),str(game),str(bios),str(out),name]+([cancel] if cancel else [])
         p=subprocess.run(cmd,capture_output=True,text=True,env=env)
@@ -104,7 +116,7 @@ def main():
         assert p.returncode==1 and not out.exists() and not Path(str(out)+'.tmp').exists(),(kind,p.stdout)
     report={'ok':True,'environment':'actual device import C on host, no game CPU emulation','synthetic_sets':cases,
             'stored_deflate_and_data_descriptors':True,'cancellation_cleanup':True,'damaged_missing_duplicate_rejected':True,
-            'existing_output_preserved':True,'write_close_rename_failure_cleanup':True,
+            'existing_output_preserved':True,'write_close_rename_failure_cleanup':True,'GBK_and_path_length_bounds':True,
             'renamed_ROM_CRC_fallback':True,'both_68000_byte_orders':True,'byte_identical_to_PC_converter':True}
     (build/'verification.json').write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report,indent=2))
