@@ -13,6 +13,42 @@
  sw $t1,4($sp)
  sll $t0,$at,8
  srl $t0,$t0,8
+#if H1_PGM
+ lui $t1,%hi(h1_pgm_bus_pages)
+ lw $t1,%lo(h1_pgm_bus_pages)($t1)
+ nop
+ beqz $t1,.Lneo_write_\name
+ nop
+ /* PGM: only ordinary mirrored 128 KiB work RAM may bypass callbacks. */
+ lui $t1,%hi(h1_bus_fast)
+ lw $t1,%lo(h1_bus_fast)($t1)
+ nop
+ beqz $t1,.Lwrite_fail
+ srl $t1,$t0,20
+ addiu $t1,$t1,-8
+ bnez $t1,.Lwrite_fail
+ nop
+ .if \width != 1
+ andi $t1,$t0,1
+ bnez $t1,.Lwrite_fail
+ nop
+ .endif
+ sll $t0,$t0,15
+ srl $t0,$t0,15
+ .if \width == 4
+ li $t1,131068
+ sltu $t1,$t1,$t0
+ bnez $t1,.Lwrite_fail
+ nop
+ .endif
+ lui $t1,%hi(h1_pgm_bus_pages)
+ lw $t1,%lo(h1_pgm_bus_pages)($t1)
+ nop
+ lw $t1,512($t1)
+ b .Lram_write_\name
+ addu $t0,$t0,$t1
+.Lneo_write_\name:
+#endif
  srl $t1,$t0,20
  addiu $t1,$t1,-1
  bnez $t1,.Lnonram_\name
@@ -34,6 +70,7 @@
  nop
  beqz $t1,.Lwrite_fail
  addu $t0,$t0,$t1
+.Lram_write_\name:
  .if \width == 1
  xori $t0,$t0,1
  sb $t9,0($t0)
@@ -145,6 +182,37 @@ bus_writer h1_bus_write32,4
  nop
  beqz $v0,.Lfail_\name
  srl $v0,$at,20
+#if H1_PGM
+ lui $t9,%hi(h1_pgm_bus_pages)
+ lw $t9,%lo(h1_pgm_bus_pages)($t9)
+ nop
+ beqz $t9,.Lneo_rom_\name
+ nop
+ srl $v0,$at,16
+ andi $v0,$v0,255
+ sll $v0,$v0,2
+ addu $t9,$t9,$v0
+ lw $t9,0($t9)
+ nop
+ beqz $t9,.Lfail_\name
+ nop
+ .if \width != 1
+ andi $v0,$at,1
+ bnez $v0,.Lfail_\name
+ nop
+ .endif
+ andi $at,$at,65535
+ .if \width == 4
+ ori $v0,$zero,65532
+ sltu $v0,$v0,$at
+ bnez $v0,.Lfail_\name
+ nop
+ .endif
+ b .Lpgm_load_\name
+ addu $at,$at,$t9
+.Lneo_rom_\name:
+ srl $v0,$at,20
+#endif
  andi $v0,$v0,15
  lui $t9,%hi(h1_bus_rom_map)
  beqz $v0,.Lselected_\name
@@ -168,6 +236,7 @@ bus_writer h1_bus_write32,4
  nop
  beqz $t9,.Lfail_\name
  addu $at,$at,$t9
+.Lpgm_load_\name:
  .if \width == 1
  xori $at,$at,1
  lbu $v0,0($at)

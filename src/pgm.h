@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "import_game.h"
 extern unsigned h1_pgm_active;
+extern uint8_t **h1_pgm_bus_pages;
 extern volatile struct h1_pgm_diagnostics {
  unsigned magic,version,state,error,frames,draws,pc,keys,hits,misses,protection,last_command;
  unsigned bios_tests,game_started,unknown_reads,unknown_writes;

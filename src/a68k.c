@@ -4,6 +4,7 @@
 #include "h1_port.h"
 #include <stddef.h>
 #include <string.h>
+#include <stdlib.h>
 #if H1_PGM
 #include "pgm.h"
 #endif
@@ -44,6 +45,30 @@ unsigned char *OP_ROM,*OP_RAM;
 int m68k_ICount;
 unsigned mem_amask=0xffffff,mame_debug,illegal_op,illegal_pc,opcode_entry,cur_mrhard;
 static unsigned total,requested;
+#if H1_PGM
+volatile unsigned h1_pgm_idle_enabled=1;
+volatile struct {unsigned magic,version,calls,loops,cycles,tests,failures;} h1_pgm_idle_stats={0x32444950,1};
+static unsigned pgm_idle_cycles(unsigned budget){
+ if(!h1_pgm_idle_enabled||budget<112||M68000_regs.irq)return 0;
+ unsigned pc=M68000_regs.pc&0xffffff,starts[]={pc,pc-6,pc-28,pc-34};
+ for(unsigned i=0;i<4;i++){
+  unsigned start=starts[i];if((start&65535)>65500)continue;
+  uint16_t *p=(uint16_t*)h1_pgm_code(start);if(!p)continue;
+  /* TST.L plain_RAM; BEQ +20; ...; TST.B plain_RAM; BEQ back.
+   * Both zero flags can change only at a later CPU/interrupt boundary.
+   * No callback, I/O, RAM counter, guest clock or IRQ work is omitted. */
+  if(p[0]!=0x4ab9||p[3]!=0x6714||p[14]!=0x4a39||p[17]!=0x67dc)continue;
+  if((i==1||i==3)&&!(M68000_regs.ccr&4))continue;
+  unsigned a=((unsigned)p[1]<<16)|p[2],b=((unsigned)p[15]<<16)|p[16];a&=0xffffff;b&=0xffffff;
+  if((a>>20)!=8||(b>>20)!=8||(a&1)||(a&0x1ffff)>0x1fffc)continue;
+  uint8_t *ram=h1_pgm_bus_pages[0x80];
+  if(*(uint16_t*)(ram+(a&0x1ffff))||*(uint16_t*)(ram+((a&0x1ffff)+2))||ram[(b&0x1ffff)^1])continue;
+  unsigned n=(budget-56)/56;++h1_pgm_idle_stats.calls;h1_pgm_idle_stats.loops+=n;h1_pgm_idle_stats.cycles+=n*56;
+  return n*56;
+ }
+ return 0;
+}
+#endif
 volatile unsigned h1_bus_fast=H1_FAST_BUS;
 uint8_t *volatile h1_bus_ram=memory.ram;
 volatile unsigned h1_idle_enabled=H1_IDLE;
@@ -61,7 +86,7 @@ static uint8_t *code_pointer(unsigned pc){
 }
 static unsigned idle_cycles(unsigned budget){
 #if H1_PGM
- if(h1_pgm_active)return 0;
+ if(h1_pgm_active)return pgm_idle_cycles(budget);
 #endif
  /* Only a RAM byte can be stable until the next scanline event. No MMIO,
   * instruction side effects, fixed game addresses or skipped IRQ delivery.
@@ -169,9 +194,8 @@ int cpu_68k_run(uint32_t n){
 #endif
 #if H1_SPEED_CORE
  h1_bus_rom_active=h1_bus_fast&&h1_rom_fast_enabled;
-#if H1_PGM
- if(h1_pgm_active)h1_bus_rom_active=0;
-#endif
+ /* The shared leaf selects PGM from its own map. Keep the independent
+  * Neo Geo video toggle intact, including its reference selftest pass. */
 #endif
 #endif
  ++h1_idle_stats.calls;
@@ -196,6 +220,58 @@ void cpu_68k_bankswitch(uint32_t a){bankaddress=a;
 #if H1_CPU_SELFTEST
 #include "bus_test_program.h"
 volatile struct {unsigned magic,version,tests,failures;} h1_bus_stats={0x31535542,1};
+#if H1_PGM
+volatile struct {unsigned magic,version,tests,failures;} h1_pgm_bus_stats={0x32425550,1};
+int h1_pgm_bus_selftest(void){
+ /* Run real A68K twice on physical H1. Preserve the complete game RAM and
+  * CPU state. The synthetic fixture executes from RAM, never patched ROM. */
+ uint8_t *work=h1_pgm_bus_pages[0x80],*saved=malloc(0x20000),*reference_ram=malloc(0x20000);
+ if(!saved||!reference_ram){free(saved);free(reference_ram);return 0;}
+ memcpy(saved,work,0x20000);context old=M68000_regs;
+ unsigned oldtotal=total,oldrequested=requested,oldfast=h1_bus_fast,oldidle=h1_pgm_idle_enabled;int oldcount=m68k_ICount,ok=1;
+ for(unsigned test=0;test<1024;test++){
+  context initial,reference;memset(&initial,0,sizeof initial);
+  unsigned value=test*1664525u+1013904223u;
+  for(unsigned i=0;i<8;i++){value=value*1664525u+1013904223u;initial.d[i]=value;initial.a[i]=value;}
+  unsigned high=value&0xff000000,mirror=0x800000+((test&7)<<17),boundary=test%4==0;
+  unsigned offset=boundary?(unsigned[]){0,0xfffc,0xfffe,0x1fffc,0x1fffe}[(test/4)%5]:0x8000+(value&0x7e00);
+  initial.a[0]=high|mirror|offset;initial.a[1]=high|mirror|0x18000;initial.a[7]=0x81f000;
+  if(test%11==0){initial.a[0]=high|0x1800;boundary=1;}
+  if(test%13==0){initial.a[0]=high|0x121ffe;boundary=1;}
+  if(test%17==0){initial.a[0]=high|0x4efffe;boundary=1;}
+  initial.pc=0x801400+(boundary?58:0);initial.ccr=value&31;initial.srh=0x27;initial.ack=ack;
+  unsigned budget=1+value%1800,pattern=value>>24;
+  memset(work,pattern,0x20000);memcpy(work+0x1400,bus_test_program,sizeof bus_test_program);
+  M68000_regs=initial;change_pc(initial.pc);h1_bus_fast=0;int expected=cpu_68k_run(budget);reference=M68000_regs;memcpy(reference_ram,work,0x20000);
+  memset(work,pattern,0x20000);memcpy(work+0x1400,bus_test_program,sizeof bus_test_program);
+  M68000_regs=initial;change_pc(initial.pc);h1_bus_fast=1;int actual=cpu_68k_run(budget);++h1_pgm_bus_stats.tests;
+  if(expected!=actual||memcmp(&reference,&M68000_regs,sizeof reference)||memcmp(reference_ram,work,0x20000)){
+   ++h1_pgm_bus_stats.failures;ok=0;h1_arcade_log("PGM_BUS_FAIL case=%u pc=%08x/%08x budget=%u used=%d/%d address=%08x",test,reference.pc,M68000_regs.pc,budget,expected,actual,initial.a[0]);break;}
+  if(h1_arcade_stats.stop){ok=0;break;}
+ }
+ for(unsigned test=0;ok&&test<1024;test++){
+  memset(work,0,0x20000);uint16_t *p=(uint16_t*)(work+0x2000);
+  for(unsigned i=0;i<20;i++)p[i]=0x4e71;
+  p[0]=0x4ab9;p[1]=0x81;p[2]=0x2800;p[3]=0x6714;p[4]=0x4e72;p[5]=0x2700;
+  p[14]=0x4a39;p[15]=0x81;p[16]=0x2900;p[17]=0x67dc;p[18]=0x4e72;p[19]=0x2700;
+  if(test%9==0)work[0x12800]=1;if(test%11==0)work[0x12901]=1;
+  if(test%17==0)p[0]=0x4a79; /* different operand size must not batch */
+  memcpy(reference_ram,work,0x20000);
+  context initial={0},reference;initial.pc=0x802000+(unsigned[]){0,6,28,34}[test&3];initial.a[7]=0x81f000;initial.srh=0x27;initial.ccr=test&31;initial.ack=ack;
+  if(test%23==0)initial.irq=1;unsigned budget=1+(test*83)%4096;
+  M68000_regs=initial;change_pc(initial.pc);h1_pgm_idle_enabled=0;int expected=cpu_68k_run(budget);reference=M68000_regs;
+  /* The fixture only reads memory, but compare all work RAM as well. */
+  unsigned clean=!memcmp(reference_ram,work,0x20000);memcpy(work,reference_ram,0x20000);
+  M68000_regs=initial;change_pc(initial.pc);h1_pgm_idle_enabled=1;int actual=cpu_68k_run(budget);++h1_pgm_idle_stats.tests;
+  if(!clean||expected!=actual||memcmp(&reference,&M68000_regs,sizeof reference)||memcmp(reference_ram,work,0x20000)){
+   ++h1_pgm_idle_stats.failures;ok=0;h1_arcade_log("PGM_IDLE_FAIL case=%u pc=%08x/%08x budget=%u used=%d/%d",test,reference.pc,M68000_regs.pc,budget,expected,actual);}
+ }
+ memcpy(work,saved,0x20000);free(saved);free(reference_ram);M68000_regs=old;change_pc(old.pc);
+ total=oldtotal;requested=oldrequested;m68k_ICount=oldcount;h1_bus_fast=oldfast;h1_pgm_idle_enabled=oldidle;
+ h1_arcade_log("PGM_IDLE_TEST cases=%u failures=%u",h1_pgm_idle_stats.tests,h1_pgm_idle_stats.failures);
+ h1_arcade_log("PGM_BUS_TEST cases=%u failures=%u",h1_pgm_bus_stats.tests,h1_pgm_bus_stats.failures);h1_arcade_log_flush();return ok;
+}
+#endif
 static unsigned test_random=4740;
 static unsigned random_word(void){test_random=test_random*1664525u+1013904223u;return test_random;}
 #if H1_FAST_BUS

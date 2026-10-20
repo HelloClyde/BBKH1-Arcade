@@ -28,7 +28,7 @@ python -X utf8 tools/convert.py "你的/kof97.zip" --set kof97 --bios "你的/ne
 支持驱动：`kof94`、`kof95`、`kof96`、`kof97`、`mslug`、`mslug2`、`samsho`、`samsho2`、`samsho3`、`samsho4`、`lastblad`。
 目前只有用户自备的《拳皇97》完成真机功能验证，列出驱动不等于所有游戏已测通过。
 
-PGM 实验版已用 H1Debug 真机运行《三国战纪》V117 并进入第一关；当前约 11.3 逻辑帧/秒、5.7 显示帧/秒，仍明显慢于正常速度。通过 `tools/build_pgm.py` 构建；不在上述 v0.1.2 Release 中，见 [PGM 说明与真机记录](docs/pgm.md)。
+PGM 实验版已用 H1Debug 真机运行《三国战纪》V117 并进入第一关。去掉播放页 CRC、增加解码缓存、MIPS 访存与等待循环批处理、合并调色板颜色转换及 MXU 输出后，战斗窗口约 35～39 逻辑帧/秒、17～19.5 显示帧/秒；仍未满速。通过 `tools/build_pgm.py` 构建；不在上述 v0.1.2 Release 中，见 [PGM 说明与真机记录](docs/pgm.md)。
 
 | 操作 | 默认按键 |
 | --- | --- |

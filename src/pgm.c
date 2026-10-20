@@ -1,6 +1,6 @@
 /* PGM H1 adapter. GPL-2.0-or-later.
  * Bus/graphics formats follow the pinned FBA-A320 PGM driver (see NOTICE).
- * Graphics/sample ROMs remain in a checked file cache rather than a 64 MiB
+ * Graphics/sample ROMs remain in a bounded file cache rather than a 64 MiB
  * resident/expanded allocation. No host emulator is used for validation. */
 #include "pgm.h"
 #include "h1_sdk.h"
@@ -21,12 +21,27 @@ volatile struct h1_pgm_diagnostics h1_pgm_stats={0x314d4750,1};
 static FILE *romfile;
 static pgm_part parts[PGM_REGIONS];
 static uint8_t *bios,*program,*ram,*bg,*tx,*rows,*vreg,*palette,*cache;
-static uint16_t *pixels;
-static uint32_t *page_crc[PGM_REGIONS],*crc_all;
+static uint32_t *pixels;
+static uint16_t *reference_pixels,*colors565;
+/* File format still accepts existing H1PGM1 containers. Per-page and loaded
+ * region CRCs are intentionally not checked during playback. */
+uint8_t **h1_pgm_bus_pages;
+static uint8_t *tile_pixels,*sprite_pixels,*text_pixels;
+static uint32_t *tile_tags,*text_tags;
+typedef struct {unsigned mask,width,height,offset;} decoded_sprite;
+static decoded_sprite *sprite_tags;
+static unsigned sprite_capacity,sprite_used;
+#define TILE_SLOTS 1024u
+#define SPRITE_SLOTS 512u
+volatile struct {unsigned magic,version,enabled,frames,ticks[9],tile_hits,tile_misses,sprite_hits,sprite_misses,mxu_pixels,decoded_bytes;} h1_pgm_perf={0x32504750,1};
+static unsigned perf_phase,perf_last;
+static void phase(unsigned next){if(h1_pgm_perf.enabled){unsigned now=h1_raw_tick_80hz();if(perf_last)h1_pgm_perf.ticks[perf_phase]+=now-perf_last;perf_last=now;perf_phase=next;}else perf_last=0;}
 static uint32_t tags[SLOTS],ages[SLOTS],age;
 /* Reserve the complete bank selector range, including unconnected text
  * palette banks. They read as zero instead of indexing past the table. */
-static uint16_t colors[4096],sprites[0x500];
+static uint32_t *colors;
+static uint16_t sprites[0x500];
+static unsigned expand(unsigned);
 static unsigned input[3],z80_work,sound_ready,audio_fraction;
 static unsigned calval,calmask,calcmd,calcount;
 extern unsigned char mame_z80mem[65536];
@@ -51,8 +66,10 @@ static uint8_t *page(unsigned region,unsigned offset){
   if(tags[i]==~0u||ages[i]<ages[slot])slot=i;
  }
  uint8_t *p=cache+slot*4096;
- if(!read_at(parts[region].offset+index*4096,p,4096)||~h1_import_crc(~0u,p,4096)!=page_crc[region][index]){
+ unsigned previous=perf_phase;phase(7);
+ if(!read_at(parts[region].offset+index*4096,p,4096)){
   h1_arcade_log("PGM_CACHE_ERROR region=%u page=%u",region,index);h1_arcade_escape(142);}
+ phase(previous);
  tags[slot]=key;ages[slot]=++age;++h1_pgm_stats.misses;return p;
 }
 static unsigned rom8(unsigned region,unsigned at){if(at>=parts[region].size)return 255;return page(region,at)[at&4095];}
@@ -74,23 +91,40 @@ static inline unsigned next_word(rom_cursor *s){
  }
  return word(s->data+(at&4095));
 }
-unsigned char h1_pgm_sample(unsigned at){return rom8(PGM_SOUND,at&0x7fffff);}
+static uint8_t *sample_data;static unsigned sample_key,sample_slot;
+unsigned char h1_pgm_sample(unsigned at){
+ at&=0x7fffff;unsigned key=(PGM_SOUND<<24)|(at>>12);
+ if(!sample_data||sample_key!=key||tags[sample_slot]!=key){sample_data=page(PGM_SOUND,at);sample_slot=(unsigned)(sample_data-cache)/4096;sample_key=key;}
+ return sample_data[at&4095];
+}
 static int load_region(unsigned region,uint8_t **p){
  unsigned size=parts[region].size;*p=malloc(size);if(!*p||!read_at(parts[region].offset,*p,size))return 0;
- return ~h1_import_crc(~0u,*p,size)==parts[region].crc;
+ return 1;
 }
 int h1_pgm_load(const char *path){
  uint8_t h[256];h1_pgm_active=1;h1_pgm_stats.state=1;
  romfile=fopen(path,"rb");if(!romfile||fseek(romfile,0,SEEK_END))return 0;long size=ftell(romfile);
  if(size<256||!read_at(0,h,256)||!h1_pgm_header(h,size,"kov"))return 0;
- unsigned count=0;for(unsigned i=0;i<PGM_REGIONS;i++){parts[i]=(pgm_part){pgm_u32(h+64+i*16),pgm_u32(h+68+i*16),pgm_u32(h+72+i*16),pgm_u32(h+76+i*16)};count+=parts[i].size/4096;}
- crc_all=malloc(count*4);if(!crc_all||!read_at(parts[0].pages,crc_all,count*4))return 0;
- unsigned at=0;for(unsigned i=0;i<PGM_REGIONS;i++){page_crc[i]=crc_all+at;at+=parts[i].size/4096;}
+ for(unsigned i=0;i<PGM_REGIONS;i++)parts[i]=(pgm_part){pgm_u32(h+64+i*16),pgm_u32(h+68+i*16),pgm_u32(h+72+i*16),pgm_u32(h+76+i*16)};
  if(!load_region(PGM_BIOS,&bios)||!load_region(PGM_PROGRAM,&program))return 0;
  ram=calloc(1,0x20000);bg=calloc(1,0x4000);tx=calloc(1,0x2000);rows=calloc(1,0x800);vreg=calloc(1,0x10000);palette=calloc(1,0x1200);
- pixels=calloc(WIDTH*HEIGHT,2);cache=malloc(SLOTS*4096);
- if(!ram||!bg||!tx||!rows||!vreg||!palette||!pixels||!cache)return 0;
- memset(tags,255,sizeof tags);memset(ages,0,sizeof ages);memset(colors,0,sizeof colors);memset(sprites,0,sizeof sprites);age=0;
+ pixels=calloc(WIDTH*HEIGHT,4);cache=malloc(SLOTS*4096);
+ colors=calloc(4096,4);colors565=calloc(4096,2);
+ if(!ram||!bg||!tx||!rows||!vreg||!palette||!pixels||!cache||!colors||!colors565)return 0;
+ h1_pgm_bus_pages=calloc(256,sizeof *h1_pgm_bus_pages);
+ tile_pixels=malloc(TILE_SLOTS*1024);tile_tags=malloc(TILE_SLOTS*4);
+ text_pixels=malloc(512*72);text_tags=malloc(512*4);
+ sprite_tags=malloc(SPRITE_SLOTS*sizeof *sprite_tags);
+ sprite_capacity=8*1024*1024;
+ while(sprite_capacity>=1024*1024&&!(sprite_pixels=malloc(sprite_capacity)))sprite_capacity/=2;
+ if(!h1_pgm_bus_pages||!tile_pixels||!tile_tags||!text_pixels||!text_tags||!sprite_tags||!sprite_pixels)return 0;
+ for(unsigned i=0;i<2;i++)h1_pgm_bus_pages[i]=bios+i*65536;
+ for(unsigned i=0x10;i<0x4f;i++)h1_pgm_bus_pages[i]=program+(i-0x10)*65536;
+ for(unsigned i=0x80;i<0x90;i++)h1_pgm_bus_pages[i]=ram+(i&1)*65536;
+ memset(tile_tags,255,TILE_SLOTS*4);memset(sprite_tags,255,SPRITE_SLOTS*sizeof *sprite_tags);sprite_used=0;
+ memset(text_tags,255,512*4);h1_pgm_perf.decoded_bytes=TILE_SLOTS*1024+sprite_capacity+512*72;
+ memset(tags,255,sizeof tags);memset(ages,0,sizeof ages);memset(sprites,0,sizeof sprites);age=0;
+ sample_data=0;
  /* FBA stores 68000 words in host order. Require an unambiguous PGM BIOS
   * vector pair; never guess and send a malformed PC to native assembly. */
  unsigned sp=word(bios)<<16|word(bios+2),pc=word(bios+4)<<16|word(bios+6);
@@ -110,8 +144,13 @@ int h1_pgm_load(const char *path){
 void h1_pgm_close(void){
  if(sound_ready){ics2115_exit();sound_ready=0;}
  if(romfile){fclose(romfile);romfile=0;}
- free(bios);free(program);free(ram);free(bg);free(tx);free(rows);free(vreg);free(palette);free(pixels);free(cache);free(crc_all);
- bios=program=ram=bg=tx=rows=vreg=palette=cache=0;pixels=0;crc_all=0;h1_pgm_active=0;h1_pgm_stats.state=4;
+ free(bios);free(program);free(ram);free(bg);free(tx);free(rows);free(vreg);free(palette);free(pixels);free(cache);
+ free(h1_pgm_bus_pages);h1_pgm_bus_pages=0;free(tile_pixels);free(tile_tags);free(sprite_pixels);free(sprite_tags);
+ free(colors);colors=0;free(colors565);colors565=0;
+ free(text_pixels);text_pixels=0;free(text_tags);text_tags=0;
+ tile_pixels=sprite_pixels=0;tile_tags=0;sprite_tags=0;
+ sample_data=0;
+ bios=program=ram=bg=tx=rows=vreg=palette=cache=0;pixels=0;h1_pgm_active=0;h1_pgm_stats.state=4;
 }
 static uint8_t *mapped(unsigned a){
  if(a<0x20000)return bios+a;
@@ -126,7 +165,8 @@ static uint8_t *mapped(unsigned a){
 uint8_t *h1_pgm_code(unsigned a){a&=0xffffff;if(a&1)return 0;
  if(a<0x20000|| (a>=0x100000&&a<0x4f0000)||(a>=0x800000&&a<0x900000))return mapped(a);return 0;}
 static void palette_write(unsigned a,unsigned v){
- unsigned r=(v>>10)&31,g=(v>>5)&31,b=v&31;colors[(a-0xa00000)/2]=(r<<11)|(g<<6)|((g>>4)<<5)|b;
+ unsigned r=(v>>10)&31,g=(v>>5)&31,b=v&31,index=(a-0xa00000)/2,c=(r<<11)|(g<<6)|((g>>4)<<5)|b;
+ colors565[index]=c;colors[index]=expand(c);
 }
 unsigned h1_pgm_read16(unsigned a){
  a&=0xfffffe;uint8_t *p=mapped(a);if(p)return word(p);
@@ -178,26 +218,43 @@ void h1_pgm_inputs(unsigned buttons){
  if(buttons&(1u<<ARCADE_COIN))b|=1;if(buttons&(1u<<ARCADE_D))b|=256;
  input[0]=65535^j;input[1]=65535^b;h1_pgm_stats.keys=buttons;
 }
-/* Drawing lives below; every cache access validates a page before use. */
+/* Phase ticks are an optional exclusive wall-time partition on physical H1:
+ * other, 68K, Z80, sound, background, sprites/text, LCD, file I/O, PCM. */
 static void draw(void);
 void h1_pgm_frame(unsigned render){
  static int debt68,debt80;
  for(unsigned i=0;i<100;i++){
+  phase(1);
   debt68=cpu_68k_run(3333-debt68);
+  phase(2);
   if(z80_work)debt80=z80_execute(1411-debt80)-(1411-debt80);
  }
+ phase(3);
  cpu_68k_interrupt(6);ics2115_frame();
  audio_fraction+=8000;nBurnSoundLen=audio_fraction/60;audio_fraction%=60;ics2115_update(nBurnSoundLen);
- if(h1_arcade_settings.muted)memset(sound_out,0,nBurnSoundLen*4);gba_audio_write(sound_out,nBurnSoundLen);
+ if(h1_arcade_settings.muted)memset(sound_out,0,nBurnSoundLen*4);phase(8);gba_audio_write(sound_out,nBurnSoundLen);
+ phase(0);
  h1_arcade_stats.audio_samples+=nBurnSoundLen;
  if(render){draw();++h1_pgm_stats.draws;}
  memcpy(sprites,ram,sizeof sprites);
  ++h1_pgm_stats.frames;h1_pgm_stats.pc=cpu_68k_getpc();
+ if(h1_pgm_perf.enabled)++h1_pgm_perf.frames;
  h1_arcade_stats.cache_hits=h1_pgm_stats.hits;h1_arcade_stats.cache_misses=h1_pgm_stats.misses;
  if(!h1_pgm_stats.game_started&&h1_pgm_stats.pc>=0x100000&&h1_pgm_stats.pc<0x500000){h1_pgm_stats.game_started=h1_pgm_stats.frames;h1_arcade_log("PGM_CARTRIDGE frame=%u pc=%08x",h1_pgm_stats.frames,h1_pgm_stats.pc);h1_arcade_log_flush();}
 }
-/* Decode individual 5-bit background rows, and 4-bit text nibbles, on demand.
- * This avoids allocating the upstream 19.2 MiB expanded tile region. */
+/* Cache palette indices, independent of palette writes, scroll, zoom and
+ * flipping. ROM contents do not change during a loaded game. */
+static const uint8_t *tile_data(unsigned tile){
+ unsigned slot=tile&(TILE_SLOTS-1);uint8_t *dst=tile_pixels+slot*1024;
+ if(tile_tags[slot]==tile){++h1_pgm_perf.tile_hits;return dst;}
+ uint8_t raw[640];unsigned base=tile*640,bytes=parts[PGM_TILES].size-base;if(bytes>640)bytes=640;
+ memset(raw,255,sizeof raw);rom_copy(PGM_TILES,base,raw,bytes);
+ for(unsigned y=0;y<32;y++)for(unsigned x=0;x<32;x++){
+  unsigned bit=x*5,b=bit>>3,s=bit&7;
+  dst[y*32+x]=((raw[y*20+b]>>s)|((b+1<20?raw[y*20+b+1]:0)<<(8-s)))&31;
+ }
+ tile_tags[slot]=tile;++h1_pgm_perf.tile_misses;return dst;
+}
 static void background(void){
  unsigned sy=word(vreg+0x2000),sx=word(vreg+0x3000);
  for(unsigned y=0;y<224;y++){
@@ -206,10 +263,10 @@ static void background(void){
    unsigned xx=(x+offset)&2047,at=((yy>>5)*64+(xx>>5))*4;
    unsigned tile=word(bg+at),attr=word(bg+at+2);if(tile>0x7ff)tile+=0x1000;
    unsigned rx=xx&31,n=32-rx;if(n>448-x)n=448-x;
-   unsigned ry=(attr&0x80)?31-row:row,base=tile*640+ry*20,pal=0x400+((attr&0x3e)<<4);
-   if(base+20<=parts[PGM_TILES].size){uint8_t raw[20];rom_copy(PGM_TILES,base,raw,20);
-    for(unsigned k=0;k<n;k++){unsigned px=(attr&0x40)?31-(rx+k):rx+k,bit=px*5,b=bit>>3,s=bit&7;
-     unsigned v=(raw[b]>>s)|((b+1<20?raw[b+1]:0)<<(8-s));v&=31;if(v!=31)pixels[y*448+x+k]=colors[pal+v];}}
+   unsigned ry=(attr&0x80)?31-row:row,pal=0x400+((attr&0x3e)<<4);
+   if(tile*640+ry*20+20<=parts[PGM_TILES].size){const uint8_t *src=tile_data(tile)+ry*32;uint32_t *dst=pixels+y*448+x;
+    if(attr&0x40){for(unsigned k=0;k<n;k++){unsigned v=src[31-rx-k];if(v!=31)dst[k]=colors[pal+v];}}
+    else for(unsigned k=0;k<n;k++){unsigned v=src[rx+k];if(v!=31)dst[k]=colors[pal+v];}}
    x+=n;
   }
  }
@@ -221,8 +278,19 @@ static void text_layer(void){
   unsigned tile=word(tx+at),attr=word(tx+at+2),rx=xx&7,n=8-rx;if(n>448-x)n=448-x;
   if(tile>0xbfff)tile=tile-0xc000+0x20000;
   unsigned ry=(attr&0x80)?7-(yy&7):yy&7,base=tile*32+ry*4,pal=0x800+((attr&0x3e)<<3);
-  if(base+4<=parts[PGM_TILES].size){uint32_t raw=pgm_u32(page(PGM_TILES,base)+(base&4095));
-   for(unsigned k=0;k<n;k++){unsigned px=(attr&0x40)?7-(rx+k):rx+k,v=(raw>>(px*4))&15;if(v!=15)pixels[y*448+x+k]=colors[pal+v];}}
+  if(base+4<=parts[PGM_TILES].size){
+   unsigned slot=tile&511;uint8_t *data=text_pixels+slot*72;
+   if(text_tags[slot]!=tile){
+    uint8_t packed[32];unsigned bytes=parts[PGM_TILES].size-tile*32;if(bytes>32)bytes=32;
+    memset(packed,255,sizeof packed);rom_copy(PGM_TILES,tile*32,packed,bytes);
+    for(unsigned yy=0;yy<8;yy++){unsigned mask=0;for(unsigned xx=0;xx<8;xx++){
+     unsigned v=(packed[yy*4+xx/2]>>((xx&1)*4))&15;data[yy*8+xx]=v;if(v!=15)mask|=1u<<xx;
+    }data[64+yy]=mask;}
+    text_tags[slot]=tile;
+   }
+   unsigned ry=(attr&0x80)?7-(yy&7):yy&7;
+   if(data[64+ry]){const uint8_t *src=data+ry*8;for(unsigned k=0;k<n;k++){unsigned px=(attr&0x40)?7-rx-k:rx+k,v=src[px];if(v!=15)pixels[y*448+x+k]=colors[pal+v];}}
+  }
   x+=n;
  }
 }
@@ -231,6 +299,27 @@ static unsigned zoom_extent(unsigned n,unsigned mask,unsigned grow){
  unsigned count=0;for(unsigned i=0;i<n;i++)count+=(mask>>(i&31))&1;
  return grow?n+count:n-count;
 }
+static const uint8_t *sprite_data(unsigned boff,unsigned wide,unsigned high){
+ unsigned slot=((boff>>2)^(wide*17)^(high*31))&(SPRITE_SLOTS-1);
+ decoded_sprite *tag=sprite_tags+slot;
+ if(tag->mask==boff&&tag->width==wide&&tag->height==high){++h1_pgm_perf.sprite_hits;return sprite_pixels+tag->offset;}
+ unsigned bytes=wide*16*high;
+ if(sprite_used+bytes>sprite_capacity){sprite_used=0;memset(sprite_tags,255,SPRITE_SLOTS*sizeof *sprite_tags);}
+ uint8_t *dst=sprite_pixels+sprite_used;
+ rom_cursor masks={.region=PGM_MASK,.pos=boff};
+ unsigned low=next_word(&masks),color=(low|(next_word(&masks)<<16))>>1;
+ rom_cursor data={.region=PGM_COLOR,.pos=color};unsigned bits=0,remain=0;
+ for(unsigned block=0;block<wide*high;block++){
+  unsigned mask=next_word(&masks);
+  if(mask==65535){memset(dst+block*16,255,16);continue;}
+  for(unsigned k=0;k<16;k++){
+   unsigned v=255;if(!(mask&(1u<<k))){if(!remain){bits=next_word(&data);remain=3;}v=bits&31;bits>>=5;--remain;}
+   dst[block*16+k]=v;
+  }
+ }
+ *tag=(decoded_sprite){boff,wide,high,sprite_used};sprite_used=(sprite_used+bytes+3)&~3u;
+ ++h1_pgm_perf.sprite_misses;return dst;
+}
 static void sprite_layer(unsigned priority){
  for(;sprite_index<0x500;sprite_index+=5){
   const uint16_t *s=sprites+sprite_index;unsigned high=s[4]&511,wide=(s[4]>>9)&63,attr=s[2];
@@ -238,57 +327,91 @@ static void sprite_layer(unsigned priority){
   int xpos=s[0]&2047,ypos=s[1]&1023;if(xpos>1023)xpos-=2048;if(ypos>511)ypos-=1024;
   unsigned boff=(((attr&127)<<16)|s[3])*2;
   if(!wide||boff+4>parts[PGM_MASK].size)continue;
-  rom_cursor masks={.region=PGM_MASK,.pos=boff};
-  unsigned low=next_word(&masks),color=(low|(next_word(&masks)<<16))>>1;
-  rom_cursor data={.region=PGM_COLOR,.pos=color};
-  unsigned bits=0,remain=0,pal=(attr>>8&31)*32,flipx=attr&0x2000,flipy=attr&0x4000;
+  unsigned pal=(attr>>8&31)*32,flipx=attr&0x2000,flipy=attr&0x4000;
   unsigned zx=(s[0]>>11)&15,zy=(s[1]>>11)&15,gx=s[0]&0x8000,gy=s[1]&0x8000;
   if(gx)zx=16-zx;if(gy)zy=16-zy;
   unsigned xzoom=word(vreg+0x1000+zx*4)<<16|word(vreg+0x1002+zx*4),yzoom=word(vreg+0x1000+zy*4)<<16|word(vreg+0x1002+zy*4);
-  uint8_t line[1008];unsigned desty=0,fullw=wide*16;
+  unsigned desty=0,fullw=wide*16;
   unsigned outw=zoom_extent(fullw,xzoom,gx),outh=zoom_extent(high,yzoom,gy);
   if(!outw||!outh||xpos>=448||xpos+(int)outw<=0||ypos>=224||ypos+(int)outh<=0)continue;
+  const uint8_t *decoded=sprite_data(boff,wide,high);
+  int left=xpos<0?0:xpos,right=xpos+(int)outw;if(right>448)right=448;
+  /* Compute horizontal zoom/flip/clipping once per sprite, not once per
+   * pixel of every row. The mapped span is contiguous even when shrinking. */
+  uint16_t columns[448];unsigned destx=0;
+  for(unsigned x=0;x<fullw;x++){
+   unsigned xz=(xzoom>>(x&31))&1,n=gx?1+xz:1-xz;
+   for(unsigned k=0;k<n;k++,destx++){int dx=xpos+(flipx?(int)outw-1-(int)destx:(int)destx);if(dx>=left&&dx<right)columns[dx-left]=x;}
+  }
   for(unsigned y=0;y<high;y++){
    if((!flipy&&ypos+(int)desty>=224)||(flipy&&ypos+(int)outh-1-(int)desty<0))break;
-   for(unsigned block=0;block<wide;block++){
-    unsigned mask=next_word(&masks);
-    for(unsigned k=0;k<16;k++){unsigned v=255;if(!(mask&(1u<<k))){if(!remain){bits=next_word(&data);remain=3;}v=bits&31;bits>>=5;--remain;}line[block*16+k]=v;}
-   }
    unsigned yz=(yzoom>>(y&31))&1,repeats=gy?1+yz:1-yz;
    for(unsigned rep=0;rep<repeats;rep++,desty++){
     int dy=ypos+(flipy?(int)outh-1-(int)desty:(int)desty);if(dy<0||dy>=224)continue;
-    unsigned destx=0;
-    for(unsigned x=0;x<fullw;x++){
-     unsigned xz=(xzoom>>(x&31))&1,n=gx?1+xz:1-xz;
-     for(unsigned rr=0;rr<n;rr++,destx++){int dx=xpos+(flipx?(int)outw-1-(int)destx:(int)destx);if(dx>=0&&dx<448&&line[x]!=255)pixels[dy*448+dx]=colors[pal+line[x]];}
-    }
+    const uint8_t *src=decoded+y*fullw;uint32_t *dst=pixels+dy*448+left;
+    for(unsigned x=0;x<(unsigned)(right-left);x++){unsigned v=src[columns[x]];if(v!=255)dst[x]=colors[pal+v];}
    }
   }
  }
 }
-static void draw(void){for(unsigned i=0;i<448*224;i++)pixels[i]=colors[0x3ff];sprite_index=0;sprite_layer(1);background();sprite_layer(0);text_layer();}
+static void draw(void){for(unsigned i=0;i<448*224;i++)pixels[i]=colors[0x3ff];sprite_index=0;phase(5);sprite_layer(1);phase(4);background();phase(5);sprite_layer(0);text_layer();phase(0);}
+#define pixels reference_pixels
+#define colors colors565
 #include "pgm_draw_reference.h"
-volatile struct {unsigned magic,version,request,state,tests,differences,reference_crc,fast_crc,reference_ticks,fast_ticks;} h1_pgm_draw_probe={0x31444750,1};
+#undef colors
+#undef pixels
+volatile struct {unsigned magic,version,request,state,tests,differences,reference_crc,fast_crc,reference_ticks,fast_ticks,present_differences[3];} h1_pgm_draw_probe={0x31444750,2};
+static void present_check(void);
 void h1_pgm_pause_probe(void){
  if(!h1_pgm_draw_probe.request)return;
  h1_pgm_draw_probe.request=0;h1_pgm_draw_probe.state=1;
- uint16_t *temporary=malloc(448*224*2),*saved=pixels;
- if(!temporary){h1_pgm_draw_probe.state=4;return;}
- unsigned start=h1_raw_tick_80hz();pixels=temporary;draw_reference();h1_pgm_draw_probe.reference_ticks=h1_raw_tick_80hz()-start;
- pixels=saved;start=h1_raw_tick_80hz();draw();h1_pgm_draw_probe.fast_ticks=h1_raw_tick_80hz()-start;
- unsigned n=0;for(unsigned i=0;i<448*224;i++)n+=temporary[i]!=saved[i];
+ uint16_t *temporary=malloc(448*224*2),*actual565=malloc(448*224*2);
+ if(!temporary||!actual565){free(temporary);free(actual565);h1_pgm_draw_probe.state=4;return;}
+ unsigned start=h1_raw_tick_80hz();reference_pixels=temporary;draw_reference();h1_pgm_draw_probe.reference_ticks=h1_raw_tick_80hz()-start;
+ start=h1_raw_tick_80hz();draw();h1_pgm_draw_probe.fast_ticks=h1_raw_tick_80hz()-start;
+ unsigned n=0;for(unsigned i=0;i<448*224;i++){unsigned c=pixels[i];n+=expand(temporary[i])!=c;actual565[i]=((c>>8)&0xf800)|((c>>5)&0x7e0)|((c>>3)&31);}
  h1_pgm_draw_probe.reference_crc=~h1_import_crc(~0u,temporary,448*224*2);
- h1_pgm_draw_probe.fast_crc=~h1_import_crc(~0u,saved,448*224*2);
- h1_pgm_draw_probe.differences=n;++h1_pgm_draw_probe.tests;free(temporary);
+ h1_pgm_draw_probe.fast_crc=~h1_import_crc(~0u,actual565,448*224*2);
+ h1_pgm_draw_probe.differences=n;++h1_pgm_draw_probe.tests;free(temporary);free(actual565);reference_pixels=0;
+ present_check();for(unsigned i=0;i<3;i++)n+=h1_pgm_draw_probe.present_differences[i];
  h1_pgm_draw_probe.state=n?3:2;
 }
 static unsigned expand(unsigned c){unsigned r=(c>>11)&31,g=(c>>5)&63,b=c&31;return ((r<<3|r>>2)<<16)|((g<<2|g>>4)<<8)|(b<<3|b>>2);}
-void h1_pgm_present(uint32_t *lcd,unsigned mode){
+static void present_reference(uint32_t *lcd,unsigned mode){
  unsigned w=mode==0?362:mode==1?448:480,h=mode==1?224:272,left=(480-w)/2,top=(272-h)/2;
  /* The full LCD is owned by the app. Clear margins on every draw so a mode
   * change or pause menu cannot leave old pixels at either edge. */
  for(unsigned y=0;y<272;y++)for(unsigned x=0;x<480;x++)lcd[y*480+x]=0;
- for(unsigned y=0;y<h;y++){const uint16_t *src=pixels+(y*224/h)*448;uint32_t *dst=lcd+(top+y)*480+left;for(unsigned x=0;x<w;x++)dst[x]=expand(src[x*448/w]);}
+ for(unsigned y=0;y<h;y++){const uint32_t *src=pixels+(y*224/h)*448;uint32_t *dst=lcd+(top+y)*480+left;for(unsigned x=0;x<w;x++)dst[x]=src[x*448/w];}
+}
+#if H1_MXU
+extern void h1_mxu_rgb565(uint32_t*,const uint16_t*,unsigned);
+extern void h1_mxu_copy32(uint32_t*,const uint32_t*,unsigned);
+#endif
+void h1_pgm_present(uint32_t *native,unsigned mode){
+ phase(6);uint32_t *lcd=native;uintptr_t address=(uintptr_t)native;
+ unsigned cached=address>=0xa0000000u&&address<0xa4000000u&&!(address&255u)&&480u*272u*4u<=0xa4000000u-address;
+ if(cached)lcd=(uint32_t*)((address&0x1fffffffu)|0x80000000u);
+ unsigned w=mode==0?362:mode==1?448:480,h=mode==1?224:272,left=(480-w)/2,top=(272-h)/2;
+ static uint16_t columns[480];static unsigned last_width;
+ if(last_width!=w){for(unsigned x=0;x<w;x++)columns[x]=x*448/w;last_width=w;}
+ if(top){memset(lcd,0,top*480*4);memset(lcd+(top+h)*480,0,(272-top-h)*480*4);}
+ uint32_t row[480];unsigned last=~0u;
+ for(unsigned y=0;y<h;y++){
+  unsigned sy=y*224/h;
+  if(sy!=last){const uint32_t *src=pixels+sy*448;
+   for(unsigned x=0;x<w;x++)row[x]=src[columns[x]];
+   last=sy;
+  }
+  uint32_t *dst=lcd+(top+y)*480;memset(dst,0,left*4);
+#if H1_MXU
+  unsigned n=w&~7u;h1_mxu_copy32(dst+left,row,n);h1_pgm_perf.mxu_pixels+=n;
+  for(unsigned x=n;x<w;x++)dst[left+x]=row[x];
+#else
+  memcpy(dst+left,row,w*4);
+#endif
+  memset(dst+left+w,0,(480-left-w)*4);
+ }
 #if defined(__mips__)
  if(((uintptr_t)lcd&0xe0000000u)==0x80000000u){
   uintptr_t a=(uintptr_t)lcd&~15u,end=(uintptr_t)(lcd+480*272);
@@ -297,4 +420,14 @@ void h1_pgm_present(uint32_t *lcd,unsigned mode){
   __asm__ volatile("sync":::"memory");
  }
 #endif
+ phase(0);
+}
+static void present_check(void){
+ uint32_t *reference=malloc(480*272*4),*actual=malloc(480*272*4);
+ if(!reference||!actual){free(reference);free(actual);for(unsigned i=0;i<3;i++)h1_pgm_draw_probe.present_differences[i]=~0u;return;}
+ for(unsigned mode=0;mode<3;mode++){
+  present_reference(reference,mode);memset(actual,0xa5,480*272*4);h1_pgm_present(actual,mode);
+  unsigned n=0;for(unsigned i=0;i<480*272;i++)n+=reference[i]!=actual[i];h1_pgm_draw_probe.present_differences[mode]=n;
+ }
+ free(reference);free(actual);
 }

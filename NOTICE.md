@@ -112,3 +112,10 @@ decryption and sound into temporary build copies, retaining the upstream
 sound attribution. The sound copy uses paged samples and 8 kHz synthesis
 with adjusted oscillator increments. New H1 filesystem, bus, cache and
 frontend adapters are GPL-2.0-or-later. No PGM game or BIOS data is included.
+
+The H1 PGM optimization adds bounded caches of decoded palette indices,
+preconverted RGB32 palette colors, MXU1 screen copies, plain-memory MIPS
+bus leaves and a signature-guarded RAM polling loop batch. The original
+RGB565 renderer remains available for frozen-frame physical comparison;
+generated graphics tests contain no game data. Playback omits page/region
+CRC computation at the user's request; conversion checks remain separate.
