@@ -647,7 +647,7 @@
     "src/palette32_selftest.h": "cade570a80afe92084a21f160837d30ff569e459bca4d8c411618e038df3f86b",
     "src/pgm.c": "3d0df78e59873fa9e5fd804a391f5ac3748cbdc4b5fcdddb8fa49c1388d263c8",
     "src/pgm.h": "2903b76cb380b87422f588b8e05ff60ce0f2f162d9f72df11a16db6c85e04513",
-    "src/pgm_draw_reference.h": "1455a951d91af1b5c31fc0e8217a627f0d36a15d31910a85fcaec8e2a5c2d89e",
+    "src/pgm_draw_reference.h": "efe5687216dca2a4276e9a43c696dbff978fea3e5322f50882a34c6fa85f1096",
     "src/pgm_format.h": "6deaa0ff9aa5f3f219f1bc1b3c98e08adf4154b90c669d50386179f5970592ac",
     "src/pgm_import.c": "369c842548517e1a87afd2af958c21a4734dfc820a826678d7e751a6a6f06310",
     "src/pgm_protection.c": "0dcb1f08298d5e3898fb100f6a4e73d9e2f521d225e218aadc3b5199213c8b8a",
