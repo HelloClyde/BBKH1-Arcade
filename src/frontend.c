@@ -68,10 +68,21 @@ volatile struct {unsigned magic,version,active,done,total,start,end,result;} h1_
 static unsigned import_last_tick;
 static const char *import_last_stage;
 static int import_notify(void *user,const char *stage,unsigned done,unsigned total){
- (void)user;int code=-1,key=-1,x,y;h1_event_fetch(&code,&key);
- if(code==H1_EVENT_KEY_DOWN&&(key==24||key==41))return 0;
+ (void)user;
+ if(h1_arcade_stats.stop)return 0;
+ /* File I/O takes longer than one native timer period. Drain the queue as
+  * the gameplay loop does, otherwise timer events fill all fifty slots and
+  * prevent new keys/touches from being posted during a long conversion. */
+ for(unsigned i=0;i<64;i++){
+  int code=-1,key=-1,x=0,y=0;h1_event_fetch(&code,&key);
+  if(code==-1&&key==-1)break;
+  if(code==H1_EVENT_KEY_DOWN&&(key==24||key==41))return 0;
+  if(code==11||code==8||code==12){
+   int position=h1_touch_position(&x,&y); /* consume pen-up views as well */
+   if(code==11&&position&&x>=338&&x<442&&y>=236&&y<264)return 0;
+  }
+ }
  if(h1_game_code_down(h1_game_key_code(24))||h1_game_code_down(h1_game_key_code(41)))return 0;
- if(code==11&&h1_touch_position(&x,&y)&&x>=338&&x<442&&y>=236&&y<264)return 0;
  unsigned tick=h1_raw_tick_80hz();h1_import_stats.done=done;h1_import_stats.total=total;
  if(!import_last_stage||strcmp(stage,import_last_stage)||tick-import_last_tick>=4||done==total){
   arcade_import_draw(lcd(),stage,done,total);import_last_stage=stage;import_last_tick=tick;
