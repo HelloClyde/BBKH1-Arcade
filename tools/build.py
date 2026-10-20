@@ -17,6 +17,7 @@ def main():
     ap.add_argument('--host-cc',default=os.environ.get('HOST_CC',shutil.which('gcc') or 'gcc'))
     ap.add_argument('--test-frames',type=int,default=0)
     ap.add_argument('--benchmark',action='store_true')
+    ap.add_argument('--pgm',action='store_true',help='experimental PGM / KOV V117, paged ROMs and ICS2115 audio')
     ap.add_argument('--profile',action='store_true',help='coarse native tick partition; physical H1 profiling')
     ap.add_argument('--core',choices=('musashi','a68k'),default='musashi',help='CPU backend; the release preset selects the A68K MIPS32r1 core')
     ap.add_argument('--idle',action='store_true',help='batch verified RAM-polling TST/BEQ idle loops within one scanline')
@@ -69,6 +70,7 @@ def main():
     if args.scale_output:name+='-scale'
     if args.cpu_mhz!=336:name+='-cpu'+str(args.cpu_mhz)
     name+='-menu'
+    if args.pgm:name+='-pgm'
     build=ROOT/'build'/name;build.mkdir(parents=True,exist_ok=True)
     core,musashi=prepare(build,fast_render=args.fast_render,tile_direct=args.tile_direct,mxu_render=args.mxu_render,palette32=args.palette32,audio_fast=args.audio_fast,visible_render=args.visible_render,speed_core=args.speed_core)
     tc=Path(args.toolchain).resolve()
@@ -82,6 +84,7 @@ def main():
            '-DM68K_EMULATE_030=0','-DM68K_EMULATE_040=0','-DM68K_EMULATE_PMMU=0',
            f'-DH1_TEST_FRAMES={args.test_frames}',f'-DH1_BENCHMARK={int(args.benchmark)}',
            f'-DH1_PROFILE={int(args.profile)}',
+           f'-DH1_PGM={int(args.pgm)}',
            f'-DH1_A68K={int(args.core=="a68k")}',
            f'-DH1_IDLE={int(args.idle)}',f'-DH1_DIRTY_PRESENT={int(args.dirty_present)}',
            f'-DH1_CPU_SELFTEST={int(args.cpu_selftest)}',
@@ -100,6 +103,10 @@ def main():
     flags.remove('-DHAVE_CONFIG_H=0')
     flags += [x for p in includes for x in ('-I',str(p))]
     sources=[ROOT/'src'/p for p in ('entry.S','startup.c','jump.S','libc.c','libc_extra.c','audio.c','cpu.c','package.c','frontend.c','arcade_config.c','arcade_menu.c','profile.c','present.c','render.c','import_game.c','import_zip.c')]
+    if args.pgm:
+        from pgm_sources import prepare_pgm
+        sources += [ROOT/'src'/p for p in ('pgm.c','pgm_import.c','pgm_protection.c')]
+        sources += prepare_pgm(ROOT,build,core)
     if args.mxu:
         mxu_source=ROOT/'src/mxu.S'
         if args.speed_core:

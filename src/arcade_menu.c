@@ -8,6 +8,9 @@
 #include "touch.h"
 #include "audio.h"
 #include "menu_font.h"
+#if H1_PGM
+#include "pgm.h"
+#endif
 #include <stdio.h>
 #include <string.h>
 volatile arcade_menu_stats h1_menu_stats={0x31554e4d,1};
@@ -62,7 +65,11 @@ static unsigned volume_at(int x){int p=x-38;if(p<0)p=0;if(p>403)p=403;return ((p
 static void draw(unsigned page,int cursor,int capture,const char *status,const arcade_settings *s,uint32_t *(*target)(void)){
  static const char *titles[]={"游戏已暂停","按键映射","显示设置","声音设置","关于街机模拟器"};
  static const char *root[]={"继续游戏","按键映射","显示设置","声音设置","退出游戏","关于"};
- static const char *modes[]={"保持4:3比例","原始320x224","全屏拉伸"};
+ const char *raw_mode="原始320x224";
+#if H1_PGM
+ if(h1_pgm_active)raw_mode="原始448x224";
+#endif
+ const char *modes[]={"保持4:3比例",raw_mode,"全屏拉伸"};
  char label[128];canvas=target();rect(0,0,480,272,0x00101818);text(titles[page],18,8,0x00ffffff);
  if(page==3&&capture<0&&!(status&&*status)){
   snprintf(label,sizeof label,"音量：%u%%  左右键／触摸调节",s->volume);text(label,18,32,0x00b8bcbc);
@@ -72,8 +79,10 @@ static void draw(unsigned page,int cursor,int capture,const char *status,const a
  if(page==0)text("触屏／P 打开菜单，返回继续",18,232,0x00b8bcbc);
  if(page==4){
   text("作者：HelloClyde",38,64,0x00ffffff);
-  text("核心：GnGeo / A68K",38,96,0x00ffffff);
-  text("声音：Z80 / YM2610",38,128,0x00ffffff);
+#if H1_PGM
+  if(h1_pgm_active){text("核心：PGM / A68K",38,96,0x00ffffff);text("声音：Z80 / ICS2115",38,128,0x00ffffff);}else
+#endif
+  {text("核心：GnGeo / A68K",38,96,0x00ffffff);text("声音：Z80 / YM2610",38,128,0x00ffffff);}
   text("H1 / Y100 V1.41",38,160,0x00ffffff);
   text("Thanks: GnGeo, A68K, H1 SDK",38,194,0x00b8bcbc);
  }
@@ -103,6 +112,9 @@ int arcade_pause_menu(arcade_settings *s,uint32_t *(*target)(void),unsigned open
  const char *status=h1_config_writable?"":"设置文件损坏，本次不写入";
  h1_menu_stats.active=1;++h1_menu_stats.opened;h1_arcade_log("PAUSE_MENU_BEGIN");
  for(;;){
+#if H1_PGM
+  if(h1_pgm_active)h1_pgm_pause_probe();
+#endif
   if(h1_arcade_stats.stop){result=2;break;}
   ++h1_arcade_stats.paused_frames;
   if(dirty){draw(page,cursor,capture,status,s,target);dirty=0;}

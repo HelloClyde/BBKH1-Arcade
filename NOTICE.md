@@ -100,3 +100,15 @@ the redundant tile modulo. The original optimization BDA remains available.
 The PC graphics decoder is extracted from the same pinned GnGeo source.
 Game/BIOS data is supplied locally by the user and is not redistributed.
 The included test cartridge and its boot code are original test material.
+
+Experimental PGM support (`--pgm`) additionally derives ROM layouts,
+KOV program decryption, ASIC28 protection HLE, graphics formats, and ICS2115
+sound behavior from the same pinned dmitrysmagin/fba-a320 revision listed
+above: src/burn/pgm/{d_pgm,pgm_run,pgm_draw,pgm_prot,pgm_crypt}.cpp and
+src/burn/ics2115.cpp. Their original terms remain applicable. PGM work is
+credited upstream to ElSemi, David Haywood, OopsWare and FBA contributors;
+the ICS2115 source credits O. Galibert, ElSemi and OopsWare. The build extracts
+decryption and sound into temporary build copies, retaining the upstream
+sound attribution. The sound copy uses paged samples and 8 kHz synthesis
+with adjusted oscillator increments. New H1 filesystem, bus, cache and
+frontend adapters are GPL-2.0-or-later. No PGM game or BIOS data is included.

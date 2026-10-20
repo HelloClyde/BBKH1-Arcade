@@ -13,6 +13,9 @@
 #include "arcade_menu.h"
 #include "import_game.h"
 #include "touch.h"
+#if H1_PGM
+#include "pgm.h"
+#endif
 #if H1_CPU_MHZ > 336
 #include "clock_control.h"
 #endif
@@ -33,6 +36,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <sys/stat.h>
 
 volatile h1_arcade_stats_t h1_arcade_stats={0x31435241,1};
 const uint32_t h1_arcade_abi[] __attribute__((used,section(".h1meta")))={
@@ -259,6 +263,9 @@ void pad_update(void){
  for(unsigned k=1;k<=42;k++)if(h1_arcade_settings.mapping[k]&&down(k))buttons|=1u<<(h1_arcade_settings.mapping[k]-1);
  if(input_release_gate){if(!buttons)input_release_gate=0;buttons=0;}
  if(paused||menu_requested)buttons=0;
+#if H1_PGM
+ if(h1_pgm_active)h1_pgm_inputs(buttons);
+#endif
  memory.intern_p1=(uint8_t)~buttons;memory.intern_p2=255;
  memory.intern_coin=7u&~((buttons>>ARCADE_COIN)&1u);
  memory.intern_start=255u&~((buttons>>ARCADE_START)&1u);
@@ -296,27 +303,90 @@ static int select_game(void){
 #endif
  char output[512]={0};typedef void(*fn)(const char*,const char*,char*);
  fn f=(fn)h1_runtime_entry(h1_runtime_table(H1_RUNTIME_GUI_TABLE_SLOT),0x9ec);
- if(!f)return -1;f("A:\\ARCADE\\","h1neo;zip",output);
+ if(!f)return -1;f("A:\\ARCADE\\","h1neo;h1pgm;zip",output);
  video_open();video_close();
  unsigned n=0;while(n<sizeof output&&output[n])++n;if(!n)return 0;
  if(n>=sizeof path||n<4||output[1]!=':'||(output[2]!='\\'&&output[2]!='/'))return -1;
  memcpy(path,output,n+1);
+#if H1_PGM
+ if(h1_pgm_cached(path,"kov"))return 2;
+#endif
  if(n>=4&&output[n-4]=='.'&&(output[n-3]=='z'||output[n-3]=='Z')&&(output[n-2]=='i'||output[n-2]=='I')&&(output[n-1]=='p'||output[n-1]=='P')){
   char cache_path[240],bios_path[240],name[16],error[128];
-  if(!h1_import_paths(output,cache_path,bios_path,name)){h1_message_box(0,"Unsupported game ZIP name or path too long. See README.","Game ZIP",0);return 0;}
-  if(h1_import_cached(cache_path,name)){memcpy(path,cache_path,strlen(cache_path)+1);h1_arcade_log("IMPORT_CACHE path=%s",path);return 1;}
-  FILE *bios=fopen(bios_path,"rb");if(bios)fclose(bios);else strcpy(bios_path,"A:\\ARCADE\\neogeo.zip");
+  unsigned pgm=0;
+#if H1_PGM
+  pgm=h1_pgm_paths(output,cache_path,bios_path,name);
+#endif
+  if(!pgm&&!h1_import_paths(output,cache_path,bios_path,name)){h1_message_box(0,"Unsupported game ZIP name or path too long. See README.","Game ZIP",0);return 0;}
+  int cached=0;
+#if H1_PGM
+  if(pgm){
+   cached=h1_pgm_cached(cache_path,name);
+   if(!cached){char external[240];snprintf(external,sizeof external,"B:\\ARCADE\\%s.h1pgm",name);
+    if(h1_pgm_cached(external,name)){strcpy(cache_path,external);cached=1;}}
+  }else
+#endif
+  cached=h1_import_cached(cache_path,name);
+  if(cached){memcpy(path,cache_path,strlen(cache_path)+1);h1_arcade_log("IMPORT_CACHE path=%s",path);return pgm?2:1;}
+  FILE *bios=fopen(bios_path,"rb");if(bios)fclose(bios);else strcpy(bios_path,pgm?"A:\\ARCADE\\pgm.zip":"A:\\ARCADE\\neogeo.zip");
   h1_import_stats.active=1;h1_import_stats.start=h1_raw_tick_80hz();import_last_stage=0;
   h1_arcade_log("IMPORT_BEGIN game=%s bios=%s output=%s",output,bios_path,cache_path);h1_arcade_log_flush();
-  video_open();int result=h1_import_game(output,bios_path,cache_path,name,import_notify,0,error);video_close();
+  video_open();int result;
+#if H1_PGM
+  if(pgm){
+   result=h1_pgm_import(output,bios_path,cache_path,name,import_notify,0,error);
+   /* Low internal-flash space must not require deleting unrelated games.
+    * An optional B:\ARCADE directory can hold the derived cache instead.
+    * Retry only a completed, cleaned-up write failure, never cancellation
+    * or an ambiguous commit/cleanup failure. Each volume commits locally. */
+   if(result<0&&!strcmp(error,"Cannot write PGM cache")&&cache_path[0]!='B'&&cache_path[0]!='b'){
+    h1_arcade_log("PGM_CACHE_FALLBACK reason=%s source=%s",error,cache_path);h1_arcade_log_flush();
+    mkdir("B:\\ARCADE",0); /* existing directory is fine; never removes data */
+    snprintf(cache_path,sizeof cache_path,"B:\\ARCADE\\%s.h1pgm",name);import_last_stage=0;
+    result=h1_pgm_import(output,bios_path,cache_path,name,import_notify,0,error);
+   }
+  }else
+#endif
+  result=h1_import_game(output,bios_path,cache_path,name,import_notify,0,error);video_close();
   h1_import_stats.end=h1_raw_tick_80hz();h1_import_stats.result=(unsigned)result;h1_import_stats.active=0;
   h1_arcade_log("IMPORT_RESULT result=%d ticks=%u error=%s",result,h1_import_stats.end-h1_import_stats.start,error);h1_arcade_log_flush();
   if(result<0){h1_message_box(0,error,"Game ZIP",0);return 0;}
   if(!result)return 0;
   memcpy(path,cache_path,strlen(cache_path)+1);
+  if(pgm)return 2;
  }
  return 1;
 }
+#if H1_PGM
+static void run_pgm(void){
+ pace_start=h1_raw_tick_80hz();pace_frames=0;h1_arcade_stats.raw_start=pace_start;h1_arcade_stats.rtc_start=h1_arcade_rtc();
+ for(;;){
+  h1_arcade_check_stop();
+  if(paused){unsigned start=h1_raw_tick_80hz();h1_arcade_log_flush();
+   while(paused){
+    if(menu_requested){
+     h1_arcade_settings.mode=display_mode;h1_arcade_settings.skip=skip;h1_arcade_settings.muted=muted;
+     int action=arcade_pause_menu(&h1_arcade_settings,lcd,menu_requested==2);
+     menu_requested=0;display_mode=h1_arcade_settings.mode;skip=h1_arcade_settings.skip;muted=h1_arcade_settings.muted;
+     if(action==2){h1_arcade_stats.stop=1;h1_arcade_escape(0);}
+     for(unsigned k=1;k<=42;k++)held[k]=h1_game_code_down(h1_game_key_code(k));input_release_gate=1;
+     h1_pgm_present(lcd(),display_mode);paused=0;if(audio_ready)gba_audio_resume();break;
+    }h1_arcade_check_stop();++h1_arcade_stats.paused_frames;
+   }pace_start+=h1_raw_tick_80hz()-start;
+  }
+  unsigned interval=h1_pgm_stats.game_started?skip+1:60,draw=h1_arcade_stats.frames%interval==0;
+  h1_arcade_settings.muted=muted;
+  h1_pgm_frame(draw);if(draw){h1_pgm_present(lcd(),display_mode);++h1_arcade_stats.displayed;}
+  ++h1_arcade_stats.frames;++pace_frames;h1_arcade_stats.pc=cpu_68k_getpc();
+  h1_arcade_stats.raw_end=h1_raw_tick_80hz();h1_arcade_stats.rtc_end=h1_arcade_rtc();
+  if(H1_TEST_FRAMES&&h1_arcade_stats.frames>=H1_TEST_FRAMES)return;
+#if !H1_BENCHMARK
+  if(gba_audio_pacing()){while(gba_audio_wait())h1_arcade_check_stop();}
+  else if(h1_arcade_stats.tick_hz){unsigned target=(uint64_t)pace_frames*h1_arcade_stats.tick_hz/60;while(h1_raw_tick_80hz()-pace_start<target)h1_arcade_check_stop();}
+#endif
+ }
+}
+#endif
 static void run_frames(void){
  unsigned fc=0,cartridge_started=0;int debt=0;
 #if H1_SPEED_CORE
@@ -459,6 +529,19 @@ int h1_app_main(void){
   gba_audio_set_volume(h1_arcade_settings.volume);
   h1_arcade_log("SELECTED path=%s",path);h1_arcade_log_flush();
   h1_arcade_stats.state=2;
+#if H1_PGM
+  if(selected==2){
+   loaded=2;if(!h1_pgm_load(path))h1_arcade_escape(140);
+   video_open();cpu_68k_init();cpu_68k_reset();calibrate();audio_ready=gba_audio_open(8000);
+   if(!audio_ready)h1_arcade_escape(141);
+#if H1_CPU_MHZ > 336
+   gba_audio_pause();if(!h1_clock_open(H1_CPU_MHZ))h1_arcade_escape(119);
+   if(!gba_audio_resume())h1_arcade_escape(119);
+#endif
+   h1_arcade_log("PGM_RUN hz=%u audio=%u clock=%u",h1_arcade_stats.tick_hz,audio_ready,H1_CPU_MHZ);h1_arcade_log_flush();
+   h1_arcade_stats.state=3;run_pgm();goto done;
+  }
+#endif
   if(!h1_neo_load(path))goto done;loaded=1;
   video_open();surface.w=352;surface.h=256;surface.pitch=704;surface.pixels=framebuffer;
   memset(framebuffer,0,sizeof framebuffer);
@@ -489,13 +572,19 @@ done:
  if(!h1_clock_close()){
   /* Avoid persistent save/log work after an unconfirmed clock restoration. */
   h1_arcade_stats.error=120;surface.pixels=0;h1_neo_close();video_close();
+#if H1_PGM
+  if(loaded==2)h1_pgm_close();
+#endif
   h1_arcade_stats.state=5;return 120;
  }
 #endif
  if(loaded){
   h1_arcade_settings.mode=display_mode;h1_arcade_settings.skip=skip;h1_arcade_settings.muted=muted;
-  h1_menu_stats.save_ok=arcade_config_save(&h1_arcade_settings);h1_neo_save();
+  h1_menu_stats.save_ok=arcade_config_save(&h1_arcade_settings);if(loaded==1)h1_neo_save();
  }
+#if H1_PGM
+ if(loaded==2)h1_pgm_close();
+#endif
  surface.pixels=0;h1_neo_close();video_close();
  h1_arcade_log("RESULT error=%u frames=%u displayed=%u pc=%08x hits=%u misses=%u samples=%u hz=%u",h1_arcade_stats.error,h1_arcade_stats.frames,h1_arcade_stats.displayed,h1_arcade_stats.pc,h1_arcade_stats.cache_hits,h1_arcade_stats.cache_misses,h1_arcade_stats.audio_samples,h1_arcade_stats.tick_hz);
  h1_arcade_log_flush();

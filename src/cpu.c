@@ -1,5 +1,8 @@
 /* Musashi to GnGeo bus adapter. GPL-2.0-or-later. */
 #include "memory.h"
+#if H1_PGM
+#include "pgm.h"
+#endif
 #if !H1_A68K
 #include "m68k.h"
 #endif
@@ -13,6 +16,9 @@ static unsigned total_cycles;
  case 12:return mem68k_fetch_bios_##bits(a); \
  case 13:return mem68k_fetch_sram_##bits(0xd00000+(a&65535));
 unsigned m68k_read_memory_8(unsigned a){
+#if H1_PGM
+ if(h1_pgm_active)return h1_pgm_read8(a);
+#endif
  a&=0xffffff;
  switch(a>>20){READ_CASES(byte)
  case 3:switch(a>>12){
@@ -25,6 +31,9 @@ unsigned m68k_read_memory_8(unsigned a){
  return 255;
 }
 unsigned m68k_read_memory_16(unsigned a){
+#if H1_PGM
+ if(h1_pgm_active)return h1_pgm_read16(a);
+#endif
  a&=0xffffff;
  switch(a>>20){READ_CASES(word)
  case 3:if((a>>12)==0x3c0)return mem68k_fetch_video_word(a);
@@ -39,6 +48,9 @@ unsigned m68k_read_memory_32(unsigned a){return (m68k_read_memory_16(a)<<16)|m68
  case 8:mem68k_store_memcrd_##bits(a,v);return; \
  case 13:mem68k_store_sram_##bits(0xd00000+(a&65535),v);return;
 void m68k_write_memory_8(unsigned a,unsigned v){
+#if H1_PGM
+ if(h1_pgm_active){h1_pgm_write8(a,v);return;}
+#endif
  a&=0xffffff;
  switch(a>>20){WRITE_CASES(byte)
  case 3:switch(a>>12){
@@ -50,6 +62,9 @@ void m68k_write_memory_8(unsigned a,unsigned v){
  } }
 }
 void m68k_write_memory_16(unsigned a,unsigned v){
+#if H1_PGM
+ if(h1_pgm_active){h1_pgm_write16(a,v);return;}
+#endif
  a&=0xffffff;
  switch(a>>20){WRITE_CASES(word)
  case 3:switch(a>>12){

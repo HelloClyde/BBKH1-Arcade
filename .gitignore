@@ -4,6 +4,7 @@
 __pycache__/
 *.py[cod]
 *.h1neo
+*.h1pgm
 *.nv[01]
 *.cfg[01]
 *.log

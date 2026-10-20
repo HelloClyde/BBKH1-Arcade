@@ -61,7 +61,11 @@ int fsync(int fd){return fd>=3&&fd<35&&files[fd-3]?0:-1;}
 int close(int fd){return fd>=3&&fd<35?fclose(files[fd-3]):-1;}
 int fstat(int fd,struct stat *st){FILE *f=fd>=3&&fd<35?files[fd-3]:0;if(!f||!st)return -1;long pos=ftell(f);if(pos<0||fseek(f,0,SEEK_END))return -1;st->st_size=ftell(f);st->st_mtime=0;st->st_mode=0;return fseek(f,pos,SEEK_SET);}
 int stat(const char *p,struct stat *st){FILE *f=fopen(p,"rb");if(!f)return -1;int r=fstat(fileno(f),st);fclose(f);return r;}
-int mkdir(const char *p,unsigned mode){(void)p;(void)mode;return -1;}
+int mkdir(const char *p,unsigned mode){
+ (void)mode;typedef int(*fn)(const char*);
+ fn f=(fn)h1_runtime_entry(h1_runtime_table(H1_RUNTIME_FS_TABLE_SLOT),0x30);
+ return f?f(p):-1;
+}
 int remove(const char *p){return h1_remove(p);}
 /* V1.41 FS+0x28: same-volume rename, refuses an existing destination. */
 int rename(const char *from,const char *to){

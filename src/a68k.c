@@ -4,6 +4,9 @@
 #include "h1_port.h"
 #include <stddef.h>
 #include <string.h>
+#if H1_PGM
+#include "pgm.h"
+#endif
 #if H1_SPEED_CORE
 #include "speed_core.h"
 volatile unsigned h1_video_bus_enabled=1;
@@ -57,6 +60,9 @@ static uint8_t *code_pointer(unsigned pc){
  return 0;
 }
 static unsigned idle_cycles(unsigned budget){
+#if H1_PGM
+ if(h1_pgm_active)return 0;
+#endif
  /* Only a RAM byte can be stable until the next scanline event. No MMIO,
   * instruction side effects, fixed game addresses or skipped IRQ delivery.
   * Leave >=one whole loop to the original core: it produces the exact final
@@ -83,6 +89,9 @@ static unsigned idle_cycles(unsigned budget){
 volatile unsigned h1_scan_hle=1;
 volatile h1_scan_stats_t h1_scan_stats={0x314e4353,1};
 static unsigned scan_cycles(unsigned budget){
+#if H1_PGM
+ if(h1_pgm_active)return 0;
+#endif
  /* MOVE.W/L (An)+,Dn; BEQ -4 scans zero words in privately owned guest RAM.
   * Consume only complete zero iterations and retain one for the original
   * interpreter's flags, PC metadata and exact final cycle overshoot. */
@@ -118,12 +127,16 @@ static unsigned scan_cycles(unsigned budget){
 #endif
 static void change_pc(unsigned pc){
  pc&=0xffffff;uint8_t *p=0;
+#if H1_PGM
+ if(h1_pgm_active){p=h1_pgm_code(pc);goto mapped;}
+#endif
  switch(pc>>20){
  case 0:p=memory.rom.cpu_m68k.p+(pc&0xfffff);break;
  case 1:p=memory.ram+(pc&0xffff);break;
  case 2:if(bankaddress+(pc&0xfffff)<memory.rom.cpu_m68k.size)p=memory.rom.cpu_m68k.p+bankaddress+(pc&0xfffff);break;
  case 12:p=memory.rom.bios_m68k.p+(pc&0x1ffff);break;
  }
+mapped:
  if(!p){h1_arcade_log("A68K_BAD_FETCH pc=%08x",pc);h1_arcade_escape(110);}
  OP_ROM=(unsigned char*)((uintptr_t)p-pc);OP_RAM=OP_ROM;
 }
@@ -151,8 +164,14 @@ int cpu_68k_run(uint32_t n){
 #if H1_FAST_BUS
  /* One mode update per scanline, rather than a flag load at every bus access. */
  h1_bus_ram=h1_bus_fast?memory.ram:0;
+#if H1_PGM
+ if(h1_pgm_active)h1_bus_ram=0;
+#endif
 #if H1_SPEED_CORE
  h1_bus_rom_active=h1_bus_fast&&h1_rom_fast_enabled;
+#if H1_PGM
+ if(h1_pgm_active)h1_bus_rom_active=0;
+#endif
 #endif
 #endif
  ++h1_idle_stats.calls;
