@@ -119,3 +119,11 @@ bus leaves and a signature-guarded RAM polling loop batch. The original
 RGB565 renderer remains available for frozen-frame physical comparison;
 generated graphics tests contain no game data. Playback omits page/region
 CRC computation at the user's request; conversion checks remain separate.
+
+The PGM sprite row composers are new MIPS32 and MXU Release-1 assembly.
+They retain palette-index transparency, clipping, zoom and flip behavior;
+unscaled rows avoid the per-pixel column map. The MXU sprite leaves preserve
+XR1 and MXU_CR and the PGM screen-copy leaf preserves its MXU context, while
+leaving interrupt enable unchanged as requested by the device owner.
+Generated row fixtures and frozen gameplay frames are compared on physical
+H1; no game/BIOS data is included in these tests.

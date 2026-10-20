@@ -535,6 +535,7 @@ int h1_app_main(void){
    video_open();cpu_68k_init();cpu_68k_reset();
 #if H1_CPU_SELFTEST && H1_A68K
    extern int h1_pgm_bus_selftest(void);if(!h1_pgm_bus_selftest())h1_arcade_escape(144);
+   extern int h1_pgm_sprite_selftest(void);if(!h1_pgm_sprite_selftest())h1_arcade_escape(145);
 #endif
    calibrate();audio_ready=gba_audio_open(8000);
    if(!audio_ready)h1_arcade_escape(141);

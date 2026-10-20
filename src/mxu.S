@@ -1,8 +1,10 @@
 /* JZ4740 MXU1 leaf routines. GPL-2.0-or-later.
  * Encodings: Ingenic XBurst MXU ISA manual, sections 3.4, 3.7, 3.9-3.11.
  * GNU MIPS32 assemblers need explicit words for this vendor extension.
- * Each bounded call preserves XR1-XR10, MXU_CR and CP0 Status. IRQs are
- * masked only during the leaf: no OS/USB calls or unbounded work inside it.
+ * Each bounded call preserves XR1-XR10 and MXU_CR. By default CP0 Status
+ * is saved/restored and IRQs are masked only during the leaf: no OS/USB
+ * calls or unbounded work inside it. The PGM-only copy32 leaf leaves CP0
+ * Status and interrupt enable untouched while preserving the MXU context.
  */
 .set mips32
 .set noreorder
@@ -24,8 +26,9 @@
 .macro mx_shuffle a, b, c, d, ptn
  .word (0x7000003d | (\ptn << 24) | (\d << 18) | (\c << 14) | (\b << 10) | (\a << 6))
 .endm
-.macro mx_begin
+.macro mx_begin irq=1
  addiu $sp,$sp,-48
+ .if \irq
  mfc0 $t8,$12
  nop
  li $t0,-2
@@ -34,6 +37,7 @@
  nop
  nop
  nop
+ .endif
  mx_m2i 16,25
  ori $t0,$t9,1
  mx_i2m 16,8
@@ -45,16 +49,18 @@
   sw $t0,((\r-1)*4)($sp)
  .endr
 .endm
-.macro mx_end
+.macro mx_end irq=1
  .irp r,1,2,3,4,5,6,7,8,9,10
   lw $t0,((\r-1)*4)($sp)
   mx_i2m \r,8
  .endr
  mx_i2m 16,25
+ .if \irq
  mtc0 $t8,$12
  nop
  nop
  nop
+ .endif
  jr $ra
  addiu $sp,$sp,48
 .endm
@@ -120,7 +126,7 @@ h1_mxu_rgb565:
 .globl h1_mxu_copy32
 .type h1_mxu_copy32,@function
 h1_mxu_copy32:
- mx_begin
+ mx_begin 0
 1:
  .irp r,1,2,3,4,5,6,7,8
   mx_ld \r,5,((\r-1)*4)
@@ -132,7 +138,7 @@ h1_mxu_copy32:
  addiu $a1,$a1,32
  bnez $a2,1b
  addiu $a0,$a0,32
- mx_end
+ mx_end 0
 .size h1_mxu_copy32,.-h1_mxu_copy32
 /* Pair-table tile composition. D16MADL is Release-1 (2007 manual 1.6.13).
  * Each halfword computes new_color + old_color * keep_old (0 or 1).

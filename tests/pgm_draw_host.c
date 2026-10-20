@@ -37,15 +37,18 @@ int main(void){
    s[2]=(rng()&0x7f80);if(i<8)s[2]|=0x80;else s[2]&=~0x80;
    s[3]=(i%32)*1024;s[4]=((1+rng()%4)<<9)|(1+rng()%32);
   }
+  /* Include identity zoom explicitly: random 32-bit zoom masks almost
+   * never exercise the contiguous source path. */
+  if(!(frame&3))memset(vreg+0x1000,0,17*4);
   if(frame==159){sprites[0]=0; sprites[1]=0; sprites[2]=0; sprites[3]=0; sprites[4]=(63<<9)|511;}
-  reference_pixels=expected;draw_reference();pixels=actual;draw();
+  reference_pixels=expected;draw_reference();pixels=actual;h1_pgm_sprite_mode=0;draw();
   unsigned n=0;for(unsigned i=0;i<448*224;i++)if(actual[i]!=expand(expected[i])){if(n++<3)fprintf(stderr,"frame=%u x=%u y=%u %06x/%06x\n",frame,i%448,i/448,actual[i],expand(expected[i]));}
   if(n){
    fprintf(stderr,"different pixels=%u\n",n);return 1;
   }
   /* Same scene a second time must reuse decoded entries without changing
    * their palette-independent indices, even after direct-map collisions. */
-  draw();for(unsigned i=0;i<448*224;i++)assert(actual[i]==expand(expected[i]));
+  for(unsigned mode=1;mode<4;mode++){h1_pgm_sprite_mode=mode;draw();for(unsigned i=0;i<448*224;i++)assert(actual[i]==expand(expected[i]));}
  }
  pixels=actual;present_check();for(unsigned i=0;i<3;i++)assert(h1_pgm_draw_probe.present_differences[i]==0);
  printf("160 generated frames exactly match reference, including zoom/flip/clipping and partial last tile; 3 presenter modes match. Sprite hits=%u misses=%u tile hits=%u misses=%u\n",h1_pgm_perf.sprite_hits,h1_pgm_perf.sprite_misses,h1_pgm_perf.tile_hits,h1_pgm_perf.tile_misses);

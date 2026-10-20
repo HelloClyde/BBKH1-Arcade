@@ -33,7 +33,23 @@ static decoded_sprite *sprite_tags;
 static unsigned sprite_capacity,sprite_used;
 #define TILE_SLOTS 1024u
 #define SPRITE_SLOTS 512u
-volatile struct {unsigned magic,version,enabled,frames,ticks[9],tile_hits,tile_misses,sprite_hits,sprite_misses,mxu_pixels,decoded_bytes;} h1_pgm_perf={0x32504750,1};
+/* Version 2 separates descriptor/zoom setup, cache-miss decode, row
+ * composition and text. The inner transparency test and palette lookup stay
+ * together: timing each pixel would measure the instrumentation itself. */
+volatile struct {unsigned magic,version,enabled,frames,ticks[12],tile_hits,tile_misses,sprite_hits,sprite_misses,mxu_pixels,decoded_bytes;
+ unsigned identity_rows,mapped_rows,identity_pixels,mapped_pixels;} h1_pgm_perf={0x32504750,2};
+/* Debug A/B switch: original mapped C, identity-aware C, MIPS rows, MXU. */
+volatile unsigned h1_pgm_sprite_mode=H1_MXU?3:2;
+#if defined(__mips__)
+extern unsigned h1_pgm_sprite_row(uint32_t *,const uint8_t *,const uint32_t *,unsigned);
+extern unsigned h1_pgm_sprite_rev(uint32_t *,const uint8_t *,const uint32_t *,unsigned);
+extern unsigned h1_pgm_sprite_map(uint32_t *,const uint8_t *,const uint32_t *,const uint16_t *,unsigned);
+#if H1_MXU
+extern unsigned h1_pgm_sprite_mxu_row(uint32_t *,const uint8_t *,const uint32_t *,unsigned);
+extern unsigned h1_pgm_sprite_mxu_rev(uint32_t *,const uint8_t *,const uint32_t *,unsigned);
+extern unsigned h1_pgm_sprite_mxu_map(uint32_t *,const uint8_t *,const uint32_t *,const uint16_t *,unsigned);
+#endif
+#endif
 static unsigned perf_phase,perf_last;
 static void phase(unsigned next){if(h1_pgm_perf.enabled){unsigned now=h1_raw_tick_80hz();if(perf_last)h1_pgm_perf.ticks[perf_phase]+=now-perf_last;perf_last=now;perf_phase=next;}else perf_last=0;}
 static uint32_t tags[SLOTS],ages[SLOTS],age;
@@ -303,6 +319,7 @@ static const uint8_t *sprite_data(unsigned boff,unsigned wide,unsigned high){
  unsigned slot=((boff>>2)^(wide*17)^(high*31))&(SPRITE_SLOTS-1);
  decoded_sprite *tag=sprite_tags+slot;
  if(tag->mask==boff&&tag->width==wide&&tag->height==high){++h1_pgm_perf.sprite_hits;return sprite_pixels+tag->offset;}
+ phase(9);
  unsigned bytes=wide*16*high;
  if(sprite_used+bytes>sprite_capacity){sprite_used=0;memset(sprite_tags,255,SPRITE_SLOTS*sizeof *sprite_tags);}
  uint8_t *dst=sprite_pixels+sprite_used;
@@ -318,10 +335,11 @@ static const uint8_t *sprite_data(unsigned boff,unsigned wide,unsigned high){
   }
  }
  *tag=(decoded_sprite){boff,wide,high,sprite_used};sprite_used=(sprite_used+bytes+3)&~3u;
- ++h1_pgm_perf.sprite_misses;return dst;
+ ++h1_pgm_perf.sprite_misses;phase(5);return dst;
 }
 static void sprite_layer(unsigned priority){
  for(;sprite_index<0x500;sprite_index+=5){
+  phase(5);
   const uint16_t *s=sprites+sprite_index;unsigned high=s[4]&511,wide=(s[4]>>9)&63,attr=s[2];
   if(!high||(priority&&!(attr&0x80)))break;
   int xpos=s[0]&2047,ypos=s[1]&1023;if(xpos>1023)xpos-=2048;if(ypos>511)ypos-=1024;
@@ -332,37 +350,81 @@ static void sprite_layer(unsigned priority){
   if(gx)zx=16-zx;if(gy)zy=16-zy;
   unsigned xzoom=word(vreg+0x1000+zx*4)<<16|word(vreg+0x1002+zx*4),yzoom=word(vreg+0x1000+zy*4)<<16|word(vreg+0x1002+zy*4);
   unsigned desty=0,fullw=wide*16;
-  unsigned outw=zoom_extent(fullw,xzoom,gx),outh=zoom_extent(high,yzoom,gy);
+  unsigned outw=xzoom?zoom_extent(fullw,xzoom,gx):fullw,outh=yzoom?zoom_extent(high,yzoom,gy):high;
   if(!outw||!outh||xpos>=448||xpos+(int)outw<=0||ypos>=224||ypos+(int)outh<=0)continue;
   const uint8_t *decoded=sprite_data(boff,wide,high);
   int left=xpos<0?0:xpos,right=xpos+(int)outw;if(right>448)right=448;
   /* Compute horizontal zoom/flip/clipping once per sprite, not once per
    * pixel of every row. The mapped span is contiguous even when shrinking. */
+  unsigned mode=h1_pgm_sprite_mode,identity=mode&&!xzoom;
   uint16_t columns[448];unsigned destx=0;
-  for(unsigned x=0;x<fullw;x++){
+  if(!identity)for(unsigned x=0;x<fullw;x++){
    unsigned xz=(xzoom>>(x&31))&1,n=gx?1+xz:1-xz;
    for(unsigned k=0;k<n;k++,destx++){int dx=xpos+(flipx?(int)outw-1-(int)destx:(int)destx);if(dx>=left&&dx<right)columns[dx-left]=x;}
   }
+  const uint32_t *pal32=colors+pal;unsigned width=right-left;
+  phase(10);
   for(unsigned y=0;y<high;y++){
    if((!flipy&&ypos+(int)desty>=224)||(flipy&&ypos+(int)outh-1-(int)desty<0))break;
    unsigned yz=(yzoom>>(y&31))&1,repeats=gy?1+yz:1-yz;
    for(unsigned rep=0;rep<repeats;rep++,desty++){
     int dy=ypos+(flipy?(int)outh-1-(int)desty:(int)desty);if(dy<0||dy>=224)continue;
     const uint8_t *src=decoded+y*fullw;uint32_t *dst=pixels+dy*448+left;
-    for(unsigned x=0;x<(unsigned)(right-left);x++){unsigned v=src[columns[x]];if(v!=255)dst[x]=colors[pal+v];}
+    if(identity){
+     src+=flipx?fullw-1-(left-xpos):left-xpos;
+     ++h1_pgm_perf.identity_rows;h1_pgm_perf.identity_pixels+=width;
+#if defined(__mips__) && H1_MXU
+     if(mode==3){if(flipx)h1_pgm_sprite_mxu_rev(dst,src,pal32,width);else h1_pgm_sprite_mxu_row(dst,src,pal32,width);}else
+#endif
+#if defined(__mips__)
+     if(mode==2){if(flipx)h1_pgm_sprite_rev(dst,src,pal32,width);else h1_pgm_sprite_row(dst,src,pal32,width);}else
+#endif
+     if(flipx){for(unsigned x=0;x<width;x++){unsigned v=src[-(int)x];if(v!=255)dst[x]=pal32[v];}}
+     else for(unsigned x=0;x<width;x++){unsigned v=src[x];if(v!=255)dst[x]=pal32[v];}
+    }else{
+     ++h1_pgm_perf.mapped_rows;h1_pgm_perf.mapped_pixels+=width;
+#if defined(__mips__) && H1_MXU
+     if(mode==3)h1_pgm_sprite_mxu_map(dst,src,pal32,columns,width);else
+#endif
+#if defined(__mips__)
+     if(mode==2)h1_pgm_sprite_map(dst,src,pal32,columns,width);else
+#endif
+     for(unsigned x=0;x<width;x++){unsigned v=src[columns[x]];if(v!=255)dst[x]=pal32[v];}
+    }
    }
   }
  }
 }
-static void draw(void){for(unsigned i=0;i<448*224;i++)pixels[i]=colors[0x3ff];sprite_index=0;phase(5);sprite_layer(1);phase(4);background();phase(5);sprite_layer(0);text_layer();phase(0);}
+static void draw(void){for(unsigned i=0;i<448*224;i++)pixels[i]=colors[0x3ff];sprite_index=0;phase(5);sprite_layer(1);phase(4);background();phase(5);sprite_layer(0);phase(11);text_layer();phase(0);}
 #define pixels reference_pixels
 #define colors colors565
 #include "pgm_draw_reference.h"
 #undef colors
 #undef pixels
 volatile struct {unsigned magic,version,request,state,tests,differences,reference_crc,fast_crc,reference_ticks,fast_ticks,present_differences[3];} h1_pgm_draw_probe={0x31444750,2};
+volatile struct {unsigned magic,version,request,state,loops,ticks[4],differences[4];} h1_pgm_sprite_bench={0x31424750,2};
+static void sprite_benchmark(void){
+ unsigned loops=h1_pgm_sprite_bench.request;if(!loops)return;
+ h1_pgm_sprite_bench.request=0;h1_pgm_sprite_bench.state=1;
+ if(loops>128)loops=128;
+ uint32_t *expected=malloc(WIDTH*HEIGHT*4);
+ if(!expected){h1_pgm_sprite_bench.state=4;return;}
+ unsigned mode=h1_pgm_sprite_mode,enabled=h1_pgm_perf.enabled;h1_pgm_perf.enabled=0;
+ h1_pgm_sprite_mode=0;draw();memcpy(expected,pixels,WIDTH*HEIGHT*4);
+ for(unsigned m=0;m<4;m++){
+  h1_pgm_sprite_mode=m;draw();unsigned start=h1_raw_tick_80hz();
+  for(unsigned i=0;i<loops;i++)draw();
+  h1_pgm_sprite_bench.ticks[m]=h1_raw_tick_80hz()-start;
+  unsigned differences=0;for(unsigned i=0;i<WIDTH*HEIGHT;i++)differences+=expected[i]!=pixels[i];
+  h1_pgm_sprite_bench.differences[m]=differences;
+ }
+ h1_pgm_sprite_mode=mode;h1_pgm_perf.enabled=enabled;perf_last=0;
+ h1_pgm_sprite_bench.loops=loops;free(expected);
+ h1_pgm_sprite_bench.state=h1_pgm_sprite_bench.differences[0]||h1_pgm_sprite_bench.differences[1]||h1_pgm_sprite_bench.differences[2]||h1_pgm_sprite_bench.differences[3]?3:2;
+}
 static void present_check(void);
 void h1_pgm_pause_probe(void){
+ sprite_benchmark();
  if(!h1_pgm_draw_probe.request)return;
  h1_pgm_draw_probe.request=0;h1_pgm_draw_probe.state=1;
  uint16_t *temporary=malloc(448*224*2),*actual565=malloc(448*224*2);
