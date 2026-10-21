@@ -1,5 +1,6 @@
 * text=auto eol=lf
 *.png binary
+assets/bios/*.zip binary
 
 # Runtime hashes bind the original physical-H1 source snapshot, including its
 # existing line endings. Preserve those exact bytes across clean checkouts.

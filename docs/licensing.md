@@ -44,4 +44,15 @@ Release 的源码 ZIP 附带 SDK、GnGeo、Musashi 和 A68K 的固定源码快�
 文件 SHA256 为 `42f4fd8ab87595919d28824337e53fd0040e9d7354d1da4189701742e1f50465`。
 保留这份文本用于记录 GnGeo 所述历史 MAME 条款；它不替代其他组件自己的版权与许可声明。
 
-所有游戏及商业 BIOS 由用户自行提供，本项目不分发这些数据或原机固件。
+## v0.2.1 安装包附带的 BIOS
+
+v0.2.1 根据项目发布者于 2026-10-21 的明确指令，将其已有的 `pgm.zip` 和 `neogeo.zip` 原样加入公开 Release 安装包的 `ARCADE/`，并固定在仓库 `assets/bios/` 供后续 CI 复现。归档及逐成员散列、发布依据见 [BIOS 清单](../assets/bios/manifest.json)。此次记录的发布依据是发布者的明确指令，未独立核实 BIOS 权利人的再分发许可；不将其描述为已独立验证的第三方授权。
+
+| 归档 | 字节数 | SHA256 | 成员范围 |
+| --- | ---: | --- | --- |
+| `pgm.zip` | 2,047,189 | `7df47eb0956aae9bbeb3fdae59ea02b3443720cd61b55072494f54ae2a1e6d41` | 3 个 PGM 系统成员，名称、尺寸和 CRC 与当前导入器的 BIOS 布局一致 |
+| `neogeo.zip` | 1,859,335 | `bf05cc848e403f8ae457bfe26faa8135cf4725cfff956fa030f5c0a00a26adcc` | 34 个 Neo Geo 系统 BIOS/资源成员，含多版本 Universe BIOS，无游戏 ROM |
+
+PGM 系统数据保留 IGS 的版权归属；Neo Geo 系统数据和 Universe BIOS 各版本保留 SNK 及 Universe BIOS 作者各自的版权。两个原始归档均未附带许可文档，项目不补造上游许可文本。H1 原创代码的 GPL 和独立模块链接例外不适用于这些独立 BIOS 数据，也不改变它们原有的权利归属。
+
+此前 v0.2.0 及更早安装包未附带商业 BIOS；历史许可说明和真机证据应按对应版本理解。v0.2.1 仅改变安装与发布内容，BDA 与 v0.2.0 完全相同。游戏 ROM、H1 原机固件、转换缓存和个人存档仍不分发。

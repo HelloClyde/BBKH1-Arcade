@@ -45,6 +45,12 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python tools/fetch.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Verify both pinned installer BIOS archives
+        run: |
+          python tools/release_bios.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tests/release_bios_host.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
       - name: Build exact physically verified preset
         run: |
           python tools/build_release.py
@@ -77,7 +83,7 @@ jobs:
           python tools/build_release.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           if ((Get-FileHash dist/H1Arcade.bda -Algorithm SHA256).Hash -ne $first) { throw 'BDA changed on repeat build' }
-      - name: Package BDA, installer, converter and complete sources
+      - name: Package BDA, both BIOS archives, installer and complete sources
         env:
           IS_VERSION_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
           RELEASE_TAG: ${{ github.ref_name }}

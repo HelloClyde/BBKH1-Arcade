@@ -6,6 +6,7 @@ import subprocess
 import sys
 from convert import gfx_library
 from source_bundle import ROOT, sha, git, write_zip, complete_source, selected_driver_archive
+from release_bios import bios_install_entries
 
 def main():
     ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--tag');a=ap.parse_args()
@@ -19,6 +20,7 @@ def main():
     data=(ROOT/'dist/H1Arcade.bda').read_bytes()
     check=json.loads((ROOT/'build/verification/release-verification.json').read_text())
     assert check['ok'] and sha(data)==check['sha256'] and check['exact_physical_bda_match']
+    bios_entries,bios_manifest=bios_install_entries()
     deps=json.loads((ROOT/'UPSTREAM.json').read_text())
     out=ROOT/'dist/release';out.mkdir(parents=True,exist_ok=True)
     expected={'H1Arcade.bda',f'H1Arcade-v{version}-install.zip',
@@ -27,7 +29,7 @@ def main():
     bda=out/'H1Arcade.bda';bda.write_bytes(data)
     entries={
         '应用/程序/H1Arcade.bda':data,
-        'ARCADE/放置游戏文件.txt':'把自己的 kof97.zip 与 neogeo.zip，或三国战纪 V117 kov.zip 与 pgm.zip 放在此目录，H1 首次打开会自动转换；也可放已有 .h1neo / .h1pgm。ROM、商业 BIOS 和个人存档不随安装包提供。\n'.encode(),
+        'ARCADE/放置游戏文件.txt':'本安装包已包含 neogeo.zip 和 pgm.zip，无需解压这两个 BIOS ZIP。把自己的 kof97.zip 或三国战纪 V117 kov.zip 放在此目录，H1 首次打开会自动转换；也可放已有 .h1neo / .h1pgm。游戏 ROM 和个人存档不随安装包提供。\n'.encode(),
         '设备端转换说明.md':(ROOT/'docs/device-import.md').read_bytes(),
         'PGM三国战纪说明.md':(ROOT/'docs/pgm.md').read_bytes(),
         '使用说明.md':(ROOT/'README.md').read_bytes(),
@@ -43,6 +45,8 @@ def main():
             'python -X utf8 convert.py "你的/kof97.zip" --set kof97 --bios "你的/neogeo.zip" --output "你的/kof97.h1neo"\n'
             '图形解码器来自固定版本 GnGeo src/roms.c，保留原版权声明和完整对应源码。\n').encode(),
     }
+    assert not set(entries)&set(bios_entries)
+    entries.update(bios_entries)
     for p in sorted((ROOT/'assets/licenses').glob('*')):
         if p.is_file():entries['许可/'+p.name]=p.read_bytes()
     entries['许可/来源与许可说明.md']=(ROOT/'docs/licensing.md').read_bytes()
@@ -52,10 +56,10 @@ def main():
     source=out/f'BBKH1-Arcade-v{version}-source.zip';source_info=complete_source(source,commit,a.tag)
     info={'version':version,'tag':a.tag,'application_commit':commit,'dependencies':deps,
           'bda':{'filename':bda.name,'sha256':sha(data),'size':len(data),
-                 'exact_physical_bda_match':True,'evidence':'docs/evidence/v0.2.0-release-verification.json',
+                 'exact_physical_bda_match':True,'evidence':check['release_evidence'],
                  'physical_evidence':check['physical_evidence']},
           'installer':{'filename':installer.name,'sha256':sha(installer.read_bytes()),'files':len(manifest)},
-          'source':source_info,'ROM_or_commercial_BIOS_distributed':False,
+          'source':source_info,'BIOS_distributed':True,'game_ROM_distributed':False,'bios':bios_manifest,
           'verification':check,'runtime_preset':{'cpu_mhz':408,'display':'4:3','skip':1,'sound_hz':8000}}
     (out/'BUILD-INFO.json').write_text(json.dumps(info,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     files=[bda,installer,source,out/'BUILD-INFO.json']
@@ -67,13 +71,14 @@ def main():
 
 下载 H1Arcade-v{version}-install.zip 后，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
 单独 BDA 放到 A:\\应用\\程序\\H1Arcade.bda。
-本版将 PGM 支持并入默认应用，支持《三国战纪》一代 kov V117；保留原有 Neo Geo 支持。
-把自己的 kof97.zip 与 neogeo.zip，或 kov.zip 与 pgm.zip 复制到 ARCADE，直接选择游戏 ZIP，H1 首次转换后进入游戏；之后复用缓存。
+v0.2.1 仅更新安装包和 CI，新增随包 BIOS。PGM 与 Neo Geo 共用同一应用，支持《三国战纪》一代 kov V117。
+安装包 ARCADE 内已包含 pgm.zip 和 neogeo.zip。把自己的 kof97.zip 或 kov.zip 复制到 ARCADE，直接选择游戏 ZIP，H1 首次转换后进入游戏；之后复用缓存。两个 BIOS ZIP 保持原样，不要解压。
 转换有进度和取消按钮，保留原始 ZIP，兼容已有 .h1neo / .h1pgm。PGM 缓存约64.2 MiB，A盘写入失败并清理临时文件后可回退 B:\\ARCADE；下次仍选原ZIP自动复用。
 PC工具仅转换Neo Geo，作为可选工具附带；PGM直接使用设备端转换。
 源码 ZIP 包含固定 SDK、GnGeo、Musashi 和 A68K 源码快照，无需另取子模块即可重建。
 上游版权与各自条款保留在 NOTICE.md、docs/licensing.md 和安装包“许可”目录；完整组合不统一重标为 GPL。
-游戏 ROM、商业 BIOS、固件和个人存档不分发。
+本版依用户明确发布要求原样附带其提供的 pgm.zip 和 neogeo.zip；后续 CI 同样从固定仓库输入打包并逐项校验。安装包 BIOS-MANIFEST.json 及完整源码 assets/bios/manifest.json 记录档案和成员校验值。
+BIOS 保留原版权与适用条款，不重新许可为 GPL；该清单不代表已独立确认 BIOS 的再分发许可。游戏 ROM、固件和个人存档不分发。
 
 PGM逐行合成后立即缩放输出，配合MIPS/MXU精灵合成、CPU等待循环HLE和8 kHz音频。
 真实H1上同一冻结画面完整绘图与输出从约22.14 ms降至14.32 ms（减少35.3%）。

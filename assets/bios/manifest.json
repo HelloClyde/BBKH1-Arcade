@@ -1,0 +1,213 @@
+{
+  "format_version": 1,
+  "files": {
+    "pgm.zip": {
+      "source_path": "assets/bios/pgm.zip",
+      "install_target": "ARCADE/pgm.zip",
+      "size": 2047189,
+      "sha256": "7df47eb0956aae9bbeb3fdae59ea02b3443720cd61b55072494f54ae2a1e6d41",
+      "members": {
+        "pgm_m01s.rom": {
+          "size": 2097152,
+          "crc32": "45ae7159",
+          "sha256": "111e9b2c455e5a2a6fb92cae7785bcb837c257c85bb70d6f65bf64660da3194d"
+        },
+        "pgm_p01s.rom": {
+          "size": 131072,
+          "crc32": "e42b166e",
+          "sha256": "16ac453200130288c76d92cf3cc677f5ae8a16d11e45277ea0d1210d6b3f7d9b"
+        },
+        "pgm_t01s.rom": {
+          "size": 2097152,
+          "crc32": "1a7123a0",
+          "sha256": "c128ef491505564550f3fe61363a5d7671d102721710ed3bcf91c14d1b355b19"
+        }
+      }
+    },
+    "neogeo.zip": {
+      "source_path": "assets/bios/neogeo.zip",
+      "install_target": "ARCADE/neogeo.zip",
+      "size": 1859335,
+      "sha256": "bf05cc848e403f8ae457bfe26faa8135cf4725cfff956fa030f5c0a00a26adcc",
+      "members": {
+        "000-lo.lo": {
+          "size": 131072,
+          "crc32": "5a86cff2",
+          "sha256": "2a76f023dc578804c6bcd58ed514ffc04fcb433b3bd75d4452575ffda57a0707"
+        },
+        "japan-j3.bin": {
+          "size": 131072,
+          "crc32": "dff6d41f",
+          "sha256": "cbbf40e1d6c406c5ebc74860dddd3530411f5913639372e1597f07a6131af5db"
+        },
+        "sfix.sfix": {
+          "size": 131072,
+          "crc32": "c2ea0cfd",
+          "sha256": "fcf51e688c006408be92c5adaf37d4302d05e7e681193dd0623072e53915c90e"
+        },
+        "sm1.sm1": {
+          "size": 131072,
+          "crc32": "94416d67",
+          "sha256": "fdc811988098d008d1aa6aed6fdc4e5c9ba034c5505ceb6808eef3af66fc95ab"
+        },
+        "sp-1v1_3db8c.bin": {
+          "size": 131072,
+          "crc32": "162f0ebe",
+          "sha256": "09be2d8b21c122bc4eec4ec73c61a7598f8689bb021369d6f4a8dd453c3040cb"
+        },
+        "sp-45.sp1": {
+          "size": 524288,
+          "crc32": "03cc9f6a",
+          "sha256": "0fbeee82b463187d6360e92811f1fad58649feb8ab2584c524222d0b5bf53a17"
+        },
+        "sp-e.sp1": {
+          "size": 131072,
+          "crc32": "2723a5b5",
+          "sha256": "8bf7312963516e4e3801f98cc249657b1c42084a1961dca627af091cf5e62303"
+        },
+        "sp-j2.sp1": {
+          "size": 131072,
+          "crc32": "acede59c",
+          "sha256": "d63e24f02f8501d10a6a08609510ea1bc1e59e49827fe41339e625cf248a287b"
+        },
+        "sp-j3.sp1": {
+          "size": 524288,
+          "crc32": "486cb450",
+          "sha256": "7b378ae5d1c7376ebe16473b7bf9ca0c8c967e0d6c9bb8a55b4b4e24e1a265d7"
+        },
+        "sp-s.sp1": {
+          "size": 131072,
+          "crc32": "c7f2fa45",
+          "sha256": "f9bb9e3aa6adc76bffab9e4f171e90745f991244784b4d8649f20ab95ea24483"
+        },
+        "sp-s2.sp1": {
+          "size": 131072,
+          "crc32": "9036d879",
+          "sha256": "ae1c5cc9a0acdead8a3d5a16ee84f575582f2209677464b05a2b8b0451f658a1"
+        },
+        "sp-s3.sp1": {
+          "size": 131072,
+          "crc32": "91b64be3",
+          "sha256": "d45b04e849e2b76ba72fd45feba45cd5bb16831cd0a809943f9ddf80e2d05c6d"
+        },
+        "sp-u2.sp1": {
+          "size": 131072,
+          "crc32": "e72943de",
+          "sha256": "01ff1db85c5b209d4f5879ea8348e3b39a237532c37232f14c2b48945e9aa7d8"
+        },
+        "sp1-j3.bin": {
+          "size": 131072,
+          "crc32": "fbc6d469",
+          "sha256": "7185b59f7b896fa1ea7408e206e9bd0c1ffe96a62f0a657cf01f14857486ca3b"
+        },
+        "sp1-u2": {
+          "size": 131072,
+          "crc32": "62f021f4",
+          "sha256": "7965ec526a4fca45fc20c02c61df2255fac98a900eab4fe4300e29d9969fff1b"
+        },
+        "sp1-u3.bin": {
+          "size": 131072,
+          "crc32": "2025b7a2",
+          "sha256": "6edce2084a0eaf66d978f6690e42626cdf94f4fc09e4c028badcfb37426e17cf"
+        },
+        "sp1-u4.bin": {
+          "size": 131072,
+          "crc32": "1179a30f",
+          "sha256": "b5ba536d57f765ce176fb4bc620e067d1fa738fa3fb159b40ea84f157d9c13db"
+        },
+        "sp1.jipan.1024": {
+          "size": 131072,
+          "crc32": "9fb0abe4",
+          "sha256": "31b6885813217ce7d76b9957857d20f58ebc4e0fda98e11fdd8c028fd125430d"
+        },
+        "uni-bios_1_0.rom": {
+          "size": 131072,
+          "crc32": "0ce453a0",
+          "sha256": "1a907b3e6b016f597f744f146505b5cd47ae47430443adb852958c0b14c37673"
+        },
+        "uni-bios_1_1.rom": {
+          "size": 131072,
+          "crc32": "5dda0d84",
+          "sha256": "b8eec4346b5a0c336cc155aa4c4ee79275bb20a17bf2b9a457860710556d8a85"
+        },
+        "uni-bios_1_2.rom": {
+          "size": 131072,
+          "crc32": "4fa698e9",
+          "sha256": "8ca8ec8c061ea3e2580f6adf1af1892c5d7d23b0c237b6d81d405188103e70ff"
+        },
+        "uni-bios_1_2o.rom": {
+          "size": 131072,
+          "crc32": "e19d3ce9",
+          "sha256": "3584772038ca892ab9e38ca23462f01bbac4fe64e43dba73edba246c7f25b097"
+        },
+        "uni-bios_1_3.rom": {
+          "size": 131072,
+          "crc32": "b24b44a0",
+          "sha256": "930652ed0772973e7f79ca98bfc6690303020a42c9834bdae4190433e7340ac7"
+        },
+        "uni-bios_2_0.rom": {
+          "size": 131072,
+          "crc32": "0c12c2ad",
+          "sha256": "d5611f313c5a1bc15e253a9f81452f3f64564d483e9eaed803e83e7dad441194"
+        },
+        "uni-bios_2_1.rom": {
+          "size": 131072,
+          "crc32": "8dabf76b",
+          "sha256": "bbccee84ccf1570f12d4d1e87a564b6f4207d61b7abe330a7bee95795d446dc1"
+        },
+        "uni-bios_2_2.rom": {
+          "size": 131072,
+          "crc32": "2d50996a",
+          "sha256": "66a0211624c96ff3305ea72bd5537258a2f7c97a798964d1c63b5e494c04dce2"
+        },
+        "uni-bios_2_3.rom": {
+          "size": 131072,
+          "crc32": "27664eb5",
+          "sha256": "1e018b5bbad4152209a7b18329f74e8c95f53853b0b99a29813bce71a37348a5"
+        },
+        "uni-bios_2_3o.rom": {
+          "size": 131072,
+          "crc32": "601720ae",
+          "sha256": "8b32554300d2e07f15a15a6d8ddef7020df5fedee3bf9010077717ea85988d47"
+        },
+        "uni-bios_3_0.rom": {
+          "size": 131072,
+          "crc32": "a97c89a9",
+          "sha256": "75646d516a7f733dd71eb8df557e30c32830ed21b98807efdfe3440a487a6106"
+        },
+        "uni-bios_3_1.rom": {
+          "size": 131072,
+          "crc32": "0c58093f",
+          "sha256": "0e3ae7179f775a813ed50c335339c99be31c3252db8cfbe61f1af72b0922c3d2"
+        },
+        "uni-bios_3_2.rom": {
+          "size": 131072,
+          "crc32": "a4e8b9b3",
+          "sha256": "c680ceb58aea41695bc8f7df347576a017e7b2a9bf3cff7df0ca18150787ef90"
+        },
+        "uni-bios_3_3.rom": {
+          "size": 131072,
+          "crc32": "24858466",
+          "sha256": "2a16ded4859c5ab7138e7939a049db50384eea4e2001f3d3d535553055affebe"
+        },
+        "uni-bios_4_0.rom": {
+          "size": 131072,
+          "crc32": "a7aab458",
+          "sha256": "e016ce75097df0b5f5910e8eb4914439f5c77511de65df5a1e089eef147b256b"
+        },
+        "vs-bios.rom": {
+          "size": 131072,
+          "crc32": "f0e8f27d",
+          "sha256": "9e9ad1123f9680bcb76fd3c33b9a77ffa64823f57d2d16136e3b674d7226d77c"
+        }
+      }
+    }
+  },
+  "provenance": {
+    "kind": "user_supplied",
+    "date": "2026-10-21",
+    "authorization": "Included at the user's explicit request to publish these supplied archives in the installer and subsequent CI builds.",
+    "independent_redistribution_license_verified": false,
+    "copyright": "Original copyright and terms are retained; these BIOS archives are not relicensed under GPL."
+  }
+}

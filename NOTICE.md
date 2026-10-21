@@ -98,7 +98,9 @@ The opaque-row specialization was slower in a frozen-state physical benchmark
 and is disabled in the delivered read-only variant; that variant removes only
 the redundant tile modulo. The original optimization BDA remains available.
 The PC graphics decoder is extracted from the same pinned GnGeo source.
-Game/BIOS data is supplied locally by the user and is not redistributed.
+Game data is supplied locally by the user and is not redistributed. Historical
+packages through v0.2.0 did not redistribute BIOS data; v0.2.1 adds the two
+publisher-supplied BIOS archives described below.
 The included test cartridge and its boot code are original test material.
 
 PGM support (enabled by the v0.2.0 release preset; `--pgm` in the generic
@@ -114,7 +116,8 @@ the ICS2115 source credits O. Galibert, ElSemi and OopsWare. The build extracts
 decryption and sound into temporary build copies, retaining the upstream
 sound attribution. The sound copy uses paged samples and 8 kHz synthesis
 with adjusted oscillator increments. New H1 filesystem, bus, cache and
-frontend adapters are GPL-2.0-or-later. No PGM game or BIOS data is included.
+frontend adapters are GPL-2.0-or-later. No PGM game data is included. The BIOS
+archive added to the v0.2.1 installer is separate from this source-derived code.
 
 The H1 PGM optimization adds bounded caches of decoded palette indices,
 preconverted RGB32 palette colors, MXU1 screen copies, plain-memory MIPS
@@ -146,5 +149,22 @@ including a bounded 60 logical / 30 displayed FPS player-action window;
 cold resource loads and other stages are not guaranteed full speed.
 The earlier Neo Geo gameplay statements above describe their historical
 builds. The exact v0.2.0 image passed native startup checks, but Neo Geo
-gameplay was not rerun on that image in this release session. Original
-ROMs, BIOS data and preprocessed ROM caches are not distributed.
+gameplay was not rerun on that image in this release session. Game ROMs,
+H1 firmware, preprocessed ROM caches and personal saves are not distributed.
+
+The v0.2.1 release changes packaging only and retains the exact v0.2.0 BDA
+(SHA256 0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0).
+It adds the publisher's existing pgm.zip and neogeo.zip, unchanged, from
+assets/bios/ to ARCADE/ in the public installer. Both archives are committed
+as fixed CI packaging inputs. The publisher explicitly requested their
+inclusion in this public release and future CI packages on 2026-10-21.
+That instruction is recorded as the publication basis; it is not an
+independently verified copyright license from the BIOS rightsholders.
+The supplied archives contain no accompanying license documents. PGM BIOS
+data remains attributable to IGS; Neo Geo system BIOS/resources and the
+included Universe BIOS variants retain their respective SNK and Universe
+BIOS author copyrights. The H1 code's GPL and linking exception do not
+relicense these separate data files. See docs/licensing.md for archive
+identification and the recorded scope of this packaging change. Archive/member
+hashes and publication provenance are recorded in
+[assets/bios/manifest.json](assets/bios/manifest.json).

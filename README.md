@@ -1,6 +1,6 @@
 # 街机游戏 · BBKH1-Arcade
 
-作者：**HelloClyde**。面向步步高 **H1 / Y100 V1.41、JZ4740、480×272 屏幕**的 **Neo Geo MVS / PGM 街机模拟器**，版本 **0.2.0**，开发预览。
+作者：**HelloClyde**。面向步步高 **H1 / Y100 V1.41、JZ4740、480×272 屏幕**的 **Neo Geo MVS / PGM 街机模拟器**，版本 **0.2.1**，开发预览。
 
 公开 H1 移植层、A68K/MXU/HLE 优化、触屏菜单和 PC 转换工具，固定所有上游提交。
 默认采用 **408 MHz、4:3 放大、固定跳1帧（目标约30显示帧/秒）、8 kHz 声音合成**。
@@ -9,20 +9,25 @@
 
 ## 快速开始
 
-下载 Release 的 `H1Arcade-v0.2.0-install.zip`，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
-也可以只下载 `H1Arcade.bda`；本地构建输出为 `dist/H1Arcade.bda`。
+下载 Release 的 **`H1Arcade-v0.2.1-install.zip`**，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
+安装包已包含 `ARCADE/pgm.zip` 和 `ARCADE/neogeo.zip`，只需另放自己的游戏 ZIP。
+也可以只下载 `H1Arcade.bda`，此时仍需自己配置对应 BIOS；本地构建输出为 `dist/H1Arcade.bda`。
 通过 USB U 盘把它复制到设备 **`A:\应用\程序\H1Arcade.bda`**，刷新桌面后打开“**街机游戏**”。
 游戏文件放在 **`A:\ARCADE\`**，直接选择原始游戏 ZIP，首次在 H1 上分块转换并显示进度，之后复用缓存：
 
 | 系统 / 游戏 | 同目录需要的文件 | 设备生成的缓存 |
 | --- | --- | --- |
-| PGM《三国战纪》一代 `kov` V117 | `kov.zip`、自己的 `pgm.zip` | `.h1pgm`，约64.2 MiB |
-| Neo Geo，例如《拳皇97》 | `kof97.zip`、自己的 `neogeo.zip` | `.h1neo`，拳皇97约58 MiB |
+| PGM《三国战纪》一代 `kov` V117 | 自己的 `kov.zip`、安装包已带的 `pgm.zip` | `.h1pgm`，约64.2 MiB |
+| Neo Geo，例如《拳皇97》 | 自己的 `kof97.zip`、安装包已带的 `neogeo.zip` | `.h1neo`，拳皇97约58 MiB |
 
 PGM 目前只支持 `kov` V117；其他版本、其他 PGM 游戏及 PGM2/PGM3 尚不支持。
 PGM 缓存优先写在原 ZIP 旁，A 盘写入失败且临时文件清理成功时回退到 `B:\ARCADE`；之后仍选择原 ZIP 即可复用。
 已有 `.h1neo` 也可直接打开，继续使用原来的存档与设置。详见[设备端转换说明](docs/device-import.md)和[PGM 说明](docs/pgm.md)。
-商业游戏、商业 BIOS、原机固件和个人存档均不随仓库或源码包分发。
+游戏 ROM、H1 原机固件、转换缓存和个人存档不随安装包提供。
+这两个 BIOS ZIP 由项目发布者提供并明确要求加入公开安装包，原样固定在 `assets/bios/`，供后续 CI 复现打包，逐成员清单和发布依据见 [BIOS 清单](assets/bios/manifest.json)。
+BIOS 的版权与许可独立于 H1 代码的 GPL；本项目没有独立核实第三方版权授权，详情见[许可说明](docs/licensing.md)。
+
+**v0.2.1 仅更新安装内容和打包检查**，程序 BDA 与 v0.2.0 完全相同，沿用同一份真机记录；没有新增游戏回归或性能测试。
 
 Neo Geo 若希望在电脑上预先转换，安装包仍附带可选“PC工具”，包含 Windows x64 图形解码 DLL，只需 Python 3.12+，无需 GCC；
 在该目录运行下列命令时，将 `tools/convert.py` 换成 `convert.py`。工具只处理本地提供的原始 ZIP：
@@ -71,6 +76,7 @@ Git 检出运行 `python -X utf8 tools/fetch.py` 初始化固定依赖。
 或设置 `H1_GNU_BIN` 与 `HOST_CC`。脚本不依赖开发者用户名或本机 SDK 路径。
 打包命令为 `python -X utf8 tools/package_release.py`，输出在 `dist/release/`；
 版本标签由 CI 构建后生成同一套 BDA、安装包、完整源码、构建信息和校验文件。
+安装包中的两个 BIOS ZIP 来自仓库内固定文件，打包时核对整包及成员清单，后续 CI 无需另行下载 BIOS。
 默认 `tools/build_release.py` 已包含 PGM 和 Neo Geo；`tools/build_pgm.py` 保留为单独的 PGM 构建入口。
 
 ## 截图
@@ -100,7 +106,7 @@ Git 检出运行 `python -X utf8 tools/fetch.py` 初始化固定依赖。
 
 ## 验证范围
 
-v0.2.0 发布的确切 BDA 为 **1,295,948字节**，SHA256：`0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0`。
+v0.2.1 沿用 v0.2.0 的确切 BDA，共 **1,295,948字节**，SHA256：`0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0`。以下为 v0.2.0 的既有真机测试，v0.2.1 未重新运行真机。
 该 BDA 已通过 H1Debug 在物理 H1 上运行用户自备的《三国战纪》V117，确认玩家投币、选人、移动与攻击、触屏暂停/继续及正常退出，退出恢复原336 MHz并释放输入。
 408 MHz、4:3、跳1帧、8 kHz、音量10%下，20.325秒采样窗口为59.83/29.91逻辑/显示FPS，随后20.3秒关闭采样窗口为60/30 FPS；两个窗口均未回退到旧绘图路径。
 新资源热身的10.175秒窗口为55.72/27.91 FPS，冷载入和新精灵解码仍可停顿。实时窗口不是确定性重放，也不保证所有关卡或长时超频始终满速。
@@ -112,7 +118,7 @@ v0.2.0 发布的确切 BDA 为 **1,295,948字节**，SHA256：`0f3bfd95fe53f3313
 
 ### 历史 Neo Geo v0.1.2 / v0.1.1
 
-以下记录对应各自旧 BDA，不作为 v0.2.0 的 Neo Geo 游戏回归证明。
+以下记录对应各自旧 BDA，不作为 v0.2.0 / v0.2.1 的 Neo Geo 游戏回归证明。
 v0.1.2 BDA SHA256：`1aab71d3d1537c5b3261ee9545e20440f8e919674cee01d3ba4bcf1ba2717692`。
 已通过 H1Debug 在物理 H1 上从原始《拳皇97》ZIP 与 BIOS 完成首次转换，单独转换用时 **95.825秒**（3833个40 Hz原生tick），
 不包含 USB 复制、启动自检、选择文件及后续载入。缓存大小60,555,520字节；全部区段CRC、精灵页CRC与使用表、176,384字节抽样均匹配PC参考。

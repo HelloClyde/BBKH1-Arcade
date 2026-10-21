@@ -7,9 +7,10 @@ from pathlib import Path, PurePosixPath
 import re
 import stat
 import zipfile
+from release_bios import ARCHIVES, MANIFEST_PATH, bios_install_entries, validate_archive
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_EVIDENCE = 'docs/evidence/v0.2.0-release-verification.json'
+RELEASE_EVIDENCE = 'docs/evidence/v0.2.1-release-verification.json'
 PHYSICAL_EVIDENCE = 'docs/evidence/pgm-stream-hardware-20261021.json'
 TESTED_BDA_SHA256 = '0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0'
 TESTED_BDA_SIZE = 1295948
@@ -43,7 +44,7 @@ def checked_members(archive):
 
 def load_release_evidence(root=ROOT):
     record = json.loads((root / RELEASE_EVIDENCE).read_text(encoding='utf-8'))
-    assert record['format_version'] == 1 and record['release_version'] == '0.2.0'
+    assert record['format_version'] == 1 and record['release_version'] == '0.2.1'
     assert record['bda_sha256'] == TESTED_BDA_SHA256 and record['bda_size'] == TESTED_BDA_SIZE
     assert record['physical_evidence']['path'] == PHYSICAL_EVIDENCE
     assert record['physical_evidence']['tested_bda_sha256'] == TESTED_BDA_SHA256
@@ -94,6 +95,7 @@ def verify(directory, tag=None, commit=None):
     directory = directory.resolve()
     info = json.loads((directory / 'BUILD-INFO.json').read_text(encoding='utf-8'))
     record, physical = load_release_evidence()
+    bios_entries, bios_manifest = bios_install_entries()
     assert info['version'] == record['release_version']
     if tag:
         assert info['tag'] == tag and tag == 'v' + info['version']
@@ -133,7 +135,9 @@ def verify(directory, tag=None, commit=None):
     assert check['pgm_hardware_verified'] is True and check['neogeo_gameplay_regression_rerun'] is False
     assert check['sdk_commit'] == record['sdk_commit'] and check['validation_scope'] == record['verification_scope']
     assert info['dependencies'] == record['dependencies']
-    assert not info['ROM_or_commercial_BIOS_distributed']
+    assert info['BIOS_distributed'] is True and info['game_ROM_distributed'] is False
+    assert 'ROM_or_commercial_BIOS_distributed' not in info
+    assert info['bios'] == bios_manifest
     with zipfile.ZipFile(directory / info['installer']['filename']) as archive:
         members = checked_members(archive)
         manifest = json.loads(archive.read('INSTALL-MANIFEST.json'))
@@ -143,6 +147,18 @@ def verify(directory, tag=None, commit=None):
             safe_relative(name)
             assert sha(archive.read(name)) == digest, name
         assert archive.read('应用/程序/H1Arcade.bda') == bda
+        for name, data in bios_entries.items():
+            assert archive.read(name) == data, name
+        assert {name for name in members if name.startswith('ARCADE/')} == {
+            'ARCADE/放置游戏文件.txt', 'ARCADE/pgm.zip', 'ARCADE/neogeo.zip'
+        }, 'Unexpected game data in installer'
+        assert {name for name in members if name.lower().endswith(('.zip', '.7z', '.rar', '.tar', '.gz', '.tgz'))} == {
+            'ARCADE/pgm.zip', 'ARCADE/neogeo.zip', 'PC工具/gngeo_data.zip'
+        }, 'Unexpected archive in installer'
+        assert not any(name.lower().endswith(('.h1neo', '.h1pgm', '.rom', '.raw', '.nand', '.bin')) for name in members)
+        for name in ARCHIVES:
+            spec = bios_manifest['files'][name]
+            validate_archive(archive.read(spec['install_target']), spec)
         assert archive.read('PC工具/gfx.dll')[:2] == b'MZ'
         with zipfile.ZipFile(io.BytesIO(archive.read('PC工具/gngeo_data.zip'))) as drivers:
             driver_names = checked_members(drivers)
@@ -164,6 +180,15 @@ def verify(directory, tag=None, commit=None):
             assert archive.read(prefix + name) == (ROOT / name).read_bytes(), name
         assert json.loads(archive.read(prefix + 'UPSTREAM.json')) == record['dependencies']
         assert archive.read(prefix + 'VERSION').decode().strip() == info['version']
+        assert archive.read(prefix + MANIFEST_PATH) == bios_entries['BIOS-MANIFEST.json']
+        for name in ARCHIVES:
+            spec = bios_manifest['files'][name]
+            data = archive.read(prefix + spec['source_path'])
+            assert data == bios_entries[spec['install_target']], name
+            validate_archive(data, spec)
+        assert {name[len(prefix):] for name in members if name.lower().endswith(('.zip', '.7z', '.rar', '.tar', '.gz', '.tgz'))} == {
+            'assets/bios/pgm.zip', 'assets/bios/neogeo.zip', 'third_party/gngeo/gngeo.dat/gngeo_data.zip'
+        }, 'Unexpected archive in corresponding sources'
         for name, digest in record['runtime_source_sha256'].items():
             assert sha(archive.read(prefix + name)) == digest, name
         assert sha(archive.read(prefix + 'assets/icon.png')) == record['icon_sha256']
@@ -181,7 +206,9 @@ def verify(directory, tag=None, commit=None):
     return {'ok': True, 'version': info['version'], 'commit': info['application_commit'],
             'bda_sha256': sha(bda), 'assets': sorted(names), 'complete_source_snapshots': True,
             'release_evidence': info['bda']['evidence'], 'physical_evidence': info['bda']['physical_evidence'],
-            'pgm_hardware_verified': physical['hardware_verified'], 'neogeo_gameplay_regression_rerun': False}
+            'pgm_hardware_verified': physical['hardware_verified'], 'neogeo_gameplay_regression_rerun': False,
+            'BIOS_distributed': True, 'game_ROM_distributed': False,
+            'bios_sha256': {name: spec['sha256'] for name, spec in bios_manifest['files'].items()}}
 
 
 def main():
