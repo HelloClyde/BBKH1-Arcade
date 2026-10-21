@@ -168,7 +168,7 @@
   "input_scope": "All local src C/header/assembly/linker inputs plus the actual build.py pipeline and invoked generation/patch/audit helpers. Build wrappers, converters, packaging/verification scripts and VERSION affect invocation or metadata only; no runtime source is relabelled. The fixed dependency commits cover SDK and upstream core/generator sources.",
   "physical_evidence": {
     "path": "docs/evidence/pgm-stream-hardware-20261021.json",
-    "sha256": "5b8612b15168419b1d2a31600f65ea52d408d3e6972650c880eae83585abcd54",
+    "sha256": "826d2200b8b7a5d569dd0ff9d8efb7707db991b37c663271991dc92c8edbc5d6",
     "tested_bda_sha256": "0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0",
     "date": "2026-10-21",
     "hardware": "physical BBK H1/Y100 V1.41 via H1Debug"
