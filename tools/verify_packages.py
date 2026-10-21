@@ -101,7 +101,10 @@ def verify(directory, tag=None, commit=None):
         assert info['application_commit'] == commit
     names = {safe_relative(info[key]['filename'], basename=True) for key in ('bda', 'installer', 'source')} | {'BUILD-INFO.json'}
     assert len(names) == 4
-    assert {path.name for path in directory.iterdir()} == names | {'SHA256SUMS.txt', 'RELEASE-NOTES.md'}, 'Unexpected release files'
+    actual_names = {path.name for path in directory.iterdir()}
+    # Actions carries the notes file; GitHub publishes its contents as the release body.
+    assert actual_names in (names | {'SHA256SUMS.txt'},
+                            names | {'SHA256SUMS.txt', 'RELEASE-NOTES.md'}), 'Unexpected release files'
     assert all(path.is_file() and not path.is_symlink() for path in directory.iterdir()), 'Non-file release entry'
     sums = {}
     for row in (directory / 'SHA256SUMS.txt').read_text(encoding='utf-8').splitlines():
