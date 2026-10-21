@@ -4,3 +4,8 @@
 # Runtime hashes bind the original physical-H1 source snapshot, including its
 # existing line endings. Preserve those exact bytes across clean checkouts.
 src/** -text
+
+# These physically verified generator inputs also retain their original CRLF.
+tools/build.py -text
+tools/fast_bus.py -text
+tools/prepare.py -text

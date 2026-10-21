@@ -61,7 +61,15 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python tests/render_host.py --mxu-render
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          python tests/audio_fast_host.py --build release-a68k-idle-dirty-selftest-o3-lto-bus-reads-tiles-mxu-spritefix-drawmxu4-audio16-visible-speed-scale-cpu408-menu
+          python tests/audio_fast_host.py --build release-a68k-idle-dirty-selftest-o3-lto-bus-reads-tiles-mxu-spritefix-drawmxu4-audio16-visible-speed-scale-cpu408-menu-pgm
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tests/pgm_import_host.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tests/pgm_draw_host.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tests/pgm_stream_host.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tests/pgm_scale_host.py --toolchain .tools/toolchain/bin
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
       - name: Rebuild and require identical BDA
         run: |
@@ -109,6 +117,9 @@ jobs:
             build/present-host/verification-mxu-o3.json
             build/render-host-mxu/verification.json
             build/audio-fast-host/verification.json
+            build/pgm-import-host/report.json
+            build/pgm-draw-host/report.json
+            build/pgm-stream-host/report.json
           if-no-files-found: error
           archive: true
           retention-days: 14

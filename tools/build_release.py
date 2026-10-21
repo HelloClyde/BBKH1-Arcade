@@ -1,4 +1,4 @@
-"""Build the physically tested A68K/408 MHz menu preset from fixed dependencies."""
+"""Build the physically tested Neo Geo/PGM preset from fixed dependencies."""
 from pathlib import Path
 import argparse
 import os
@@ -7,11 +7,11 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-BUILD_NAME = 'release-a68k-idle-dirty-selftest-o3-lto-bus-reads-tiles-mxu-spritefix-drawmxu4-audio16-visible-speed-scale-cpu408-menu'
+BUILD_NAME = 'release-a68k-idle-dirty-selftest-o3-lto-bus-reads-tiles-mxu-spritefix-drawmxu4-audio16-visible-speed-scale-cpu408-menu-pgm'
 PRESET = ['--core','a68k','--idle','--dirty-present','--cpu-selftest',
           '--optimize','3','--lto','--fast-bus','--bus-reads-only','--tile-direct',
           '--mxu','--mxu-render','--audio-fast','--visible-render','--speed-core',
-          '--scale-output','--cpu-mhz','408']
+          '--scale-output','--cpu-mhz','408','--pgm']
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)

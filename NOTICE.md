@@ -101,11 +101,14 @@ The PC graphics decoder is extracted from the same pinned GnGeo source.
 Game/BIOS data is supplied locally by the user and is not redistributed.
 The included test cartridge and its boot code are original test material.
 
-Experimental PGM support (`--pgm`) additionally derives ROM layouts,
+PGM support (enabled by the v0.2.0 release preset; `--pgm` in the generic
+builder) additionally derives ROM layouts,
 KOV program decryption, ASIC28 protection HLE, graphics formats, and ICS2115
 sound behavior from the same pinned dmitrysmagin/fba-a320 revision listed
 above: src/burn/pgm/{d_pgm,pgm_run,pgm_draw,pgm_prot,pgm_crypt}.cpp and
-src/burn/ics2115.cpp. Their original terms remain applicable. PGM work is
+src/burn/ics2115.cpp. The original FBA, PGM, ASIC28 and ICS2115 source
+notices and terms remain applicable; their adaptations are not relabelled
+under the H1 adapters' GPL. PGM work is
 credited upstream to ElSemi, David Haywood, OopsWare and FBA contributors;
 the ICS2115 source credits O. Galibert, ElSemi and OopsWare. The build extracts
 decryption and sound into temporary build copies, retaining the upstream
@@ -127,3 +130,21 @@ XR1 and MXU_CR and the PGM screen-copy leaf preserves its MXU context, while
 leaving interrupt enable unchanged as requested by the device owner.
 Generated row fixtures and frozen gameplay frames are compared on physical
 H1; no game/BIOS data is included in these tests.
+
+The v0.2.0 PGM preset adds 448-pixel row composition followed immediately
+by LCD scaling, bounded sprite/background/text plans and cache reservation,
+ordinary MIPS fixed-coordinate scaling and targeted MXU1 spans/copies.
+Signature-guarded 68000 and Z80 idle-loop batches preserve the emulated
+registers, instruction timing and interrupt boundaries. The new PGM MXU
+leaves save and restore the XR registers and MXU control state they use,
+without changing interrupt enable. Upstream CPU, protection and sound
+attributions remain in the complete corresponding source archive.
+
+Physical-H1 evidence for the exact v0.2.0 BDA is recorded in
+`docs/evidence/pgm-stream-hardware-20261021.json`. It covers KOV V117,
+including a bounded 60 logical / 30 displayed FPS player-action window;
+cold resource loads and other stages are not guaranteed full speed.
+The earlier Neo Geo gameplay statements above describe their historical
+builds. The exact v0.2.0 image passed native startup checks, but Neo Geo
+gameplay was not rerun on that image in this release session. Original
+ROMs, BIOS data and preprocessed ROM caches are not distributed.

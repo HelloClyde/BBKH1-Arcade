@@ -1,4 +1,4 @@
-"""Package the checked BDA, Windows converter, installer and complete sources."""
+"""Package the verified Neo Geo/PGM BDA, installer and complete sources."""
 from pathlib import Path
 import argparse
 import json
@@ -21,11 +21,15 @@ def main():
     assert check['ok'] and sha(data)==check['sha256'] and check['exact_physical_bda_match']
     deps=json.loads((ROOT/'UPSTREAM.json').read_text())
     out=ROOT/'dist/release';out.mkdir(parents=True,exist_ok=True)
+    expected={'H1Arcade.bda',f'H1Arcade-v{version}-install.zip',
+              f'BBKH1-Arcade-v{version}-source.zip','BUILD-INFO.json','SHA256SUMS.txt','RELEASE-NOTES.md'}
+    assert {p.name for p in out.iterdir()}<=expected,'Move previous release outputs aside before packaging a new version'
     bda=out/'H1Arcade.bda';bda.write_bytes(data)
     entries={
         '应用/程序/H1Arcade.bda':data,
-        'ARCADE/放置游戏文件.txt':'把原始游戏 ZIP（如 kof97.zip）和自己的 neogeo.zip 放在此目录，H1 首次打开会自动转换；也可放已有 .h1neo。ROM、商业 BIOS 和个人存档不随安装包提供。\n'.encode(),
+        'ARCADE/放置游戏文件.txt':'把自己的 kof97.zip 与 neogeo.zip，或三国战纪 V117 kov.zip 与 pgm.zip 放在此目录，H1 首次打开会自动转换；也可放已有 .h1neo / .h1pgm。ROM、商业 BIOS 和个人存档不随安装包提供。\n'.encode(),
         '设备端转换说明.md':(ROOT/'docs/device-import.md').read_bytes(),
+        'PGM三国战纪说明.md':(ROOT/'docs/pgm.md').read_bytes(),
         '使用说明.md':(ROOT/'README.md').read_bytes(),
         'NOTICE.md':(ROOT/'NOTICE.md').read_bytes(),
         '许可/H1-GPL-2.0.txt':(ROOT/'LICENSE').read_bytes(),
@@ -48,7 +52,8 @@ def main():
     source=out/f'BBKH1-Arcade-v{version}-source.zip';source_info=complete_source(source,commit,a.tag)
     info={'version':version,'tag':a.tag,'application_commit':commit,'dependencies':deps,
           'bda':{'filename':bda.name,'sha256':sha(data),'size':len(data),
-                 'exact_physical_bda_match':True,'evidence':'docs/evidence/hardware-verification.json'},
+                 'exact_physical_bda_match':True,'evidence':'docs/evidence/v0.2.0-release-verification.json',
+                 'physical_evidence':check['physical_evidence']},
           'installer':{'filename':installer.name,'sha256':sha(installer.read_bytes()),'files':len(manifest)},
           'source':source_info,'ROM_or_commercial_BIOS_distributed':False,
           'verification':check,'runtime_preset':{'cpu_mhz':408,'display':'4:3','skip':1,'sound_hz':8000}}
@@ -62,13 +67,19 @@ def main():
 
 下载 H1Arcade-v{version}-install.zip 后，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
 单独 BDA 放到 A:\\应用\\程序\\H1Arcade.bda。
-把自己的游戏 ZIP 与 neogeo.zip 复制到 ARCADE，直接选择游戏 ZIP，H1 首次转换、校验后进入游戏；之后复用缓存。
-转换有进度和取消按钮，保留原始 ZIP，兼容已有 .h1neo 和存档。PC 转换工具仍作为可选工具附带。
+本版将 PGM 支持并入默认应用，支持《三国战纪》一代 kov V117；保留原有 Neo Geo 支持。
+把自己的 kof97.zip 与 neogeo.zip，或 kov.zip 与 pgm.zip 复制到 ARCADE，直接选择游戏 ZIP，H1 首次转换后进入游戏；之后复用缓存。
+转换有进度和取消按钮，保留原始 ZIP，兼容已有 .h1neo / .h1pgm。PGM 缓存约64.2 MiB，A盘写入失败并清理临时文件后可回退 B:\\ARCADE；下次仍选原ZIP自动复用。
+PC工具仅转换Neo Geo，作为可选工具附带；PGM直接使用设备端转换。
 源码 ZIP 包含固定 SDK、GnGeo、Musashi 和 A68K 源码快照，无需另取子模块即可重建。
 上游版权与各自条款保留在 NOTICE.md、docs/licensing.md 和安装包“许可”目录；完整组合不统一重标为 GPL。
 游戏 ROM、商业 BIOS、固件和个人存档不分发。
 
-本版加入设备端 ZIP 首次转换。发布 BDA 与本版真机验收的构建逐字节相同：{sha(data)}。
+PGM逐行合成后立即缩放输出，配合MIPS/MXU精灵合成、CPU等待循环HLE和8 kHz音频。
+真实H1上同一冻结画面完整绘图与输出从约22.14 ms降至14.32 ms（减少35.3%）。
+在408 MHz、4:3、跳1帧、8 kHz下，20.3秒玩家战斗操作窗口达到60逻辑/30显示FPS；首次加载新资源仍会短暂掉速，不保证所有关卡恒定满速。
+发布 BDA 与上述PGM真机验收的构建逐字节相同：{sha(data)}。
+本次未对确切最终BDA重跑Neo Geo完整游戏回归；旧版拳皇97验证记录单独保留，不作为本次重新验收。
 CI 做实际 C 函数测试和重建校验，没有运行真机或游戏 CPU 模拟器。
 历史实测窗口及限制见 README 和完整源码中的真机记录。
 
