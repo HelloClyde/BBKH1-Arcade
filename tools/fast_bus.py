@@ -101,9 +101,63 @@ static unsigned h1_scheduled_read(char size,int address){
 }
 '''
 
+PGM_BANKING=r'''
+/* PGM-only same-mapping branch shortcut. A2/A3/T9/AT are scratch in the
+ * original C-banking path. Preserve FULLPC and every live CPU register.
+ * TST absolute-long targets retain C banking for the checked idle HLE. */
+static unsigned h1_pgm_bank_label;
+static unsigned h1_pgm_same_mapping(int pc){
+ unsigned label=++h1_pgm_bank_label;const char *p=regnameslong[pc];
+ fprintf(fp,"#if H1_PGM\n\t.set push\n\t.set noat\n");
+ fprintf(fp,"\tlui $t9,%%hi(h1_pgm_bus_pages)\n\tlw $t9,%%lo(h1_pgm_bus_pages)($t9)\n\tnop\n");
+ fprintf(fp,"\tbeqz $t9,.Lh1_pgm_bank_slow%u\n\tnop\n",label);
+ fprintf(fp,"\tlui $a2,%%hi(h1_pgm_banking_active)\n\tlw $a2,%%lo(h1_pgm_banking_active)($a2)\n\tnop\n");
+ fprintf(fp,"\tbeqz $a2,.Lh1_pgm_bank_slow%u\n\tsll $a2,%s,8\n\tsrl $a2,$a2,8\n",label,p);
+ fprintf(fp,"\tsrl $at,$a2,16\n\tsll $at,$at,2\n\taddu $t9,$t9,$at\n\tlw $t9,0($t9)\n\tnop\n");
+ fprintf(fp,"\tbeqz $t9,.Lh1_pgm_bank_slow%u\n\tlui $at,0xff\n\tand $at,$at,$a2\n\tsubu $t9,$t9,$at\n",label);
+ fprintf(fp,"\tbne $t9,$s6,.Lh1_pgm_bank_slow%u\n\tnop\n\taddu $a3,$s6,$a2\n\tlhu $at,0($a3)\n",label);
+ fprintf(fp,"\tori $t9,$zero,0x4ab9\n\tbeq $at,$t9,.Lh1_pgm_bank_slow%u\n\tori $t9,$zero,0x4a39\n",label);
+ fprintf(fp,"\tbeq $at,$t9,.Lh1_pgm_bank_slow%u\n\tnop\n\tmove $s7,$a3\n",label);
+ fprintf(fp,"\tlui $t9,%%hi(h1_pgm_banking_stats)\n\taddiu $t9,$t9,%%lo(h1_pgm_banking_stats)\n\tlw $at,8($t9)\n\tnop\n\taddiu $at,$at,1\n\tsw $at,8($t9)\n");
+ fprintf(fp,"\tb .Lh1_pgm_bank_done%u\n\tnop\n.Lh1_pgm_bank_slow%u:\n\t.set pop\n#endif\n",label,label);
+ return label;
+}
+'''
+
+PGM_DBRA=r'''
+static void h1_pgm_dbra_hook(void){
+ /* Only the unconditional DBF/DBRA handler emits this hook, after taking
+  * the branch and decrementing its Dn. T8 still points at that D register.
+  * All live flags/PC/base registers are o32 callee-saved; T7 is published
+  * and reloaded explicitly. Completed immediately reloads the next T8. */
+ fprintf(fp,"#if H1_PGM\n\t.set push\n\t.set noat\n\tli $at,-4\n\tbne $v0,$at,.Lh1_pgm_dbra_done\n\tnop\n");
+ fprintf(fp,"\tlui $at,%%hi(h1_pgm_dbra_active)\n\tlw $at,%%lo(h1_pgm_dbra_active)($at)\n\tnop\n\tbeqz $at,.Lh1_pgm_dbra_done\n\tnop\n");
+ fprintf(fp,"\tslti $at,$t7,560\n\tbnez $at,.Lh1_pgm_dbra_done\n\tnop\n");
+ fprintf(fp,"\tlui $at,%%hi(m68k_ICount)\n\tsw $t7,%%lo(m68k_ICount)($at)\n\tsubu $a1,$t8,$s5\n\tmove $a2,$t7\n\tjal h1_pgm_dbra_batch\n\tmove $a0,$s7\n");
+ fprintf(fp,"\tlui $at,%%hi(m68k_ICount)\n\tlw $t7,%%lo(m68k_ICount)($at)\n\tnop\n\tsubu $t7,$t7,$v0\n.Lh1_pgm_dbra_done:\n\t.set pop\n#endif\n");
+}
+'''
+
 
 def generate_copy(source:Path,target:Path,read_only=False,video=False,rom=False):
-    original=source.read_text();read=original.index('void Memory_Read(');write=original.index('void Memory_Write(',read)
+    original=source.read_text()
+    if rom:
+        bank=original.index('void MemoryBanking(');bank_end=original.index('/*\n * Update Previous PC',bank)
+        body=original[bank:bank_end]
+        token='\t/* Mask to n bits */'
+        assert body.count(token)==1
+        body=body.replace(token,'\tunsigned h1_pgm_label=h1_pgm_same_mapping(pc);\n\n'+token,1)
+        token='\tfprintf(fp, " # End of Banking code:\\n");'
+        assert body.count(token)==1
+        body=body.replace(token,token+'\n\tfprintf(fp,"#if H1_PGM\\n.Lh1_pgm_bank_done%u:\\n#endif\\n",h1_pgm_label);',1)
+        original=original[:bank]+PGM_BANKING+body+original[bank_end:]
+        op5=original.index('void opcode5(');op5_end=original.index('void branchinstructions(',op5)
+        body=original[op5:op5_end]
+        token='\t\t\t\t\tfprintf(fp, "\\t\\t addu  %s,%s,%s\\n", regnameslong[PC], regnameslong[PC], regnameslong[V0]);\n\t\t\t\t\tCompleted();'
+        assert body.count(token)==1
+        body=body.replace(token,token.replace('\n\t\t\t\t\tCompleted();','\n\t\t\t\t\tif(((Opcode>>8)&15)==1)h1_pgm_dbra_hook();\n\t\t\t\t\tCompleted();'),1)
+        original=original[:op5]+PGM_DBRA+body+original[op5_end:]
+    read=original.index('void Memory_Read(');write=original.index('void Memory_Write(',read)
     end=original.index('/*\n * Fetch data from Code area',write)
     r=original[read:write];w=original[write:end]
     token='\tassert(AReg != T9);'

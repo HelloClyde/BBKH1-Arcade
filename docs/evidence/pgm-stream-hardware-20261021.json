@@ -1,0 +1,3803 @@
+{
+  "date": "2026-10-21",
+  "firmware": "physical BBK H1/Y100 V1.41",
+  "bda_sha256": "0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0",
+  "bda_size": 1295948,
+  "hardware_verified": true,
+  "scope": "Physical H1Debug game execution, controls and native MIPS/MXU checks; host tests execute generated graphics and PCM arithmetic only, no guest CPU/device simulation.",
+  "settings": {
+    "cpu_mhz": 408,
+    "mode": "4:3 362x272",
+    "skip": 1,
+    "synthesis_hz": 8000,
+    "volume_percent": 10
+  },
+  "deployment": {
+    "operation": "deploy",
+    "source": "C:\\Users\\ASUS\\Documents\\ChatGPT\\bbk H1\\releases\\BBKH1-Arcade\\build\\release-a68k-idle-dirty-selftest-o3-lto-bus-reads-tiles-mxu-spritefix-drawmxu4-audio16-visible-speed-scale-cpu408-menu-pgm\\H1Arcade.bda",
+    "target": "A:\\应用\\程序\\H1Arcade.bda",
+    "bda": {
+      "path": "C:\\Users\\ASUS\\Documents\\ChatGPT\\bbk H1\\releases\\BBKH1-Arcade\\build\\release-a68k-idle-dirty-selftest-o3-lto-bus-reads-tiles-mxu-spritefix-drawmxu4-audio16-visible-speed-scale-cpu408-menu-pgm\\H1Arcade.bda",
+      "size": 1295948,
+      "title": "街机游戏",
+      "description": "H1 Native BDA SDK",
+      "category": 71,
+      "version": 16777474,
+      "file_size_minus_4": 1295944,
+      "payload_offset": 30812,
+      "resource_offset": 136,
+      "resource_sizes": [
+        6088,
+        9760,
+        5892,
+        8936
+      ],
+      "resources": [
+        {
+          "index": 0,
+          "start": 136,
+          "end": 6224,
+          "size": 6088,
+          "width": 45,
+          "height": 45,
+          "bits": 24,
+          "planes": 1,
+          "draw_width": 45,
+          "draw_height": 45
+        },
+        {
+          "index": 1,
+          "start": 6224,
+          "end": 15984,
+          "size": 9760,
+          "width": 57,
+          "height": 57,
+          "bits": 24,
+          "planes": 1,
+          "draw_width": 57,
+          "draw_height": 57
+        },
+        {
+          "index": 2,
+          "start": 15984,
+          "end": 21876,
+          "size": 5892,
+          "width": 49,
+          "height": 60,
+          "bits": 16,
+          "planes": 1,
+          "draw_width": 49,
+          "draw_height": 60
+        },
+        {
+          "index": 3,
+          "start": 21876,
+          "end": 30812,
+          "size": 8936,
+          "width": 49,
+          "height": 60,
+          "bits": 16,
+          "planes": 1,
+          "draw_width": 49,
+          "draw_height": 60
+        }
+      ],
+      "checksum": 5651,
+      "expected_checksum": 5651,
+      "checksum_ok": true,
+      "errors": [],
+      "warnings": [],
+      "ok": true
+    },
+    "completed": true,
+    "upload": {
+      "operation": "file_put",
+      "source": "C:\\Users\\ASUS\\AppData\\Local\\Temp\\h1-deploy-3yvhlj91\\H1Arcade.bda",
+      "target": "A:\\应用\\程序\\H1Arcade.bda",
+      "target_gbk_hex": "413a5cd3a6d3c35cb3ccd0f25c48314172636164652e626461",
+      "phase": "done",
+      "completed": true,
+      "size": 1295948,
+      "crc32": 1004840795,
+      "sha256": "0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0",
+      "token": 40,
+      "received": 1295948,
+      "status": {
+        "version": 1,
+        "state": 5,
+        "token": 40,
+        "size": 1295948,
+        "received": 1295948,
+        "expected_crc": 1004840795,
+        "actual_crc": 1004840795,
+        "verify_offset": 1295948,
+        "error": 0,
+        "fs_errno": 0,
+        "flags": 9,
+        "old_size": 1291820,
+        "old_crc": 59943720,
+        "last_activity_tick": 1370992,
+        "step_count": 959,
+        "reserved": 0,
+        "state_name": "done",
+        "error_name": "ok"
+      },
+      "paths": {
+        "target": "A:\\应用\\程序\\H1Arcade.bda",
+        "temporary": "A:\\应用\\程序\\H1D00000028.TMP",
+        "backup": "A:\\应用\\程序\\H1D00000028.BAK"
+      },
+      "device_crc_verified": true,
+      "elapsed_seconds": 90.32799999997951,
+      "original_source": "C:\\Users\\ASUS\\Documents\\ChatGPT\\bbk H1\\releases\\BBKH1-Arcade\\build\\release-a68k-idle-dirty-selftest-o3-lto-bus-reads-tiles-mxu-spritefix-drawmxu4-audio16-visible-speed-scale-cpu408-menu-pgm\\H1Arcade.bda"
+    },
+    "refresh": {
+      "operation": "desktop_refresh",
+      "before": {
+        "job_id": 37,
+        "kind": 2,
+        "state": 4,
+        "error": 0,
+        "menu_idle": 1,
+        "app_index": 84,
+        "entry_count": 18,
+        "return_code": 0,
+        "state_name": "done"
+      },
+      "completed": true,
+      "request_sent": true,
+      "job_id": 38,
+      "status": {
+        "job_id": 38,
+        "kind": 1,
+        "state": 4,
+        "error": 0,
+        "menu_idle": 1,
+        "app_index": 4294967295,
+        "entry_count": 18,
+        "return_code": 0,
+        "state_name": "done"
+      },
+      "payload_started": false,
+      "elapsed_seconds": 0.125
+    },
+    "run": {
+      "path": "A:\\应用\\程序\\H1Arcade.bda",
+      "operation": "desktop_run",
+      "before": {
+        "job_id": 38,
+        "kind": 1,
+        "state": 4,
+        "error": 0,
+        "menu_idle": 1,
+        "app_index": 4294967295,
+        "entry_count": 18,
+        "return_code": 0,
+        "state_name": "done"
+      },
+      "completed": true,
+      "request_sent": true,
+      "job_id": 39,
+      "status": {
+        "job_id": 39,
+        "kind": 2,
+        "state": 3,
+        "error": 0,
+        "menu_idle": 0,
+        "app_index": 84,
+        "entry_count": 19,
+        "return_code": 0,
+        "state_name": "running"
+      },
+      "payload_started": true,
+      "elapsed_seconds": 0.4220000000204891
+    }
+  },
+  "native": {
+    "bda_sha256": "0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0",
+    "state": {
+      "magic": 826495553,
+      "version": 1,
+      "state": 3,
+      "error": 0,
+      "frames": 1064,
+      "displayed": 163,
+      "cache_hits": 250,
+      "cache_misses": 70,
+      "tick_hz": 40,
+      "raw_start": 1380393,
+      "raw_end": 1381110,
+      "rtc_start": 1245762663,
+      "rtc_end": 1245762681,
+      "stop": 0,
+      "pc": 1075310,
+      "audio_samples": 142000,
+      "cache_bytes": 2097152,
+      "checksum": 0,
+      "keys": 0,
+      "paused_frames": 0
+    },
+    "sprite": [
+      827543623,
+      1,
+      3072,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "copy": [
+      826495047,
+      1,
+      256,
+      0,
+      0,
+      0,
+      0
+    ],
+    "bus": [
+      843208016,
+      1,
+      1024,
+      0
+    ],
+    "idle": [
+      843336016,
+      1,
+      1317,
+      1731989,
+      96991384,
+      1024,
+      0
+    ],
+    "z80_hle": [
+      860379728,
+      1,
+      1223,
+      189657,
+      36983115,
+      2048,
+      0
+    ],
+    "layers": [
+      1
+    ],
+    "present": [
+      1
+    ],
+    "interleave": [
+      2
+    ],
+    "settings": [
+      0,
+      1,
+      10,
+      0
+    ]
+  },
+  "additional_native": {
+    "branch": [
+      860113232,
+      1,
+      546,
+      994494,
+      55691664,
+      1024,
+      0
+    ],
+    "banking": [
+      876761168,
+      1,
+      13077414,
+      352,
+      0
+    ],
+    "bg": [
+      826427216,
+      1,
+      512,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "dbra": [
+      893535312,
+      1,
+      22575,
+      239,
+      88209,
+      1876670,
+      1028,
+      0,
+      22336
+    ],
+    "audio_fast": [
+      826361416,
+      1,
+      404,
+      0
+    ],
+    "clock": [
+      1212369995,
+      408,
+      1,
+      0,
+      0,
+      336,
+      408,
+      1,
+      1080435232,
+      452986144,
+      0,
+      4,
+      36,
+      13
+    ],
+    "stream": {
+      "magic": 827541328,
+      "version": 1,
+      "prepares": 166,
+      "prepared": 166,
+      "frames": 166,
+      "fallbacks": 0,
+      "resets": 1,
+      "source_rows": 37184,
+      "output_rows": 45152,
+      "reused_rows": 7968,
+      "lcd_pixels": 16345024,
+      "full_repaints": 1
+    }
+  },
+  "profiled_player_actions": {
+    "bda_sha256": "0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0",
+    "start": {
+      "magic": 826495553,
+      "version": 1,
+      "state": 3,
+      "error": 0,
+      "frames": 6210,
+      "displayed": 2736,
+      "cache_hits": 53603,
+      "cache_misses": 2315,
+      "tick_hz": 40,
+      "raw_start": 1380393,
+      "raw_end": 1391427,
+      "rtc_start": 1245762663,
+      "rtc_end": 1245762938,
+      "stop": 0,
+      "pc": 1075310,
+      "audio_samples": 828133,
+      "cache_bytes": 2097152,
+      "checksum": 0,
+      "keys": 0,
+      "paused_frames": 180521338
+    },
+    "end": {
+      "magic": 826495553,
+      "version": 1,
+      "state": 3,
+      "error": 0,
+      "frames": 7426,
+      "displayed": 3344,
+      "cache_hits": 62628,
+      "cache_misses": 2377,
+      "tick_hz": 40,
+      "raw_start": 1380393,
+      "raw_end": 1392240,
+      "rtc_start": 1245762663,
+      "rtc_end": 1245762959,
+      "stop": 0,
+      "pc": 1075332,
+      "audio_samples": 990266,
+      "cache_bytes": 2097152,
+      "checksum": 0,
+      "keys": 0,
+      "paused_frames": 180521338
+    },
+    "perf_start": {
+      "magic": 844121936,
+      "version": 3,
+      "enabled": 1,
+      "frames": 569,
+      "other": 1,
+      "cpu68": 115,
+      "z80": 8,
+      "sound": 8,
+      "background": 32,
+      "setup": 18,
+      "LCD": 51,
+      "IO": 49,
+      "PCM": 1,
+      "decode": 8,
+      "compose": 53,
+      "text": 14,
+      "input": 16,
+      "clear": 6,
+      "wait": 27,
+      "tile_hits": 432736,
+      "tile_misses": 744,
+      "sprite_hits": 35042,
+      "sprite_misses": 2704,
+      "mxu_pixels": 47350440,
+      "decoded_bytes": 9474048,
+      "identity_rows": 2629810,
+      "mapped_rows": 2492,
+      "identity_pixels": 398128536,
+      "mapped_pixels": 1114369
+    },
+    "perf_end": {
+      "magic": 844121936,
+      "version": 3,
+      "enabled": 1,
+      "frames": 1785,
+      "other": 2,
+      "cpu68": 382,
+      "z80": 25,
+      "sound": 13,
+      "background": 111,
+      "setup": 44,
+      "LCD": 174,
+      "IO": 63,
+      "PCM": 2,
+      "decode": 11,
+      "compose": 132,
+      "text": 46,
+      "input": 30,
+      "clear": 17,
+      "wait": 167,
+      "tile_hits": 570610,
+      "tile_misses": 744,
+      "sprite_hits": 49531,
+      "sprite_misses": 2930,
+      "mxu_pixels": 57860280,
+      "decoded_bytes": 9474048,
+      "identity_rows": 3519714,
+      "mapped_rows": 2492,
+      "identity_pixels": 486761847,
+      "mapped_pixels": 1114369
+    },
+    "stream_before": {
+      "magic": 827541328,
+      "version": 1,
+      "prepares": 2742,
+      "prepared": 2741,
+      "frames": 2741,
+      "fallbacks": 0,
+      "resets": 5,
+      "source_rows": 613984,
+      "output_rows": 745552,
+      "reused_rows": 131568,
+      "lcd_pixels": 269889824,
+      "full_repaints": 5
+    },
+    "stream_after": {
+      "magic": 827541328,
+      "version": 1,
+      "prepares": 3349,
+      "prepared": 3349,
+      "frames": 3348,
+      "fallbacks": 0,
+      "resets": 5,
+      "source_rows": 749952,
+      "output_rows": 910656,
+      "reused_rows": 160704,
+      "lcd_pixels": 329657472,
+      "full_repaints": 5
+    },
+    "device_ticks": 813,
+    "device_seconds": 20.325,
+    "host_seconds": 20.296000000089407,
+    "logic_fps": 59.82779827798278,
+    "display_fps": 29.91389913899139,
+    "profile": true,
+    "inputs": [
+      {
+        "at_seconds": 0.0,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 0.343,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 0.703,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 1.046,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 1.39,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 1.75,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 2.093,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 2.453,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 2.796,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 3.156,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 3.5,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 3.843,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 4.203,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 4.546,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 4.906,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 5.25,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 5.593,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 5.953,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 6.296,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 6.656,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 7.0,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 7.343,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 7.703,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 8.046,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 8.406,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 8.75,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 9.093,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 9.453,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 9.796,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 10.156,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 10.5,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 10.843,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 11.203,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 11.546,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 11.906,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 12.25,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 12.593,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 12.953,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 13.296,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 13.656,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 14.0,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 14.343,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 14.703,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 15.046,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 15.406,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 15.75,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 16.093,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 16.453,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 16.796,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 17.156,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 17.5,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 17.843,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 18.203,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 18.546,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 18.906,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 19.25,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 19.593,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 19.953,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      }
+    ]
+  },
+  "unprofiled_player_actions": {
+    "bda_sha256": "0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0",
+    "start": {
+      "magic": 826495553,
+      "version": 1,
+      "state": 3,
+      "error": 0,
+      "frames": 7428,
+      "displayed": 3345,
+      "cache_hits": 62633,
+      "cache_misses": 2377,
+      "tick_hz": 40,
+      "raw_start": 1380393,
+      "raw_end": 1392241,
+      "rtc_start": 1245762663,
+      "rtc_end": 1245762959,
+      "stop": 0,
+      "pc": 1075332,
+      "audio_samples": 990533,
+      "cache_bytes": 2097152,
+      "checksum": 0,
+      "keys": 0,
+      "paused_frames": 180521338
+    },
+    "end": {
+      "magic": 826495553,
+      "version": 1,
+      "state": 3,
+      "error": 0,
+      "frames": 8646,
+      "displayed": 3954,
+      "cache_hits": 72208,
+      "cache_misses": 2381,
+      "tick_hz": 40,
+      "raw_start": 1380393,
+      "raw_end": 1393053,
+      "rtc_start": 1245762663,
+      "rtc_end": 1245762979,
+      "stop": 0,
+      "pc": 1075332,
+      "audio_samples": 1152800,
+      "cache_bytes": 2097152,
+      "checksum": 0,
+      "keys": 0,
+      "paused_frames": 180521338
+    },
+    "perf_start": {
+      "magic": 844121936,
+      "version": 3,
+      "enabled": 0,
+      "frames": 1785,
+      "other": 2,
+      "cpu68": 382,
+      "z80": 25,
+      "sound": 13,
+      "background": 111,
+      "setup": 44,
+      "LCD": 174,
+      "IO": 63,
+      "PCM": 2,
+      "decode": 11,
+      "compose": 132,
+      "text": 46,
+      "input": 30,
+      "clear": 17,
+      "wait": 167,
+      "tile_hits": 570839,
+      "tile_misses": 744,
+      "sprite_hits": 49552,
+      "sprite_misses": 2930,
+      "mxu_pixels": 57870720,
+      "decoded_bytes": 9474048,
+      "identity_rows": 3520558,
+      "mapped_rows": 2492,
+      "identity_pixels": 486850074,
+      "mapped_pixels": 1114369
+    },
+    "perf_end": {
+      "magic": 844121936,
+      "version": 3,
+      "enabled": 0,
+      "frames": 1785,
+      "other": 2,
+      "cpu68": 382,
+      "z80": 25,
+      "sound": 13,
+      "background": 111,
+      "setup": 44,
+      "LCD": 174,
+      "IO": 63,
+      "PCM": 2,
+      "decode": 11,
+      "compose": 132,
+      "text": 46,
+      "input": 30,
+      "clear": 17,
+      "wait": 167,
+      "tile_hits": 708916,
+      "tile_misses": 744,
+      "sprite_hits": 62667,
+      "sprite_misses": 3064,
+      "mxu_pixels": 68394240,
+      "decoded_bytes": 9474048,
+      "identity_rows": 4365915,
+      "mapped_rows": 2492,
+      "identity_pixels": 570834538,
+      "mapped_pixels": 1114369
+    },
+    "stream_before": {
+      "magic": 827541328,
+      "version": 1,
+      "prepares": 3350,
+      "prepared": 3349,
+      "frames": 3349,
+      "fallbacks": 0,
+      "resets": 5,
+      "source_rows": 750176,
+      "output_rows": 910928,
+      "reused_rows": 160752,
+      "lcd_pixels": 329755936,
+      "full_repaints": 5
+    },
+    "stream_after": {
+      "magic": 827541328,
+      "version": 1,
+      "prepares": 3959,
+      "prepared": 3959,
+      "frames": 3959,
+      "fallbacks": 0,
+      "resets": 5,
+      "source_rows": 886816,
+      "output_rows": 1076848,
+      "reused_rows": 190032,
+      "lcd_pixels": 389818976,
+      "full_repaints": 5
+    },
+    "device_ticks": 812,
+    "device_seconds": 20.3,
+    "host_seconds": 20.32799999997951,
+    "logic_fps": 60.0,
+    "display_fps": 30.0,
+    "profile": false,
+    "inputs": [
+      {
+        "at_seconds": 0.0,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 0.343,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 0.703,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 1.047,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 1.39,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 1.75,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 2.093,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 2.453,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 2.797,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 3.14,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 3.5,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 3.843,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 4.203,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 4.547,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 4.89,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 5.25,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 5.593,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 5.953,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 6.297,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 6.64,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 7.0,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 7.343,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 7.703,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 8.047,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 8.39,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 8.75,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 9.093,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 9.453,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 9.797,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 10.14,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 10.5,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 10.843,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 11.203,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 11.547,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 11.89,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 12.25,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 12.593,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 12.953,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 13.297,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 13.64,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 14.0,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 14.343,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 14.703,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 15.047,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 15.39,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 15.75,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 16.093,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 16.453,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 16.797,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 17.156,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 17.5,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 17.843,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 18.203,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 18.547,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 18.906,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 19.25,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 19.593,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 19.953,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      }
+    ]
+  },
+  "exclusive_phase_approximation": {
+    "other": {
+      "ticks": 1,
+      "ms_per_logic": 0.02055921052631579,
+      "wall_percent": 0.12300123001230012
+    },
+    "cpu68": {
+      "ticks": 267,
+      "ms_per_logic": 5.489309210526316,
+      "wall_percent": 32.84132841328413
+    },
+    "z80": {
+      "ticks": 17,
+      "ms_per_logic": 0.3495065789473684,
+      "wall_percent": 2.091020910209102
+    },
+    "sound": {
+      "ticks": 5,
+      "ms_per_logic": 0.10279605263157894,
+      "wall_percent": 0.6150061500615006
+    },
+    "background": {
+      "ticks": 79,
+      "ms_per_logic": 1.6241776315789473,
+      "wall_percent": 9.71709717097171
+    },
+    "setup": {
+      "ticks": 26,
+      "ms_per_logic": 0.5345394736842105,
+      "wall_percent": 3.1980319803198034
+    },
+    "LCD": {
+      "ticks": 123,
+      "ms_per_logic": 2.528782894736842,
+      "wall_percent": 15.129151291512915
+    },
+    "IO": {
+      "ticks": 14,
+      "ms_per_logic": 0.2878289473684211,
+      "wall_percent": 1.7220172201722017
+    },
+    "PCM": {
+      "ticks": 1,
+      "ms_per_logic": 0.02055921052631579,
+      "wall_percent": 0.12300123001230012
+    },
+    "decode": {
+      "ticks": 3,
+      "ms_per_logic": 0.061677631578947366,
+      "wall_percent": 0.36900369003690037
+    },
+    "compose": {
+      "ticks": 79,
+      "ms_per_logic": 1.6241776315789473,
+      "wall_percent": 9.71709717097171
+    },
+    "text": {
+      "ticks": 32,
+      "ms_per_logic": 0.6578947368421053,
+      "wall_percent": 3.936039360393604
+    },
+    "input": {
+      "ticks": 14,
+      "ms_per_logic": 0.2878289473684211,
+      "wall_percent": 1.7220172201722017
+    },
+    "clear": {
+      "ticks": 11,
+      "ms_per_logic": 0.22615131578947367,
+      "wall_percent": 1.3530135301353015
+    },
+    "wait": {
+      "ticks": 140,
+      "ms_per_logic": 2.8782894736842106,
+      "wall_percent": 17.22017220172202
+    }
+  },
+  "phase_unit": "40Hz wall ticks, 25ms resolution, accumulated then divided by logical frames. Setup includes preparation of all layers. Wait is deliberate pacing, not useful work.",
+  "cold_scene": {
+    "bda_sha256": "0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0",
+    "start": {
+      "magic": 826495553,
+      "version": 1,
+      "state": 3,
+      "error": 0,
+      "frames": 5638,
+      "displayed": 2450,
+      "cache_hits": 48540,
+      "cache_misses": 2147,
+      "tick_hz": 40,
+      "raw_start": 1380393,
+      "raw_end": 1391017,
+      "rtc_start": 1245762663,
+      "rtc_end": 1245762928,
+      "stop": 0,
+      "pc": 1075332,
+      "audio_samples": 751733,
+      "cache_bytes": 2097152,
+      "checksum": 0,
+      "keys": 0,
+      "paused_frames": 180521338
+    },
+    "end": {
+      "magic": 826495553,
+      "version": 1,
+      "state": 3,
+      "error": 0,
+      "frames": 6205,
+      "displayed": 2734,
+      "cache_hits": 53549,
+      "cache_misses": 2315,
+      "tick_hz": 40,
+      "raw_start": 1380393,
+      "raw_end": 1391424,
+      "rtc_start": 1245762663,
+      "rtc_end": 1245762938,
+      "stop": 0,
+      "pc": 1075338,
+      "audio_samples": 827333,
+      "cache_bytes": 2097152,
+      "checksum": 0,
+      "keys": 0,
+      "paused_frames": 180521338
+    },
+    "perf_start": {
+      "magic": 844121936,
+      "version": 3,
+      "enabled": 1,
+      "frames": 1,
+      "other": 0,
+      "cpu68": 0,
+      "z80": 0,
+      "sound": 0,
+      "background": 0,
+      "setup": 0,
+      "LCD": 0,
+      "IO": 0,
+      "PCM": 0,
+      "decode": 0,
+      "compose": 0,
+      "text": 0,
+      "input": 0,
+      "clear": 0,
+      "wait": 0,
+      "tile_hits": 371959,
+      "tile_misses": 628,
+      "sprite_hits": 27688,
+      "sprite_misses": 2373,
+      "mxu_pixels": 42413040,
+      "decoded_bytes": 9474048,
+      "identity_rows": 2133153,
+      "mapped_rows": 2492,
+      "identity_pixels": 345239729,
+      "mapped_pixels": 1114369
+    },
+    "perf_end": {
+      "magic": 844121936,
+      "version": 3,
+      "enabled": 1,
+      "frames": 567,
+      "other": 1,
+      "cpu68": 114,
+      "z80": 8,
+      "sound": 8,
+      "background": 32,
+      "setup": 18,
+      "LCD": 51,
+      "IO": 49,
+      "PCM": 1,
+      "decode": 8,
+      "compose": 53,
+      "text": 14,
+      "input": 16,
+      "clear": 6,
+      "wait": 27,
+      "tile_hits": 432049,
+      "tile_misses": 744,
+      "sprite_hits": 34971,
+      "sprite_misses": 2703,
+      "mxu_pixels": 47312640,
+      "decoded_bytes": 9474048,
+      "identity_rows": 2626647,
+      "mapped_rows": 2492,
+      "identity_pixels": 397810770,
+      "mapped_pixels": 1114369
+    },
+    "stream_before": {
+      "magic": 827541328,
+      "version": 1,
+      "prepares": 2455,
+      "prepared": 2455,
+      "frames": 2454,
+      "fallbacks": 0,
+      "resets": 5,
+      "source_rows": 549696,
+      "output_rows": 667488,
+      "reused_rows": 117792,
+      "lcd_pixels": 241630656,
+      "full_repaints": 5
+    },
+    "stream_after": {
+      "magic": 827541328,
+      "version": 1,
+      "prepares": 2739,
+      "prepared": 2739,
+      "frames": 2738,
+      "fallbacks": 0,
+      "resets": 5,
+      "source_rows": 613312,
+      "output_rows": 744736,
+      "reused_rows": 131424,
+      "lcd_pixels": 269594432,
+      "full_repaints": 5
+    },
+    "device_ticks": 407,
+    "device_seconds": 10.175,
+    "host_seconds": 10.171000000089407,
+    "logic_fps": 55.72481572481572,
+    "display_fps": 27.91154791154791,
+    "profile": true,
+    "inputs": [
+      {
+        "at_seconds": 0.0,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 0.343,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 0.703,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 1.046,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 1.39,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 1.75,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 2.093,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 2.453,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 2.796,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 3.14,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 3.5,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 3.843,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 4.203,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 4.546,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 4.89,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 5.25,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 5.593,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 5.953,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 6.296,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 6.64,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 7.0,
+        "keys": [
+          "Z",
+          "LEFT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 7.343,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 7.703,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 8.046,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 8.406,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 8.75,
+        "keys": [
+          "Z",
+          "RIGHT"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 9.093,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 9.453,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      },
+      {
+        "at_seconds": 9.796,
+        "keys": [
+          "Z"
+        ],
+        "ticks": 80,
+        "release_after_seconds": 0.12
+      }
+    ]
+  },
+  "frozen_pipeline": {
+    "magic": 827543632,
+    "version": 1,
+    "request": 0,
+    "state": 2,
+    "loops": 96,
+    "full_a": 85,
+    "full_b": 85,
+    "stream_c_a": 55,
+    "stream_c_b": 56,
+    "stream_asm_a": 55,
+    "stream_asm_b": 55,
+    "full_diff_4_3": 0,
+    "full_diff_raw": 0,
+    "full_diff_full": 0,
+    "stream_c_diff_4_3": 0,
+    "stream_c_diff_raw": 0,
+    "stream_c_diff_full": 0,
+    "stream_asm_diff_4_3": 0,
+    "stream_asm_diff_raw": 0,
+    "stream_asm_diff_full": 0,
+    "prepare_failures": 0,
+    "bda_sha256": "0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0"
+  },
+  "final_state": {
+    "bda_sha256": "0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0",
+    "stream": {
+      "magic": 827541328,
+      "version": 1,
+      "prepares": 4548,
+      "prepared": 4548,
+      "frames": 4548,
+      "fallbacks": 0,
+      "resets": 30,
+      "source_rows": 1018752,
+      "output_rows": 1236768,
+      "reused_rows": 218016,
+      "lcd_pixels": 448018176,
+      "full_repaints": 21
+    },
+    "settings": [
+      0,
+      1,
+      10,
+      0
+    ],
+    "scale": [
+      1
+    ],
+    "sprite": [
+      3
+    ],
+    "text_ready": [
+      1
+    ],
+    "text_blocks": [
+      162
+    ],
+    "text_capacity": [
+      1024
+    ],
+    "idle": [
+      1
+    ],
+    "branch": [
+      1
+    ],
+    "banking": [
+      1
+    ],
+    "z80_hle": [
+      1
+    ],
+    "cache": {
+      "path": "B:\\ARCADE\\kov.h1pgm",
+      "exists": 1,
+      "size": 67305856,
+      "is_directory": 0
+    },
+    "debug": {
+      "version": 1,
+      "state": 1,
+      "usb_configured": 1,
+      "usb_fault": 0,
+      "usb_resets": 30,
+      "commands": 118322,
+      "bad_frames": 0,
+      "tick": 1395998,
+      "poll_count": 35011545,
+      "last_poll_tick": 1395998,
+      "resident_base": 2185878624,
+      "resident_size": 727104,
+      "keys_low": 0,
+      "keys_high": 0,
+      "exec_state": 5,
+      "last_error": 0
+    },
+    "capabilities": {
+      "version": 1,
+      "features": 16383,
+      "max_payload": 512,
+      "ram_start": 2147483648,
+      "ram_size": 67108864,
+      "module_abi": 1,
+      "forced_preemption": 0,
+      "tick_hz": 0
+    }
+  },
+  "exit": {
+    "desktop": {
+      "job_id": 39,
+      "kind": 2,
+      "state": 4,
+      "error": 0,
+      "menu_idle": 1,
+      "app_index": 84,
+      "entry_count": 19,
+      "return_code": 0,
+      "state_name": "done"
+    },
+    "clock": [
+      1212369995,
+      408,
+      2,
+      0,
+      0,
+      336,
+      408,
+      3,
+      1080435232,
+      452986144,
+      0,
+      4,
+      36,
+      13
+    ],
+    "debug": {
+      "version": 1,
+      "state": 1,
+      "usb_configured": 1,
+      "usb_fault": 0,
+      "usb_resets": 30,
+      "commands": 118340,
+      "bad_frames": 0,
+      "tick": 1400213,
+      "poll_count": 35019864,
+      "last_poll_tick": 1400213,
+      "resident_base": 2185878624,
+      "resident_size": 727104,
+      "keys_low": 0,
+      "keys_high": 0,
+      "exec_state": 5,
+      "last_error": 0
+    },
+    "stream_layers": [
+      0
+    ],
+    "stream_sprites": [
+      0
+    ],
+    "text_blocks": [
+      0
+    ],
+    "sprite_preflight": [
+      0
+    ]
+  },
+  "startup_and_audio_log": "H1ARCADE_BEGIN version=0.1.0 NeoGeo core=A68K MIPS evaluation\nIDLE_TEST_OK cases=4096 batched=2077 cycles=1823492\nBUS_TEST_OK cases=2048 full_context_and_RAM=1\nVIDEO_BUS_OK cases=256 full_context_and_VIDEO=1\nSCAN_HLE_OK cases=2048 full_context_and_RAM=1\nZ80_HLE_OK cases=1600 full_context_and_RAM=1\nTIMER_FAST_OK cases=16 exact_clock_deadlines_and_callbacks=1\nRENDER_TEST_OK cases=1792 full_framebuffer=1\nMXU_TEST_OK cases=512 all_65536_colors=1\nSCALE_TEST_OK all_65536_colors=1\nAUDIO_FAST_TEST_OK cases=404\nIMPORT_CACHE path=B:\\ARCADE\\kov.h1pgm\nSELECTED path=B:\\ARCADE\\kov.h1pgm\nALLOC_BEGIN bytes=4194304\nALLOC_END bytes=4194304 raw=0x825786c0\nALLOC_BEGIN bytes=401408\nALLOC_END bytes=401408 raw=0x829afa40\nALLOC_BEGIN bytes=2097152\nALLOC_END bytes=2097152 raw=0x82a11a80\nALLOC_BEGIN bytes=1056768\nALLOC_END bytes=1056768 raw=0x82c17b40\nALLOC_BEGIN bytes=8388608\nALLOC_END bytes=8388608 raw=0x82d26480\nPGM_LOAD bios_sp=00820000 bios_pc=000004ce program=4194304 cache=2097152 sound=8000\nPGM_DBRA_TEST cases=1028 failures=0 hit_cases=239 loops=88209\nPGM_BANK_TEST cases=352 failures=0 hit_cases=192 mirror_cases=128 rom_cases=32\nPGM_BRANCH_TEST cases=1024 failures=0 hit_cases=310 irq_hit_cases=49\nPGM_IDLE_TEST cases=1024 failures=0\nPGM_BUS_TEST cases=1024 failures=0\nPGM_Z80_HLE_TEST cases=2048 failures=0 loops=7810\nAUDIO_OPEN_BEGIN source=8000 output=32000 mono=1 queue=0x8095f6a8\nAUDIO_DESCRIPTOR_BEGIN slot=0\nAUDIO_DESCRIPTOR_END slot=0 rc=1\nAUDIO_DEVICE_BEGIN\nAUDIO_DEVICE_END rc=1\nAUDIO_START_BEGIN\nAUDIO_START_END rc=1\nAUDIO_OPEN_END ready=1\nAUDIO_PAUSE batches=0 underruns=0 failures=0\nPGM_RUN hz=40 audio=1 clock=408\nPGM_CARTRIDGE frame=763 pc=00100df0\nAUDIO_PAUSE batches=3821 underruns=37 failures=0\nPAUSE_MENU_BEGIN\nPAUSE_MENU_END action=0 mode=0 skip=1 volume=10 muted=0\nAUDIO_PAUSE batches=4229 underruns=38 failures=0\nPAUSE_MENU_BEGIN\nPAUSE_MENU_END action=0 mode=0 skip=1 volume=10 muted=0\nAUDIO_PAUSE batches=5067 underruns=38 failures=0\nPAUSE_MENU_BEGIN\nPAUSE_MENU_END action=0 mode=0 skip=1 volume=10 muted=0\nAUDIO_PAUSE batches=5627 underruns=64 failures=0\nPAUSE_MENU_BEGIN\nPAUSE_MENU_END action=0 mode=0 skip=1 volume=10 muted=0\nAUDIO_PAUSE batches=9013 underruns=69 failures=0\n",
+  "host_generated_graphics": {
+    "ok": true,
+    "random_scenes": 64,
+    "scenes": 72,
+    "lcd_comparisons": 1099,
+    "fallback_modes": 9,
+    "wrap_modes": 3,
+    "snapshot_modes": 3,
+    "mode_switch_checks": 16,
+    "sparse_text_blocks": 16,
+    "sparse_text_copied_indices_bytes": 1024,
+    "text_allocation_fallback_modes": 3,
+    "sprite_pool_cases": 4,
+    "sprite_pool_row_comparisons": 896,
+    "display_modes": 3,
+    "frame_size": [
+      448,
+      224
+    ],
+    "lcd_size": [
+      480,
+      272
+    ],
+    "scope": "Generated graphics only: zoom/flip/priority, rowscroll, partial tiles, dense and sparse text plans, conflicting font-cache tiles with copied indices, text allocation failure retaining row fallback, decoded-cache conflict/capacity fallback, pool wrap, exact ordered sprite reservation with warm-hit preservation and pre-reset pin safety, virtual-tag allocation failure without cache side effects and retry, prepared sprite snapshot, stable/mode/target/UI-reset output and guards. No guest CPU or device execution model. MXU uses C fallback on host.",
+    "stdout": "484 presenter passes match across all modes, target changes, steady output and explicit same-target UI invalidation; guards intact.\n160 generated frames / 736 renderer passes exactly match reference, including all 3 layer modes, rowscroll grouping, zoom/flip/clipping and partial last tile; 21 cache-invalidation scenes / 42 passes and 23 word/byte epoch locations match; 53 selective-clear passes preserve all opaque pixels and match final reference frames, debug on/off coverage matches; 512 opaque-span C fallback fixtures match (native MXU checks run separately on H1); 3 presenter modes match. Sprite hits=4006 misses=1170 tile hits=903945 misses=48\nPGM_STREAM_RESULT {\"random_scenes\":64,\"scenes\":72,\"lcd_comparisons\":1099,\"fallback_modes\":9,\"wrap_modes\":3,\"snapshot_modes\":3,\"mode_switch_checks\":16,\"sparse_text_blocks\":16,\"sparse_text_copied_indices_bytes\":1024,\"text_allocation_fallback_modes\":3,\"sprite_pool_cases\":4,\"sprite_pool_row_comparisons\":896,\"display_modes\":3}\n",
+    "source_sha256": {
+      "src/pgm.c": "fd5f8bbbf6d244cd82b794865d08a8976eeac5648f96d7421c0066de0276cd5b",
+      "src/pgm_draw_reference.h": "efe5687216dca2a4276e9a43c696dbff978fea3e5322f50882a34c6fa85f1096",
+      "src/pgm_layers.h": "b60d82a3571244b7a8445ea33e830ef61df96228d05c82699bbe17d715e7cbe1",
+      "src/pgm_clear.h": "363d596ff5d5a797b5f88e402e4183e38c29256c4357349ac8a85e065cf2bb1e",
+      "src/pgm_present_fast.h": "76f74eab16249fa392cc94eed71eb06febe4d58eb6845a46cbb2a44d34b3c79e",
+      "src/pgm_stream.h": "307ef36416cc5d4f204e9f8e9c867ffde8a276bf34e39da053995c754ecc534a",
+      "src/pgm_stream_layers.h": "3776ee1eba2834697fd774b954daefbfa4e807611e2534613d19e1ba0ba4fd58",
+      "src/pgm_stream_sprites.h": "3830243e935ff4f4ddfd2e85c09e517591139124e94e3d5a1b73ece5f7789916",
+      "tests/pgm_draw_host.c": "f8b39c427901afbc28baab41bd246b49ebae22770ddbe674b85f219de96a8ec1",
+      "tests/pgm_stream_host.c": "648fe1c385a14d9b06bb0192905e7f27ac85a4e84a89c4624f2cc1c44405a581",
+      "tests/pgm_stream_host.py": "dc6f174d278c501509e301731414df42fbcd007472160b45376741500648d2fb"
+    }
+  },
+  "host_pcm": {
+    "ok": true,
+    "environment": "actual C YM2610 and PCM producer on host; firmware services unreachable stubs; no CPU or device simulation",
+    "streaming_fixtures": 72,
+    "exact_output_against_independent_box_oracle": true,
+    "output_frames_per_second": 32000,
+    "source_rates": [
+      22050,
+      16000,
+      8000
+    ],
+    "pcm_selftests": 356,
+    "pcm_failures": 0,
+    "rate_switch_selftests": 48,
+    "rate_switch_failures": 0,
+    "tone_peaks": [
+      {
+        "kind": "SSG",
+        "sample_rate": 22050,
+        "rising_crossings_per_second": 200,
+        "rms": 15398.851484833951
+      },
+      {
+        "kind": "SSG",
+        "sample_rate": 16000,
+        "rising_crossings_per_second": 200,
+        "rms": 15386.002404328423
+      },
+      {
+        "kind": "SSG",
+        "sample_rate": 8000,
+        "rising_crossings_per_second": 200,
+        "rms": 15313.75493827363
+      },
+      {
+        "kind": "FM",
+        "sample_rate": 22050,
+        "rising_crossings_per_second": 260,
+        "rms": 23098.102009843642
+      },
+      {
+        "kind": "FM",
+        "sample_rate": 16000,
+        "rising_crossings_per_second": 259,
+        "rms": 23087.201608304546
+      },
+      {
+        "kind": "FM",
+        "sample_rate": 8000,
+        "rising_crossings_per_second": 259,
+        "rms": 23019.447986289768
+      }
+    ],
+    "adpcm_nibble_position_after_10ms": [
+      184,
+      185,
+      185
+    ],
+    "native_source_sha256": {
+      "src/audio.c": "c7a73ed8f0e54200fe2b1850659a5239379cfb6c7626caf99195fc0780b9a234",
+      "src/ym_audio_fast.h": "8dad5784293819a122418dc91a9189f338f03a5a28fe517930ecce6494253054",
+      "src/audio_fast.h": "df9e9bee4a2b7504a65036f969bb87d5001dc07a42ab94d53949cc69749c1810",
+      "tools/prepare.py": "61a17b585c790caae270876ef08940224019f5fd8071b72df9887715224cecb4"
+    }
+  },
+  "earlier_stream_version": {
+    "bda_sha256": "34febc6e052e2c22045e23fcc478d492745a19e2cd4e8ffdaf5b87860cea6c65",
+    "active_warm_player_actions": {
+      "bda_sha256": "34febc6e052e2c22045e23fcc478d492745a19e2cd4e8ffdaf5b87860cea6c65",
+      "start": {
+        "magic": 826495553,
+        "version": 1,
+        "state": 3,
+        "error": 0,
+        "frames": 38433,
+        "displayed": 18848,
+        "cache_hits": 725422,
+        "cache_misses": 8756,
+        "tick_hz": 40,
+        "raw_start": 1297278,
+        "raw_end": 1358573,
+        "rtc_start": 1245760585,
+        "rtc_end": 1245762117,
+        "stop": 0,
+        "pc": 1075304,
+        "audio_samples": 5124400,
+        "cache_bytes": 2097152,
+        "checksum": 0,
+        "keys": 0,
+        "paused_frames": 928264294
+      },
+      "end": {
+        "magic": 826495553,
+        "version": 1,
+        "state": 3,
+        "error": 0,
+        "frames": 39653,
+        "displayed": 19458,
+        "cache_hits": 750064,
+        "cache_misses": 8760,
+        "tick_hz": 40,
+        "raw_start": 1297278,
+        "raw_end": 1359386,
+        "rtc_start": 1245760585,
+        "rtc_end": 1245762137,
+        "stop": 0,
+        "pc": 1075338,
+        "audio_samples": 5287066,
+        "cache_bytes": 2097152,
+        "checksum": 0,
+        "keys": 0,
+        "paused_frames": 928264294
+      },
+      "perf_start": {
+        "magic": 844121936,
+        "version": 3,
+        "enabled": 1,
+        "frames": 4315,
+        "other": 10,
+        "cpu68": 668,
+        "z80": 112,
+        "sound": 38,
+        "background": 214,
+        "setup": 82,
+        "LCD": 410,
+        "IO": 385,
+        "PCM": 1,
+        "decode": 61,
+        "compose": 290,
+        "text": 307,
+        "input": 210,
+        "clear": 45,
+        "wait": 408,
+        "tile_hits": 4149975,
+        "tile_misses": 7165,
+        "sprite_hits": 412299,
+        "sprite_misses": 13344,
+        "mxu_pixels": 348581376,
+        "decoded_bytes": 9474048,
+        "identity_rows": 26085954,
+        "mapped_rows": 7528,
+        "identity_pixels": 3180011833,
+        "mapped_pixels": 3369417
+      },
+      "perf_end": {
+        "magic": 844121936,
+        "version": 3,
+        "enabled": 1,
+        "frames": 5535,
+        "other": 12,
+        "cpu68": 873,
+        "z80": 164,
+        "sound": 43,
+        "background": 289,
+        "setup": 93,
+        "LCD": 514,
+        "IO": 386,
+        "PCM": 1,
+        "decode": 62,
+        "compose": 377,
+        "text": 397,
+        "input": 247,
+        "clear": 52,
+        "wait": 543,
+        "tile_hits": 4288363,
+        "tile_misses": 7165,
+        "sprite_hits": 427723,
+        "sprite_misses": 13495,
+        "mxu_pixels": 359122176,
+        "decoded_bytes": 9474048,
+        "identity_rows": 27038416,
+        "mapped_rows": 7528,
+        "identity_pixels": 3274313787,
+        "mapped_pixels": 3369417
+      },
+      "stream_before": {
+        "magic": 827541328,
+        "version": 1,
+        "prepares": 19674,
+        "prepared": 19479,
+        "frames": 19479,
+        "fallbacks": 195,
+        "resets": 65,
+        "source_rows": 4363296,
+        "output_rows": 5297712,
+        "reused_rows": 934416,
+        "lcd_pixels": 1918388064,
+        "full_repaints": 46
+      },
+      "stream_after": {
+        "magic": 827541328,
+        "version": 1,
+        "prepares": 20284,
+        "prepared": 20089,
+        "frames": 20089,
+        "fallbacks": 195,
+        "resets": 65,
+        "source_rows": 4499936,
+        "output_rows": 5463632,
+        "reused_rows": 963696,
+        "lcd_pixels": 1978451104,
+        "full_repaints": 46
+      },
+      "device_ticks": 813,
+      "device_seconds": 20.325,
+      "host_seconds": 20.328999999910593,
+      "logic_fps": 60.024600246002464,
+      "display_fps": 30.012300123001232,
+      "profile": true,
+      "inputs": [
+        {
+          "at_seconds": 0.016,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 0.375,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 0.719,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 1.063,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 1.422,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 1.766,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 2.125,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 2.469,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 2.813,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 3.172,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 3.516,
+          "keys": [
+            "Z",
+            "LEFT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 3.875,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 4.219,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 4.579,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 4.922,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 5.266,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 5.625,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 5.969,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 6.329,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 6.672,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 7.016,
+          "keys": [
+            "Z",
+            "LEFT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 7.375,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 7.719,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 8.079,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 8.422,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 8.766,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 9.125,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 9.469,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 9.829,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 10.172,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 10.516,
+          "keys": [
+            "Z",
+            "LEFT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 10.875,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 11.219,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 11.579,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 11.922,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 12.266,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 12.625,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 12.969,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 13.329,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 13.672,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 14.016,
+          "keys": [
+            "Z",
+            "LEFT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 14.375,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 14.719,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 15.079,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 15.422,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 15.766,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 16.125,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 16.469,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 16.829,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 17.172,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 17.516,
+          "keys": [
+            "Z",
+            "LEFT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 17.875,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 18.219,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 18.579,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 18.922,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 19.266,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 19.625,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 19.969,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        }
+      ]
+    },
+    "cold_scene_player_actions": {
+      "bda_sha256": "34febc6e052e2c22045e23fcc478d492745a19e2cd4e8ffdaf5b87860cea6c65",
+      "start": {
+        "magic": 826495553,
+        "version": 1,
+        "state": 3,
+        "error": 0,
+        "frames": 37002,
+        "displayed": 18132,
+        "cache_hits": 692406,
+        "cache_misses": 8548,
+        "tick_hz": 40,
+        "raw_start": 1297278,
+        "raw_end": 1354045,
+        "rtc_start": 1245760585,
+        "rtc_end": 1245762004,
+        "stop": 0,
+        "pc": 1075338,
+        "audio_samples": 4933600,
+        "cache_bytes": 2097152,
+        "checksum": 0,
+        "keys": 0,
+        "paused_frames": 827506651
+      },
+      "end": {
+        "magic": 826495553,
+        "version": 1,
+        "state": 3,
+        "error": 0,
+        "frames": 37460,
+        "displayed": 18361,
+        "cache_hits": 705269,
+        "cache_misses": 8707,
+        "tick_hz": 40,
+        "raw_start": 1297278,
+        "raw_end": 1354452,
+        "rtc_start": 1245760585,
+        "rtc_end": 1245762014,
+        "stop": 0,
+        "pc": 1075304,
+        "audio_samples": 4994800,
+        "cache_bytes": 2097152,
+        "checksum": 0,
+        "keys": 0,
+        "paused_frames": 827506651
+      },
+      "perf_start": {
+        "magic": 844121936,
+        "version": 3,
+        "enabled": 1,
+        "frames": 3856,
+        "other": 9,
+        "cpu68": 557,
+        "z80": 103,
+        "sound": 32,
+        "background": 202,
+        "setup": 78,
+        "LCD": 375,
+        "IO": 328,
+        "PCM": 1,
+        "decode": 26,
+        "compose": 217,
+        "text": 273,
+        "input": 194,
+        "clear": 39,
+        "wait": 401,
+        "tile_hits": 4003747,
+        "tile_misses": 7165,
+        "sprite_hits": 393142,
+        "sprite_misses": 12418,
+        "mxu_pixels": 336191616,
+        "decoded_bytes": 9474048,
+        "identity_rows": 24722094,
+        "mapped_rows": 7528,
+        "identity_pixels": 3033277343,
+        "mapped_pixels": 3369417
+      },
+      "perf_end": {
+        "magic": 844121936,
+        "version": 3,
+        "enabled": 1,
+        "frames": 4315,
+        "other": 10,
+        "cpu68": 668,
+        "z80": 112,
+        "sound": 38,
+        "background": 214,
+        "setup": 82,
+        "LCD": 410,
+        "IO": 385,
+        "PCM": 1,
+        "decode": 61,
+        "compose": 290,
+        "text": 307,
+        "input": 210,
+        "clear": 45,
+        "wait": 408,
+        "tile_hits": 4039373,
+        "tile_misses": 7165,
+        "sprite_hits": 399805,
+        "sprite_misses": 13213,
+        "mxu_pixels": 340165296,
+        "decoded_bytes": 9474048,
+        "identity_rows": 25318807,
+        "mapped_rows": 7528,
+        "identity_pixels": 3103833005,
+        "mapped_pixels": 3369417
+      },
+      "stream_before": {
+        "magic": 827541328,
+        "version": 1,
+        "prepares": 18958,
+        "prepared": 18763,
+        "frames": 18762,
+        "fallbacks": 195,
+        "resets": 64,
+        "source_rows": 4202688,
+        "output_rows": 5102688,
+        "reused_rows": 900000,
+        "lcd_pixels": 1847789376,
+        "full_repaints": 45
+      },
+      "stream_after": {
+        "magic": 827541328,
+        "version": 1,
+        "prepares": 19187,
+        "prepared": 18992,
+        "frames": 18991,
+        "fallbacks": 195,
+        "resets": 64,
+        "source_rows": 4253984,
+        "output_rows": 5164976,
+        "reused_rows": 910992,
+        "lcd_pixels": 1870337632,
+        "full_repaints": 45
+      },
+      "device_ticks": 407,
+      "device_seconds": 10.175,
+      "host_seconds": 10.155999999959022,
+      "logic_fps": 45.01228501228501,
+      "display_fps": 22.506142506142506,
+      "profile": true,
+      "inputs": [
+        {
+          "at_seconds": 0.0,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 0.344,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 0.703,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 1.047,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 1.406,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 1.75,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 2.094,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 2.453,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 2.797,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 3.156,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 3.5,
+          "keys": [
+            "Z",
+            "LEFT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 3.844,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 4.203,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 4.547,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 4.906,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 5.25,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 5.594,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 5.953,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 6.297,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 6.656,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 7.0,
+          "keys": [
+            "Z",
+            "LEFT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 7.344,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 7.703,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 8.047,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 8.406,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 8.75,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 9.094,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 9.453,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 9.797,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        }
+      ]
+    },
+    "first_unprofiled_player_actions": {
+      "bda_sha256": "34febc6e052e2c22045e23fcc478d492745a19e2cd4e8ffdaf5b87860cea6c65",
+      "start": {
+        "magic": 826495553,
+        "version": 1,
+        "state": 3,
+        "error": 0,
+        "frames": 37462,
+        "displayed": 18362,
+        "cache_hits": 705292,
+        "cache_misses": 8707,
+        "tick_hz": 40,
+        "raw_start": 1297278,
+        "raw_end": 1354453,
+        "rtc_start": 1245760585,
+        "rtc_end": 1245762014,
+        "stop": 0,
+        "pc": 1075338,
+        "audio_samples": 4995066,
+        "cache_bytes": 2097152,
+        "checksum": 0,
+        "keys": 0,
+        "paused_frames": 827506651
+      },
+      "end": {
+        "magic": 826495553,
+        "version": 1,
+        "state": 3,
+        "error": 0,
+        "frames": 38064,
+        "displayed": 18663,
+        "cache_hits": 717472,
+        "cache_misses": 8739,
+        "tick_hz": 40,
+        "raw_start": 1297278,
+        "raw_end": 1354859,
+        "rtc_start": 1245760585,
+        "rtc_end": 1245762024,
+        "stop": 0,
+        "pc": 1075332,
+        "audio_samples": 5075333,
+        "cache_bytes": 2097152,
+        "checksum": 0,
+        "keys": 0,
+        "paused_frames": 827506651
+      },
+      "perf_start": {
+        "magic": 844121936,
+        "version": 3,
+        "enabled": 0,
+        "frames": 4315,
+        "other": 10,
+        "cpu68": 668,
+        "z80": 112,
+        "sound": 38,
+        "background": 214,
+        "setup": 82,
+        "LCD": 410,
+        "IO": 385,
+        "PCM": 1,
+        "decode": 61,
+        "compose": 290,
+        "text": 307,
+        "input": 210,
+        "clear": 45,
+        "wait": 408,
+        "tile_hits": 4039602,
+        "tile_misses": 7165,
+        "sprite_hits": 399829,
+        "sprite_misses": 13215,
+        "mxu_pixels": 340173936,
+        "decoded_bytes": 9474048,
+        "identity_rows": 25319584,
+        "mapped_rows": 7528,
+        "identity_pixels": 3103914711,
+        "mapped_pixels": 3369417
+      },
+      "perf_end": {
+        "magic": 844121936,
+        "version": 3,
+        "enabled": 0,
+        "frames": 4315,
+        "other": 10,
+        "cpu68": 668,
+        "z80": 112,
+        "sound": 38,
+        "background": 214,
+        "setup": 82,
+        "LCD": 410,
+        "IO": 385,
+        "PCM": 1,
+        "decode": 61,
+        "compose": 290,
+        "text": 307,
+        "input": 210,
+        "clear": 45,
+        "wait": 408,
+        "tile_hits": 4107973,
+        "tile_misses": 7165,
+        "sprite_hits": 407505,
+        "sprite_misses": 13270,
+        "mxu_pixels": 345371616,
+        "decoded_bytes": 9474048,
+        "identity_rows": 25793447,
+        "mapped_rows": 7528,
+        "identity_pixels": 3151488059,
+        "mapped_pixels": 3369417
+      },
+      "stream_before": {
+        "magic": 827541328,
+        "version": 1,
+        "prepares": 19188,
+        "prepared": 18993,
+        "frames": 18992,
+        "fallbacks": 195,
+        "resets": 64,
+        "source_rows": 4254208,
+        "output_rows": 5165248,
+        "reused_rows": 911040,
+        "lcd_pixels": 1870436096,
+        "full_repaints": 45
+      },
+      "stream_after": {
+        "magic": 827541328,
+        "version": 1,
+        "prepares": 19489,
+        "prepared": 19294,
+        "frames": 19294,
+        "fallbacks": 195,
+        "resets": 64,
+        "source_rows": 4321856,
+        "output_rows": 5247392,
+        "reused_rows": 925536,
+        "lcd_pixels": 1900172224,
+        "full_repaints": 45
+      },
+      "device_ticks": 406,
+      "device_seconds": 10.15,
+      "host_seconds": 10.172000000020489,
+      "logic_fps": 59.310344827586206,
+      "display_fps": 29.655172413793103,
+      "profile": false,
+      "inputs": [
+        {
+          "at_seconds": 0.0,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 0.359,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 0.703,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 1.047,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 1.406,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 1.75,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 2.109,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 2.453,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 2.797,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 3.156,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 3.5,
+          "keys": [
+            "Z",
+            "LEFT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 3.859,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 4.203,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 4.547,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 4.906,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 5.25,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 5.609,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 5.953,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 6.297,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 6.656,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 7.0,
+          "keys": [
+            "Z",
+            "LEFT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 7.359,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 7.703,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 8.047,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 8.406,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 8.75,
+          "keys": [
+            "Z",
+            "RIGHT"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 9.109,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 9.453,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        },
+        {
+          "at_seconds": 9.797,
+          "keys": [
+            "Z"
+          ],
+          "ticks": 80,
+          "release_after_seconds": 0.12
+        }
+      ]
+    },
+    "frozen_bg_mxu": {
+      "magic": 827543632,
+      "version": 1,
+      "request": 0,
+      "state": 2,
+      "loops": 96,
+      "full_a": 87,
+      "full_b": 87,
+      "stream_c_a": 65,
+      "stream_c_b": 64,
+      "stream_asm_a": 62,
+      "stream_asm_b": 63,
+      "full_diff_4_3": 0,
+      "full_diff_raw": 0,
+      "full_diff_full": 0,
+      "stream_c_diff_4_3": 0,
+      "stream_c_diff_raw": 0,
+      "stream_c_diff_full": 0,
+      "stream_asm_diff_4_3": 0,
+      "stream_asm_diff_raw": 0,
+      "stream_asm_diff_full": 0,
+      "prepare_failures": 0,
+      "bda_sha256": "34febc6e052e2c22045e23fcc478d492745a19e2cd4e8ffdaf5b87860cea6c65"
+    },
+    "frozen_bg_c": {
+      "magic": 827543632,
+      "version": 1,
+      "request": 0,
+      "state": 2,
+      "loops": 96,
+      "full_a": 86,
+      "full_b": 87,
+      "stream_c_a": 65,
+      "stream_c_b": 65,
+      "stream_asm_a": 63,
+      "stream_asm_b": 63,
+      "full_diff_4_3": 0,
+      "full_diff_raw": 0,
+      "full_diff_full": 0,
+      "stream_c_diff_4_3": 0,
+      "stream_c_diff_raw": 0,
+      "stream_c_diff_full": 0,
+      "stream_asm_diff_4_3": 0,
+      "stream_asm_diff_raw": 0,
+      "stream_asm_diff_full": 0,
+      "prepare_failures": 0,
+      "bda_sha256": "34febc6e052e2c22045e23fcc478d492745a19e2cd4e8ffdaf5b87860cea6c65"
+    }
+  },
+  "limitations": [
+    "Measured real-time windows are not deterministic replays or a guarantee for every stage.",
+    "First encounters with new ROM pages and sprite decodes can still stall; cold measurements are kept separately.",
+    "Capacity/active tile-cache conflicts correctly fall back to the original renderer.",
+    "Earlier long-key attempts that reached demonstration/continue screens are excluded from steady player-action results.",
+    "The 0.1.2 Neo Geo release BDA is separate; this task does not publish a new GitHub release.",
+    "No game ZIP, BIOS, converted ROM resources or RAM dump is distributed."
+  ]
+}

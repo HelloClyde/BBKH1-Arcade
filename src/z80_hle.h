@@ -60,7 +60,7 @@ static void h1_z80_poll_run(void){
  }
 }
 int h1_z80_hle_selftest(void){
- static unsigned char seed_map[65536],reference_map[65536];
+ unsigned char seed_map[65536],reference_map[65536];
  static Z80_Regs initial,reference;
  unsigned rng=4740;
  z80_init();

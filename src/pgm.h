@@ -22,7 +22,13 @@ void h1_pgm_write16(unsigned,unsigned);
 void h1_pgm_inputs(unsigned);
 void h1_pgm_frame(unsigned);
 void h1_pgm_present(uint32_t *,unsigned);
+/* Invalidate persistent black margins after any UI writes to the LCD. */
+void h1_pgm_present_reset(void);
+void h1_pgm_refresh(uint32_t *,unsigned);
 void h1_pgm_pause_probe(void);
+void h1_pgm_profile_phase(unsigned);
+int h1_pgm_z80_hle_selftest(void);
+int h1_pgm_bg_selftest(void);
 unsigned h1_pgm_prot_read(unsigned);
 void h1_pgm_prot_write(unsigned,unsigned);
 void h1_pgm_prot_reset(void);

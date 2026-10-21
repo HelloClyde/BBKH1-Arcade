@@ -32,5 +32,10 @@ def prepare_pgm(root: Path, build: Path, core: Path):
     p=core/'mamez80/z80.c';s=p.read_text()
     s='#include "pgm.h"\n'+s
     s=s.replace('h1_z80_hle && h1_z80_poll_valid','h1_z80_hle && !h1_pgm_active && h1_z80_poll_valid')
+    if '#include "z80_hle.h"' in s:
+        s=s.replace('#include "z80_hle.h"','#include "z80_hle.h"\n#include "pgm_z80_hle.h"')
+        marker='\t\tif(Z80_ICOUNT>0 && _PCD>=0x122'
+        assert marker in s
+        s=s.replace(marker,'\t\tif(h1_pgm_active && _PCD==0x329)h1_pgm_z80_hle_poll();\n'+marker)
     p.write_text(s)
     return [target,snd]

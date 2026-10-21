@@ -9,13 +9,13 @@ import struct
 def audit(payload,functions,base):
     checked=[];total=0
     for name,address,size in functions:
-        if name not in ('h1_mxu_control','h1_mxu_probe','h1_mxu_rgb565','h1_mxu_scale362','h1_mxu_copy32','h1_mxu_tile16','h1_mxu_tile16_opaque','h1_mxu_tile16_rgb','h1_mxu_tile16_palette','h1_mxu_tile16_palette32','h1_pgm_sprite_mxu_row','h1_pgm_sprite_mxu_rev','h1_pgm_sprite_mxu_map'):continue
+        if name not in ('h1_mxu_control','h1_mxu_probe','h1_mxu_rgb565','h1_mxu_scale362','h1_mxu_copy32','h1_mxu_tile16','h1_mxu_tile16_opaque','h1_mxu_tile16_rgb','h1_mxu_tile16_palette','h1_mxu_tile16_palette32','h1_pgm_sprite_mxu_row','h1_pgm_sprite_mxu_rev','h1_pgm_sprite_mxu_map','h1_pgm_bg_mxu_span'):continue
         assert size>0 and size%4==0 and 0<=address-base<=len(payload)-size
         count=0;source_words=[];destination_words=[]
         for off in range(address-base,address-base+size,4):
             word=struct.unpack_from('<I',payload,off)[0]
-            if name=='h1_mxu_copy32' or name.startswith('h1_pgm_sprite_mxu_'):
-                assert word>>26!=0x10,'PGM copy must not read/write CP0 interrupt state'
+            if name=='h1_mxu_copy32' or name.startswith('h1_pgm_sprite_mxu_') or name=='h1_pgm_bg_mxu_span':
+                assert word>>26!=0x10,'PGM MXU leaves must not read/write CP0 interrupt state'
             if word>>26!=0x1c:continue
             op=word&63
             if op==0x27 and word>>18&7!=1:raise ValueError('only R1 S32ALN permitted in pool16')

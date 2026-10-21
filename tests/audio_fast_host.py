@@ -74,6 +74,8 @@ unsigned adpcm_position(unsigned rate){
  pcm=ctypes.CDLL(str(out/'pcm.dll'));ym=ctypes.CDLL(str(out/'ym.dll'))
  assert pcm.gba_audio_resampler_selftest()==1
  assert ym.h1_ym_rate_selftest()==1
+ pcm_tests=list((ctypes.c_uint*5).in_dll(pcm,'h1_audio_fast_stats'));ym_tests=list((ctypes.c_uint*5).in_dll(ym,'h1_audio_fast_stats'))
+ assert pcm_tests[3]==ym_tests[3]==0
  rng=random.Random(4740);cases=0
  for hz in (8000,16000,22050):
   for fixture in range(24):
@@ -103,6 +105,6 @@ unsigned adpcm_position(unsigned rate){
    tones.append({'kind':'FM' if fm else 'SSG','sample_rate':hz,'rising_crossings_per_second':peak,'rms':math.sqrt(sum(v*v for v in values)/len(values))})
   assert max(peaks)-min(peaks)<=1,(fm,peaks)
  positions=[ym.adpcm_position(hz) for hz in (22050,16000,8000)];assert max(positions)-min(positions)<=2,positions
- report={'ok':True,'environment':'actual C YM2610 and PCM producer on host; firmware services unreachable stubs; no CPU or device simulation','streaming_fixtures':cases,'exact_output_against_independent_box_oracle':True,'output_frames_per_second':32000,'source_rates':[22050,16000,8000],'rate_switch_selftests':48,'tone_peaks':tones,'adpcm_nibble_position_after_10ms':positions,'native_source_sha256':{p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ('src/audio.c','src/ym_audio_fast.h','src/audio_fast.h','tools/prepare.py')}}
+ report={'ok':True,'environment':'actual C YM2610 and PCM producer on host; firmware services unreachable stubs; no CPU or device simulation','streaming_fixtures':cases,'exact_output_against_independent_box_oracle':True,'output_frames_per_second':32000,'source_rates':[22050,16000,8000],'pcm_selftests':pcm_tests[2],'pcm_failures':pcm_tests[3],'rate_switch_selftests':ym_tests[2],'rate_switch_failures':ym_tests[3],'tone_peaks':tones,'adpcm_nibble_position_after_10ms':positions,'native_source_sha256':{p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ('src/audio.c','src/ym_audio_fast.h','src/audio_fast.h','tools/prepare.py')}}
  (out/'verification.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
 if __name__=='__main__':main()

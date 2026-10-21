@@ -144,6 +144,9 @@ int SDL_FillRect(SDL_Surface *s,const SDL_Rect *r,Uint32 color){
  return 0;
 }
 void screen_flip(void){
+#if H1_PGM
+ if(h1_pgm_active)h1_pgm_present_reset();
+#endif
  if(!surface.pixels)return;
 #if H1_FAST_RENDER || H1_MXU_RENDER
  if(h1_render_bench_only)return;
@@ -222,6 +225,15 @@ static int down(unsigned key){
 #else
 static int down(unsigned key){return h1_game_code_down(h1_game_key_code(key));}
 #endif
+static void input_events(void){
+ for(unsigned i=0;i<64;i++){
+  int e=-1,k=-1;h1_event_fetch(&e,&k);if(e==-1&&k==-1)break;
+  if(e==11&&h1_pause_menu_enabled){menu_requested=2;paused=1;if(audio_ready)gba_audio_pause();break;}
+ }
+}
+#if H1_PGM
+static unsigned pgm_input_tick;
+#endif
 void pad_update(void){
 #if H1_SPEED_CORE
  /* Cache aliases only within this sample. Keep the authoritative firmware
@@ -229,10 +241,7 @@ void pad_update(void){
  memset(queried_keys,0,sizeof queried_keys);query_calls=query_unique=0;
  query_key=(int(*)(unsigned))h1_runtime_entry(h1_runtime_table(H1_RUNTIME_GUI_TABLE_SLOT),0x9d8u);
 #endif
- for(unsigned i=0;i<64;i++){
-  int e=-1,k=-1;h1_event_fetch(&e,&k);if(e==-1&&k==-1)break;
-  if(e==11&&h1_pause_menu_enabled){menu_requested=2;paused=1;if(audio_ready)gba_audio_pause();break;}
- }
+ input_events();
  // Native game mode does not reliably enqueue matrix-key transitions.
  // Use the same authoritative scan query as the game controls for hotkeys.
  static const unsigned hotkeys[]={H1_KEY_ESCAPE,H1_KEY_BACK,H1_KEY_P,H1_KEY_F,H1_KEY_G,H1_KEY_H
@@ -270,12 +279,23 @@ void pad_update(void){
  memory.intern_coin=7u&~((buttons>>ARCADE_COIN)&1u);
  memory.intern_start=255u&~((buttons>>ARCADE_START)&1u);
  h1_arcade_stats.keys=buttons&255;
+#if H1_PGM
+ if(h1_pgm_active)pgm_input_tick=h1_raw_tick_80hz();
+#endif
 #if H1_SPEED_CORE
  ++h1_input_stats.scans;h1_input_stats.queries+=query_unique;
  h1_input_stats.reused+=query_calls-query_unique;
 #endif
 }
 void h1_arcade_check_stop(void){pad_update();if(h1_arcade_stats.stop)h1_arcade_escape(0);}
+#if H1_PGM
+static void pgm_wait_stop(void){
+ /* Keep one full sample per logical frame. Busy audio/pacing waits drain
+  * events, refreshing matrix keys only once per raw tick when necessary. */
+ if(h1_raw_tick_80hz()!=pgm_input_tick){h1_pgm_profile_phase(12);h1_arcade_check_stop();h1_pgm_profile_phase(14);}
+ else{input_events();if(h1_arcade_stats.stop)h1_arcade_escape(0);}
+}
+#endif
 unsigned get_ticks(void){return (unsigned)((uint64_t)h1_raw_tick_80hz()*1000000/(h1_arcade_stats.tick_hz?h1_arcade_stats.tick_hz:40));}
 static void calibrate(void){
  unsigned r=h1_arcade_rtc(),spins=0;
@@ -361,7 +381,9 @@ static int select_game(void){
 static void run_pgm(void){
  pace_start=h1_raw_tick_80hz();pace_frames=0;h1_arcade_stats.raw_start=pace_start;h1_arcade_stats.rtc_start=h1_arcade_rtc();
  for(;;){
+  h1_pgm_profile_phase(12);
   h1_arcade_check_stop();
+  h1_pgm_profile_phase(0);
   if(paused){unsigned start=h1_raw_tick_80hz();h1_arcade_log_flush();
    while(paused){
     if(menu_requested){
@@ -370,7 +392,7 @@ static void run_pgm(void){
      menu_requested=0;display_mode=h1_arcade_settings.mode;skip=h1_arcade_settings.skip;muted=h1_arcade_settings.muted;
      if(action==2){h1_arcade_stats.stop=1;h1_arcade_escape(0);}
      for(unsigned k=1;k<=42;k++)held[k]=h1_game_code_down(h1_game_key_code(k));input_release_gate=1;
-     h1_pgm_present(lcd(),display_mode);paused=0;if(audio_ready)gba_audio_resume();break;
+     h1_pgm_refresh(lcd(),display_mode);paused=0;if(audio_ready)gba_audio_resume();break;
     }h1_arcade_check_stop();++h1_arcade_stats.paused_frames;
    }pace_start+=h1_raw_tick_80hz()-start;
   }
@@ -381,8 +403,10 @@ static void run_pgm(void){
   h1_arcade_stats.raw_end=h1_raw_tick_80hz();h1_arcade_stats.rtc_end=h1_arcade_rtc();
   if(H1_TEST_FRAMES&&h1_arcade_stats.frames>=H1_TEST_FRAMES)return;
 #if !H1_BENCHMARK
-  if(gba_audio_pacing()){while(gba_audio_wait())h1_arcade_check_stop();}
-  else if(h1_arcade_stats.tick_hz){unsigned target=(uint64_t)pace_frames*h1_arcade_stats.tick_hz/60;while(h1_raw_tick_80hz()-pace_start<target)h1_arcade_check_stop();}
+  h1_pgm_profile_phase(14);
+  if(gba_audio_pacing()){while(gba_audio_wait())pgm_wait_stop();}
+  else if(h1_arcade_stats.tick_hz){unsigned target=(uint64_t)pace_frames*h1_arcade_stats.tick_hz/60;while(h1_raw_tick_80hz()-pace_start<target)pgm_wait_stop();}
+  h1_pgm_profile_phase(0);
 #endif
  }
 }
@@ -536,6 +560,12 @@ int h1_app_main(void){
 #if H1_CPU_SELFTEST && H1_A68K
    extern int h1_pgm_bus_selftest(void);if(!h1_pgm_bus_selftest())h1_arcade_escape(144);
    extern int h1_pgm_sprite_selftest(void);if(!h1_pgm_sprite_selftest())h1_arcade_escape(145);
+#if H1_MXU
+   if(!h1_pgm_bg_selftest())h1_arcade_escape(147);
+#endif
+#if H1_SPEED_CORE
+   if(!h1_pgm_z80_hle_selftest())h1_arcade_escape(146);
+#endif
 #endif
    calibrate();audio_ready=gba_audio_open(8000);
    if(!audio_ready)h1_arcade_escape(141);

@@ -4,6 +4,7 @@
 #include "profile.h"
 #include <string.h>
 #include "spu_profile.h"
+#include <stdlib.h>
 #if H1_AUDIO_FAST
 #include "audio_fast.h"
 #endif
@@ -36,6 +37,9 @@ static int32_t accumulator;
 static unsigned batches, submitted, dropped, failures, nonzero, underruns;
 static unsigned waiting, progress_tick, progress_position;
 static unsigned paused;
+/* Exact PCM A/B switch; the generic producer still owns all edge cases. */
+volatile unsigned h1_audio_batch_mode=1;
+volatile struct {unsigned magic,version,calls,outputs;} h1_audio_batch_stats={0x31424350,1};
 #if H1_PROFILE
 extern uint32_t h1_wall_clock(void);
 typedef struct {
@@ -174,6 +178,7 @@ int gba_audio_open(unsigned source_rate)
     }
     memset(descriptors, 0, sizeof(descriptors)); memset(samples, 0, sizeof(samples));
     initialized = batches = submitted = dropped = failures = nonzero = underruns = 0;
+    h1_audio_batch_stats.calls=h1_audio_batch_stats.outputs=0;
 #if H1_PROFILE
     gap_count=gap_total=0;
 #endif
@@ -222,6 +227,43 @@ static void output(int16_t sample)
         ++submitted;
     }
 }
+#if H1_AUDIO_FAST
+static int output_batch(const int16_t *stereo,size_t frames,unsigned copies)
+{
+    /* Startup/submission, partial capacity and odd ring positions retain
+     * output()'s exact ordering and failure/drop handling. With playback
+     * already active, only the app writes these queue bookkeeping fields. */
+    if (!playing || (used & 1u) || queued > BLOCK_SAMPLES ||
+        frames > (BLOCK_SAMPLES - queued) / copies) return 0;
+    uint32_t *ring=(uint32_t *)samples[0];
+    unsigned position=used/2u,nz=0;
+    if(copies==4){
+        for(size_t i=0;i<frames;i++){
+            int16_t mono=((int32_t)stereo[i*2]+stereo[i*2+1])/2;
+            uint32_t pair=(uint16_t)mono|((uint32_t)(uint16_t)mono<<16);
+            ring[position]=pair;ring[(position+1u)&(BLOCK_SAMPLES/2u-1u)]=pair;
+            position=(position+2u)&(BLOCK_SAMPLES/2u-1u);if(mono)nz+=4;
+        }
+    }else{
+        for(size_t i=0;i<frames;i++){
+            int16_t mono=((int32_t)stereo[i*2]+stereo[i*2+1])/2;
+            uint32_t pair=(uint16_t)mono|((uint32_t)(uint16_t)mono<<16);
+            ring[position]=pair;position=(position+1u)&(BLOCK_SAMPLES/2u-1u);if(mono)nz+=2;
+        }
+    }
+    unsigned produced=(unsigned)frames*copies;
+    used=position*2u;queued+=produced;nonzero+=nz;
+    ++h1_audio_batch_stats.calls;h1_audio_batch_stats.outputs+=produced;return 1;
+}
+static void output_repeated(const int16_t *stereo,size_t frames,unsigned copies)
+{
+    if(h1_audio_batch_mode&&output_batch(stereo,frames,copies))return;
+    for(size_t i=0;i<frames;i++){
+        int16_t mono=((int32_t)stereo[i*2]+stereo[i*2+1])/2;
+        output(mono);output(mono);if(copies==4){output(mono);output(mono);}
+    }
+}
+#endif
 size_t gba_audio_write(const int16_t *stereo, size_t frames)
 {
     size_t i;
@@ -233,11 +275,7 @@ size_t gba_audio_write(const int16_t *stereo, size_t frames)
     if((rate==16000u || rate==8000u) && phase==0){
         /* Exact box-filter result for 16 -> 32 kHz: two copies of each mono
          * input, without fractional weights, multiplication or division. */
-        for(i=0;i<frames;i++){
-            int16_t mono=((int32_t)stereo[i*2]+stereo[i*2+1])/2;
-            output(mono);output(mono);
-            if(rate==8000u){output(mono);output(mono);}
-        }
+        output_repeated(stereo,frames,rate==8000u?4:2);
         H1_SPU_END(HSP_RESAMPLE,tick);
         return frames;
     }
@@ -267,6 +305,58 @@ void gba_audio_source_rate(unsigned source_rate){
  if(source_rate!=8000&&source_rate!=16000&&source_rate!=22050)return;
  rate=source_rate;phase=0;accumulator=0;
 }
+static unsigned batch_test_calls,batch_test_result,batch_test_errors;
+static int batch_test_submit(int channel,pcm_descriptor *descriptor,int repeat,int flags){
+ ++batch_test_calls;if(channel||descriptor!=&descriptors[0]||repeat||flags)++batch_test_errors;
+ return (int)batch_test_result;
+}
+typedef struct {unsigned used,queued,playing,submitted,dropped,failures,nonzero,batches,phase,accumulator,calls,errors;} batch_test_state;
+static batch_test_state batch_test_snapshot(void){
+ batch_test_state s={used,queued,playing,submitted,dropped,failures,nonzero,batches,phase,(unsigned)accumulator,batch_test_calls,batch_test_errors};return s;
+}
+static void batch_test_prepare(unsigned position,unsigned fill,unsigned running,unsigned success){
+ memset(samples,0xa5,sizeof samples);used=position;queued=fill;playing=running;
+ submitted=4;dropped=7;failures=11;nonzero=13;batches=17;phase=0;accumulator=0;
+ batch_test_calls=batch_test_errors=0;batch_test_result=success;
+}
+static int batch_output_selftest(const int16_t *input){
+ static const unsigned positions[]={0,1,2,BLOCK_SAMPLES-2,BLOCK_SAMPLES-1,4096};
+ static const unsigned fills[]={0,1,PREFILL-6,PREFILL-1,PREFILL,BLOCK_SAMPLES-2,BLOCK_SAMPLES-1,BLOCK_SAMPLES};
+ static const unsigned lengths[]={0,1,2,7,64,133,134,1024};
+ uint8_t *expected=malloc(sizeof samples);if(!expected)return 0;
+ submit_fn saved_submit=submit;unsigned saved_mode=h1_audio_batch_mode;int ok=1;
+ submit=batch_test_submit;
+ /* Compare the real producer's full ring and bookkeeping, including odd
+  * positions, wrapping, full/partial capacity, prefill and submit failure.
+  * The only replacement is the firmware submit service; no mixer runs. */
+ for(unsigned fixture=0;fixture<192&&ok;fixture++){
+  unsigned position=positions[fixture%6],fill=fills[(fixture/3)%8],n=lengths[(fixture/5)%8],copies=fixture&1?4:2;
+  batch_test_state reference;
+  for(unsigned fast=0;fast<2;fast++){
+   batch_test_prepare(position,fill,(fixture/7)&1,(fixture/11)&1);h1_audio_batch_mode=fast;
+   output_repeated(input,n,copies);batch_test_state actual=batch_test_snapshot();
+   if(!fast){memcpy(expected,samples,sizeof samples);reference=actual;}
+   else if(memcmp(expected,samples,sizeof samples)||memcmp(&reference,&actual,sizeof actual)||actual.errors)ok=0;
+  }
+  ++h1_audio_fast_stats.tests;if(!ok)++h1_audio_fast_stats.failures;
+ }
+ /* Also exercise the public resampler at all supported source rates and
+  * fractional phases. Starting stopped makes retirement a no-op; crossing
+  * prefill still invokes the stub above with the real descriptor ABI. */
+ static const unsigned rates[]={8000,16000,22050};
+ for(unsigned fixture=0;fixture<36&&ok;fixture++){
+  batch_test_state reference;unsigned source_rate=rates[fixture%3];
+  for(unsigned fast=0;fast<2;fast++){
+   batch_test_prepare(positions[(fixture/3)%6],fixture&1?PREFILL-1:0,0,(fixture/5)&1);
+   rate=source_rate;phase=fixture&2?source_rate/3:0;active=1;paused=0;h1_audio_batch_mode=fast;
+   gba_audio_write(input,133);active=0;batch_test_state actual=batch_test_snapshot();
+   if(!fast){memcpy(expected,samples,sizeof samples);reference=actual;}
+   else if(memcmp(expected,samples,sizeof samples)||memcmp(&reference,&actual,sizeof actual)||actual.errors)ok=0;
+  }
+  ++h1_audio_fast_stats.tests;if(!ok)++h1_audio_fast_stats.failures;
+ }
+ submit=saved_submit;h1_audio_batch_mode=saved_mode;free(expected);return ok;
+}
 int gba_audio_resampler_selftest(void){
  if(active||initialized)return 0;
  static int16_t input[2048];unsigned seed=4740;
@@ -285,7 +375,9 @@ int gba_audio_resampler_selftest(void){
   for(unsigned i=n*copies;i<BLOCK_SAMPLES&&!bad;i++)bad=samples[0][i]!=(int16_t)0xa5a5;
   ++h1_audio_fast_stats.tests;if(bad){++h1_audio_fast_stats.failures;return 0;}
  }
- batches=submitted=dropped=failures=nonzero=underruns=0;queued=used=phase=accumulator=0;memset(samples,0,sizeof samples);
+ if(!batch_output_selftest(input))return 0;
+ h1_audio_batch_stats.calls=h1_audio_batch_stats.outputs=0;
+ batches=submitted=dropped=failures=nonzero=underruns=0;queued=used=phase=accumulator=0;playing=active=paused=0;memset(samples,0,sizeof samples);
  return 1;
 }
 #endif

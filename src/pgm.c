@@ -22,12 +22,27 @@ static FILE *romfile;
 static pgm_part parts[PGM_REGIONS];
 static uint8_t *bios,*program,*ram,*bg,*tx,*rows,*vreg,*palette,*cache;
 static uint32_t *pixels;
+static unsigned pgm_stream_ready;
+extern volatile unsigned h1_pgm_stream_mode;
+static int pgm_stream_prepare(void);
+static void pgm_stream_reset(void);
+static void pgm_stream_close(void);
+static uint32_t *bg_surface;
+static unsigned bg_epoch=1,bg_cached_epoch,bg_opaque;
+/* Whole RGB backgrounds increase SDRAM traffic on this target; keep that
+ * measured experiment available for A/B, default to the tile-span path. */
+volatile unsigned h1_pgm_layers_mode=1,h1_pgm_present_mode=1;
+/* 1: complete unrolled fill, 2: initialize only background holes. */
+volatile unsigned h1_pgm_clear_mode=2;
 static uint16_t *reference_pixels,*colors565;
 /* File format still accepts existing H1PGM1 containers. Per-page and loaded
  * region CRCs are intentionally not checked during playback. */
 uint8_t **h1_pgm_bus_pages;
 static uint8_t *tile_pixels,*sprite_pixels,*text_pixels;
 static uint32_t *tile_tags,*text_tags;
+/* Two 32-bit row masks live after the decoded tile allocation: nonempty
+ * and wholly opaque. They share the decoded cache's direct-mapped tag. */
+static uint32_t *tile_row_masks;
 typedef struct {unsigned mask,width,height,offset;} decoded_sprite;
 static decoded_sprite *sprite_tags;
 static unsigned sprite_capacity,sprite_used;
@@ -36,8 +51,8 @@ static unsigned sprite_capacity,sprite_used;
 /* Version 2 separates descriptor/zoom setup, cache-miss decode, row
  * composition and text. The inner transparency test and palette lookup stay
  * together: timing each pixel would measure the instrumentation itself. */
-volatile struct {unsigned magic,version,enabled,frames,ticks[12],tile_hits,tile_misses,sprite_hits,sprite_misses,mxu_pixels,decoded_bytes;
- unsigned identity_rows,mapped_rows,identity_pixels,mapped_pixels;} h1_pgm_perf={0x32504750,2};
+volatile struct {unsigned magic,version,enabled,frames,ticks[15],tile_hits,tile_misses,sprite_hits,sprite_misses,mxu_pixels,decoded_bytes;
+ unsigned identity_rows,mapped_rows,identity_pixels,mapped_pixels;} h1_pgm_perf={0x32504750,3};
 /* Debug A/B switch: original mapped C, identity-aware C, MIPS rows, MXU. */
 volatile unsigned h1_pgm_sprite_mode=H1_MXU?3:2;
 #if defined(__mips__)
@@ -52,6 +67,7 @@ extern unsigned h1_pgm_sprite_mxu_map(uint32_t *,const uint8_t *,const uint32_t 
 #endif
 static unsigned perf_phase,perf_last;
 static void phase(unsigned next){if(h1_pgm_perf.enabled){unsigned now=h1_raw_tick_80hz();if(perf_last)h1_pgm_perf.ticks[perf_phase]+=now-perf_last;perf_last=now;perf_phase=next;}else perf_last=0;}
+void h1_pgm_profile_phase(unsigned next){phase(next);}
 static uint32_t tags[SLOTS],ages[SLOTS],age;
 /* Reserve the complete bank selector range, including unconnected text
  * palette banks. They read as zero instead of indexing past the table. */
@@ -59,6 +75,9 @@ static uint32_t *colors;
 static uint16_t sprites[0x500];
 static unsigned expand(unsigned);
 static unsigned input[3],z80_work,sound_ready,audio_fraction;
+/* Match pinned FBA PGM_INTER_LEAVE=2. Keep a runtime A/B control while
+ * preserving the same 20 MHz / 8.468 MHz cycle budget at every setting. */
+volatile unsigned h1_pgm_interleave=2;
 static unsigned calval,calmask,calcmd,calcount;
 extern unsigned char mame_z80mem[65536];
 extern void z80_init(void),z80_reset(void *),z80_set_irq_callback(int(*)(int));
@@ -118,6 +137,7 @@ static int load_region(unsigned region,uint8_t **p){
  return 1;
 }
 int h1_pgm_load(const char *path){
+ h1_pgm_present_reset();
  uint8_t h[256];h1_pgm_active=1;h1_pgm_stats.state=1;
  romfile=fopen(path,"rb");if(!romfile||fseek(romfile,0,SEEK_END))return 0;long size=ftell(romfile);
  if(size<256||!read_at(0,h,256)||!h1_pgm_header(h,size,"kov"))return 0;
@@ -128,7 +148,8 @@ int h1_pgm_load(const char *path){
  colors=calloc(4096,4);colors565=calloc(4096,2);
  if(!ram||!bg||!tx||!rows||!vreg||!palette||!pixels||!cache||!colors||!colors565)return 0;
  h1_pgm_bus_pages=calloc(256,sizeof *h1_pgm_bus_pages);
- tile_pixels=malloc(TILE_SLOTS*1024);tile_tags=malloc(TILE_SLOTS*4);
+ tile_pixels=malloc(TILE_SLOTS*(1024+8));tile_tags=malloc(TILE_SLOTS*4);
+ tile_row_masks=tile_pixels?(uint32_t*)(tile_pixels+TILE_SLOTS*1024):0;
  text_pixels=malloc(512*72);text_tags=malloc(512*4);
  sprite_tags=malloc(SPRITE_SLOTS*sizeof *sprite_tags);
  sprite_capacity=8*1024*1024;
@@ -158,13 +179,16 @@ int h1_pgm_load(const char *path){
  h1_pgm_stats.state=2;return 1;
 }
 void h1_pgm_close(void){
+ h1_pgm_present_reset();
+ pgm_stream_close();
+ free(bg_surface);bg_surface=0;bg_cached_epoch=0;++bg_epoch;
  if(sound_ready){ics2115_exit();sound_ready=0;}
  if(romfile){fclose(romfile);romfile=0;}
  free(bios);free(program);free(ram);free(bg);free(tx);free(rows);free(vreg);free(palette);free(pixels);free(cache);
  free(h1_pgm_bus_pages);h1_pgm_bus_pages=0;free(tile_pixels);free(tile_tags);free(sprite_pixels);free(sprite_tags);
  free(colors);colors=0;free(colors565);colors565=0;
  free(text_pixels);text_pixels=0;free(text_tags);text_tags=0;
- tile_pixels=sprite_pixels=0;tile_tags=0;sprite_tags=0;
+ tile_pixels=sprite_pixels=0;tile_row_masks=0;tile_tags=0;sprite_tags=0;
  sample_data=0;
  bios=program=ram=bg=tx=rows=vreg=palette=cache=0;pixels=0;h1_pgm_active=0;h1_pgm_stats.state=4;
 }
@@ -203,7 +227,9 @@ unsigned h1_pgm_read8(unsigned a){
 }
 void h1_pgm_write16(unsigned a,unsigned v){
  a&=0xfffffe;v&=65535;uint8_t *p=mapped(a);
- if(p){if(a<0x800000)return;store(p,v);if(a>=0xa00000&&a<0xa01200)palette_write(a,v);return;}
+ if(p){if(a<0x800000)return;
+  if(word(p)!=v&&((a>=0x900000&&a<0x904000)||(a>=0x907000&&a<0x907800)||(a>=0xa00800&&a<0xa01000)||a==0xb02000||a==0xb03000))++bg_epoch;
+  store(p,v);if(a>=0xa00000&&a<0xa01200)palette_write(a,v);return;}
  if((a&0xff0000)==0xc10000){mame_z80mem[a&65535]=v>>8;mame_z80mem[(a+1)&65535]=v;return;}
  switch(a){
  case 0x500000:case 0x500002:h1_pgm_prot_write(a&2,v);return;
@@ -219,7 +245,9 @@ void h1_pgm_write16(unsigned a,unsigned v){
 }
 void h1_pgm_write8(unsigned a,unsigned v){
  a&=0xffffff;uint8_t *p=mapped(a&~1u);
- if(p&&a>=0x800000){p[(a&1)^1]=v;if(a>=0xa00000&&a<0xa01200)palette_write(a&~1u,word(p));return;}
+ if(p&&a>=0x800000){unsigned aligned=a&~1u;
+  if(p[(a&1)^1]!=(uint8_t)v&&((a>=0x900000&&a<0x904000)||(a>=0x907000&&a<0x907800)||(a>=0xa00800&&a<0xa01000)||aligned==0xb02000||aligned==0xb03000))++bg_epoch;
+  p[(a&1)^1]=v;if(a>=0xa00000&&a<0xa01200)palette_write(a&~1u,word(p));return;}
  if((a&0xff0000)==0xc10000){mame_z80mem[a&65535]=v;return;}
  /* Byte lane writes to I/O are deliberately not converted into reads of
   * side-effect registers. The PGM interface consumes the low data lane. */
@@ -239,11 +267,16 @@ void h1_pgm_inputs(unsigned buttons){
 static void draw(void);
 void h1_pgm_frame(unsigned render){
  static int debt68,debt80;
- for(unsigned i=0;i<100;i++){
+ unsigned count=h1_pgm_interleave;if(count<2||count>100)count=2;
+ unsigned done68=0,done80=0;
+ for(unsigned i=0;i<count;i++){
+  unsigned next68=(i+1)*(20000000u/60)/count,next80=(i+1)*(8468000u/60)/count;
+  int budget68=(int)(next68-done68)-debt68,budget80=(int)(next80-done80)-debt80;
   phase(1);
-  debt68=cpu_68k_run(3333-debt68);
+  debt68=cpu_68k_run(budget68);
   phase(2);
-  if(z80_work)debt80=z80_execute(1411-debt80)-(1411-debt80);
+  if(z80_work)debt80=z80_execute(budget80)-budget80;
+  done68=next68;done80=next80;
  }
  phase(3);
  cpu_68k_interrupt(6);ics2115_frame();
@@ -251,7 +284,9 @@ void h1_pgm_frame(unsigned render){
  if(h1_arcade_settings.muted)memset(sound_out,0,nBurnSoundLen*4);phase(8);gba_audio_write(sound_out,nBurnSoundLen);
  phase(0);
  h1_arcade_stats.audio_samples+=nBurnSoundLen;
- if(render){draw();++h1_pgm_stats.draws;}
+ /* Prepare before the hardware's one-frame sprite latch is advanced below.
+  * A stream plan snapshots geometry and pins decoded pointers until present. */
+ if(render){if(!pgm_stream_prepare())draw();++h1_pgm_stats.draws;}
  memcpy(sprites,ram,sizeof sprites);
  ++h1_pgm_stats.frames;h1_pgm_stats.pc=cpu_68k_getpc();
  if(h1_pgm_perf.enabled)++h1_pgm_perf.frames;
@@ -265,10 +300,17 @@ static const uint8_t *tile_data(unsigned tile){
  if(tile_tags[slot]==tile){++h1_pgm_perf.tile_hits;return dst;}
  uint8_t raw[640];unsigned base=tile*640,bytes=parts[PGM_TILES].size-base;if(bytes>640)bytes=640;
  memset(raw,255,sizeof raw);rom_copy(PGM_TILES,base,raw,bytes);
- for(unsigned y=0;y<32;y++)for(unsigned x=0;x<32;x++){
-  unsigned bit=x*5,b=bit>>3,s=bit&7;
-  dst[y*32+x]=((raw[y*20+b]>>s)|((b+1<20?raw[y*20+b+1]:0)<<(8-s)))&31;
+ unsigned nonempty=0,opaque=0;
+ for(unsigned y=0;y<32;y++){
+  unsigned mask=0;
+  for(unsigned x=0;x<32;x++){
+   unsigned bit=x*5,b=bit>>3,s=bit&7;
+   unsigned v=((raw[y*20+b]>>s)|((b+1<20?raw[y*20+b+1]:0)<<(8-s)))&31;
+   dst[y*32+x]=v;if(v!=31)mask|=1u<<x;
+  }
+  if(mask)nonempty|=1u<<y;if(mask==~0u)opaque|=1u<<y;
  }
+ if(tile_row_masks){tile_row_masks[slot*2]=nonempty;tile_row_masks[slot*2+1]=opaque;}
  tile_tags[slot]=tile;++h1_pgm_perf.tile_misses;return dst;
 }
 static void background(void){
@@ -309,6 +351,22 @@ static void text_layer(void){
   }
   x+=n;
  }
+}
+#include "pgm_layers.h"
+/* Cache the composed background independently of sprites. Writes affecting
+ * tiles, row scroll, scroll registers or its palette invalidate it. 0xffffffff
+ * is a transparency marker outside the RGB32 color range. */
+static int prepare_background(void){
+ if(!bg_surface)bg_surface=malloc(WIDTH*HEIGHT*4);
+ if(!bg_surface)return 0;
+ if(bg_cached_epoch!=bg_epoch){
+  phase(4);uint32_t *saved=pixels;pixels=bg_surface;
+  for(unsigned i=0;i<WIDTH*HEIGHT;i++)pixels[i]=~0u;
+  background_fast();pixels=saved;bg_opaque=1;
+  for(unsigned i=0;i<WIDTH*HEIGHT;i++)if(bg_surface[i]==~0u){bg_opaque=0;break;}
+  bg_cached_epoch=bg_epoch;
+ }
+ return 1;
 }
 static unsigned sprite_index;
 static unsigned zoom_extent(unsigned n,unsigned mask,unsigned grow){
@@ -395,7 +453,33 @@ static void sprite_layer(unsigned priority){
   }
  }
 }
-static void draw(void){for(unsigned i=0;i<448*224;i++)pixels[i]=colors[0x3ff];sprite_index=0;phase(5);sprite_layer(1);phase(4);background();phase(5);sprite_layer(0);phase(11);text_layer();phase(0);}
+/* Palette and framebuffer are separate allocations. Snapshot the backdrop
+ * before writing, so alias analysis cannot reload it for every pixel. Keep
+ * sixteen consecutive stores per branch for the JZ4740's small in-order core. */
+static void clear_pixels(void){
+ uint32_t c=colors[0x3ff],*p=pixels,*end=pixels+WIDTH*HEIGHT;
+ do{
+  p[0]=c;p[1]=c;p[2]=c;p[3]=c;p[4]=c;p[5]=c;p[6]=c;p[7]=c;
+  p[8]=c;p[9]=c;p[10]=c;p[11]=c;p[12]=c;p[13]=c;p[14]=c;p[15]=c;p+=16;
+ }while(p!=end);
+}
+#include "pgm_clear.h"
+static void draw(void){
+ pgm_stream_ready=0;
+ unsigned mode=h1_pgm_layers_mode,cached=mode==2&&prepare_background();sprite_index=0;
+ if(cached&&bg_opaque){
+  /* All low-priority sprites are covered by an opaque background. Advance
+   * the list exactly as sprite_layer(1) without decoding invisible pixels. */
+  while(sprite_index<0x500&&(sprites[sprite_index+4]&511)&&(sprites[sprite_index+2]&0x80))sprite_index+=5;
+  phase(4);memcpy(pixels,bg_surface,WIDTH*HEIGHT*4);
+ }else{
+  phase(13);if(h1_pgm_clear_mode==2&&mode==1)background_clear_fast(colors[0x3ff]);else clear_pixels();
+  phase(5);sprite_layer(1);phase(4);
+  if(cached){for(unsigned i=0;i<WIDTH*HEIGHT;i++){unsigned c=bg_surface[i];if(c!=~0u)pixels[i]=c;}}
+  else if(mode)background_fast();else background();
+ }
+ phase(5);sprite_layer(0);phase(11);if(mode)text_layer_fast();else text_layer();phase(0);
+}
 #define pixels reference_pixels
 #define colors colors565
 #include "pgm_draw_reference.h"
@@ -423,8 +507,12 @@ static void sprite_benchmark(void){
  h1_pgm_sprite_bench.state=h1_pgm_sprite_bench.differences[0]||h1_pgm_sprite_bench.differences[1]||h1_pgm_sprite_bench.differences[2]||h1_pgm_sprite_bench.differences[3]?3:2;
 }
 static void present_check(void);
+static void pipeline_benchmark(void);
+static void stream_benchmark(void);
 void h1_pgm_pause_probe(void){
  sprite_benchmark();
+ pipeline_benchmark();
+ stream_benchmark();
  if(!h1_pgm_draw_probe.request)return;
  h1_pgm_draw_probe.request=0;h1_pgm_draw_probe.state=1;
  uint16_t *temporary=malloc(448*224*2),*actual565=malloc(448*224*2);
@@ -450,7 +538,12 @@ static void present_reference(uint32_t *lcd,unsigned mode){
 extern void h1_mxu_rgb565(uint32_t*,const uint16_t*,unsigned);
 extern void h1_mxu_copy32(uint32_t*,const uint32_t*,unsigned);
 #endif
+#include "pgm_present_fast.h"
+#include "pgm_stream.h"
 void h1_pgm_present(uint32_t *native,unsigned mode){
+ if(pgm_stream_ready){pgm_stream_present(native,mode);return;}
+ if(h1_pgm_present_mode){present_fast(native,mode);return;}
+ h1_pgm_present_reset();
  phase(6);uint32_t *lcd=native;uintptr_t address=(uintptr_t)native;
  unsigned cached=address>=0xa0000000u&&address<0xa4000000u&&!(address&255u)&&480u*272u*4u<=0xa4000000u-address;
  if(cached)lcd=(uint32_t*)((address&0x1fffffffu)|0x80000000u);
@@ -484,12 +577,96 @@ void h1_pgm_present(uint32_t *native,unsigned mode){
 #endif
  phase(0);
 }
+void h1_pgm_refresh(uint32_t *native,unsigned mode){
+ h1_pgm_present_reset();
+ if(!pgm_stream_prepare())draw();
+ h1_pgm_present(native,mode);
+}
 static void present_check(void){
  uint32_t *reference=malloc(480*272*4),*actual=malloc(480*272*4);
  if(!reference||!actual){free(reference);free(actual);for(unsigned i=0;i<3;i++)h1_pgm_draw_probe.present_differences[i]=~0u;return;}
  for(unsigned mode=0;mode<3;mode++){
-  present_reference(reference,mode);memset(actual,0xa5,480*272*4);h1_pgm_present(actual,mode);
+  present_reference(reference,mode);memset(actual,0xa5,480*272*4);h1_pgm_present_reset();h1_pgm_present(actual,mode);
   unsigned n=0;for(unsigned i=0;i<480*272;i++)n+=reference[i]!=actual[i];h1_pgm_draw_probe.present_differences[mode]=n;
+  /* Stable output may omit black-margin writes. A UI can overwrite the
+   * same target without changing its address or display mode. */
+  h1_pgm_present(actual,mode);for(unsigned i=0;i<480*272;i++)n+=reference[i]!=actual[i];
+  memset(actual,0x5a,480*272*4);h1_pgm_present_reset();h1_pgm_present(actual,mode);
+  for(unsigned i=0;i<480*272;i++)n+=reference[i]!=actual[i];h1_pgm_draw_probe.present_differences[mode]=n;
  }
+ h1_pgm_present_reset();
  free(reference);free(actual);
+}
+volatile struct {unsigned magic,version,request,state,loops,draw_ticks[3],present_ticks[2],differences[5];} h1_pgm_pipeline_bench={0x314c5050,1};
+static void pipeline_benchmark(void){
+ unsigned loops=h1_pgm_pipeline_bench.request;if(!loops)return;
+ h1_pgm_pipeline_bench.request=0;h1_pgm_pipeline_bench.state=1;if(loops>128)loops=128;
+ uint32_t *expected=malloc(WIDTH*HEIGHT*4),*reference=malloc(480*272*4),*actual=malloc(480*272*4);
+ if(!expected||!reference||!actual){free(expected);free(reference);free(actual);h1_pgm_pipeline_bench.state=4;return;}
+ unsigned layers=h1_pgm_layers_mode,present=h1_pgm_present_mode,enabled=h1_pgm_perf.enabled;
+ h1_pgm_perf.enabled=0;h1_pgm_layers_mode=0;draw();memcpy(expected,pixels,WIDTH*HEIGHT*4);
+ unsigned fail=0;
+ for(unsigned m=0;m<3;m++){
+  h1_pgm_layers_mode=m;draw();unsigned start=h1_raw_tick_80hz();
+  for(unsigned i=0;i<loops;i++)draw();h1_pgm_pipeline_bench.draw_ticks[m]=h1_raw_tick_80hz()-start;
+  unsigned n=0;for(unsigned i=0;i<WIDTH*HEIGHT;i++)n+=expected[i]!=pixels[i];h1_pgm_pipeline_bench.differences[m]=n;fail+=n;
+ }
+ h1_pgm_present_mode=0;h1_pgm_present(reference,0);
+ for(unsigned m=0;m<2;m++){
+  h1_pgm_present_mode=m;h1_pgm_present(actual,0);unsigned start=h1_raw_tick_80hz();
+  for(unsigned i=0;i<loops;i++)h1_pgm_present(actual,0);h1_pgm_pipeline_bench.present_ticks[m]=h1_raw_tick_80hz()-start;
+  unsigned n=0;for(unsigned i=0;i<480*272;i++)n+=reference[i]!=actual[i];h1_pgm_pipeline_bench.differences[3+m]=n;fail+=n;
+ }
+ h1_pgm_layers_mode=layers;h1_pgm_present_mode=present;h1_pgm_perf.enabled=enabled;perf_last=0;
+ free(expected);free(reference);free(actual);h1_pgm_pipeline_bench.loops=loops;h1_pgm_pipeline_bench.state=fail?3:2;
+}
+/* Paused physical-device comparison: original RGB565 rendering is the
+ * independent oracle. Timings cover complete draw+LCD output in 4:3, in
+ * forward/reverse order to expose noise in the coarse firmware clock. */
+volatile struct {
+ unsigned magic,version,request,state,loops,ticks[3][2],differences[3][3],prepare_failures;
+} h1_pgm_stream_probe={0x31535050,1};
+static int stream_probe_render(uint32_t *target,unsigned mode,unsigned variant){
+ if(!variant){h1_pgm_scale_mode=0;draw();present_fast(target,mode);return 1;}
+ h1_pgm_scale_mode=variant-1;
+ if(!pgm_stream_prepare()){++h1_pgm_stream_probe.prepare_failures;return 0;}
+ pgm_stream_present(target,mode);return 1;
+}
+static void stream_benchmark(void){
+ unsigned loops=h1_pgm_stream_probe.request;if(!loops)return;
+ h1_pgm_stream_probe.request=0;h1_pgm_stream_probe.state=1;if(loops>128)loops=128;
+ uint16_t *gold=malloc(WIDTH*HEIGHT*2);
+ uint32_t *reference=malloc(480*272*4),*actual=malloc(480*272*4);
+ if(!gold||!reference||!actual){free(gold);free(reference);free(actual);h1_pgm_stream_probe.state=4;return;}
+ unsigned enabled=h1_pgm_perf.enabled,layers=h1_pgm_layers_mode;
+ unsigned stream=h1_pgm_stream_mode,scale=h1_pgm_scale_mode;
+ h1_pgm_perf.enabled=0;h1_pgm_layers_mode=1;h1_pgm_stream_mode=1;
+ h1_pgm_stream_probe.prepare_failures=0;
+ reference_pixels=gold;draw_reference();reference_pixels=0;
+ unsigned fail=0;
+ for(unsigned mode=0;mode<3;mode++){
+  for(unsigned i=0;i<WIDTH*HEIGHT;i++)pixels[i]=expand(gold[i]);
+  present_reference(reference,mode);
+  for(unsigned variant=0;variant<3;variant++){
+   unsigned n=0;
+   for(unsigned pass=0;pass<3;pass++){
+    if(pass!=1){memset(actual,0xa5,480*272*4);h1_pgm_present_reset();}
+    if(!stream_probe_render(actual,mode,variant)){n=~0u;break;}
+    for(unsigned i=0;i<480*272;i++)n+=reference[i]!=actual[i];
+   }
+   h1_pgm_stream_probe.differences[variant][mode]=n;fail|=n;
+  }
+ }
+ if(!h1_pgm_stream_probe.prepare_failures){
+  for(unsigned round=0;round<2;round++)for(unsigned k=0;k<3;k++){
+   unsigned variant=round?2-k:k;h1_pgm_present_reset();
+   stream_probe_render(actual,0,variant);unsigned start=h1_raw_tick_80hz();
+   for(unsigned i=0;i<loops;i++)if(!stream_probe_render(actual,0,variant))break;
+   h1_pgm_stream_probe.ticks[variant][round]=h1_raw_tick_80hz()-start;
+  }
+ }
+ h1_pgm_stream_mode=stream;h1_pgm_scale_mode=scale;h1_pgm_layers_mode=layers;
+ h1_pgm_perf.enabled=enabled;perf_last=0;h1_pgm_present_reset();draw();
+ free(gold);free(reference);free(actual);h1_pgm_stream_probe.loops=loops;
+ h1_pgm_stream_probe.state=fail||h1_pgm_stream_probe.prepare_failures?3:2;
 }

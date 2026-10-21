@@ -28,7 +28,7 @@ python -X utf8 tools/convert.py "你的/kof97.zip" --set kof97 --bios "你的/ne
 支持驱动：`kof94`、`kof95`、`kof96`、`kof97`、`mslug`、`mslug2`、`samsho`、`samsho2`、`samsho3`、`samsho4`、`lastblad`。
 目前只有用户自备的《拳皇97》完成真机功能验证，列出驱动不等于所有游戏已测通过。
 
-PGM 实验版已用 H1Debug 真机运行《三国战纪》V117 并进入第一关。去掉播放页 CRC、增加解码缓存、MIPS 访存与等待循环批处理、合并颜色转换与 MXU 输出，再加入精灵 MIPS/MXU 合成后，本次战斗窗口约 40.9 逻辑帧/秒、20.4 显示帧/秒，仍未满速。同一冻结帧的完整绘图耗时减少约8～9%，MXU与普通MIPS版本接近；PGM的MXU路径保留XR/控制寄存器恢复，不主动关中断。通过 `tools/build_pgm.py` 构建；不在上述 v0.1.2 Release 中，见 [PGM 说明与真机记录](docs/pgm.md)。
+PGM 实验版已用 H1Debug 真机运行《三国战纪》V117。经CPU等待循环批处理、MIPS/MXU精灵合成及逐行合成后立即缩放输出，在408 MHz、4:3、跳1帧、8 kHz下，20.3秒实际战斗操作窗口达到60逻辑帧/秒、30显示帧/秒。同一冻结帧的完整绘图与输出由约22.14 ms降至14.32 ms；首次新资源加载仍会短暂掉速，尚不能保证所有关卡恒定满速。PGM的MXU路径保存XR/控制寄存器，不主动关中断。通过 `tools/build_pgm.py` 构建；不在上述 v0.1.2 Release 中，见 [PGM 说明与真机记录](docs/pgm.md)。
 
 | 操作 | 默认按键 |
 | --- | --- |
