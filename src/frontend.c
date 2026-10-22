@@ -38,6 +38,10 @@
 #include <stddef.h>
 #include <sys/stat.h>
 
+#ifndef H1_STARTUP_SELFTEST
+#define H1_STARTUP_SELFTEST 0
+#endif
+
 volatile h1_arcade_stats_t h1_arcade_stats={0x31435241,1};
 const uint32_t h1_arcade_abi[] __attribute__((used,section(".h1meta")))={
  0x31494241,offsetof(neo_mem,ram),offsetof(neo_mem,sram),offsetof(neo_mem,memcard),sizeof(neo_mem)
@@ -515,7 +519,8 @@ static void run_frames(void){
 int h1_app_main(void){
  volatile unsigned loaded=0;FILE *f=fopen("A:\\ARCADE\\h1arcade.log","wb");if(f)fclose(f);
  h1_arcade_log("H1ARCADE_BEGIN version=0.1.0 NeoGeo core=%s",H1_A68K?"A68K MIPS evaluation":"Musashi C");h1_arcade_log_flush();
-#if H1_CPU_SELFTEST
+ h1_arcade_log("STARTUP_SELFTEST enabled=%u",H1_STARTUP_SELFTEST);h1_arcade_log_flush();
+#if H1_CPU_SELFTEST && H1_STARTUP_SELFTEST
  extern int h1_cpu_selftest(void);
  if(!h1_cpu_selftest()){h1_arcade_log_flush();h1_arcade_stats.error=111;h1_arcade_stats.state=5;return 111;}
 #if H1_SPEED_CORE
@@ -557,7 +562,7 @@ int h1_app_main(void){
   if(selected==2){
    loaded=2;if(!h1_pgm_load(path))h1_arcade_escape(140);
    video_open();cpu_68k_init();cpu_68k_reset();
-#if H1_CPU_SELFTEST && H1_A68K
+#if H1_CPU_SELFTEST && H1_STARTUP_SELFTEST && H1_A68K
    extern int h1_pgm_bus_selftest(void);if(!h1_pgm_bus_selftest())h1_arcade_escape(144);
    extern int h1_pgm_sprite_selftest(void);if(!h1_pgm_sprite_selftest())h1_arcade_escape(145);
 #if H1_MXU

@@ -25,6 +25,20 @@ python -X utf8 tests/performance_hardware.py --build release-a68k-idle-dirty-sel
 不能自动重发触控、退出或写入动作。
 真实测试需要用户自备设备、驻留器、游戏与 BIOS；CI 只执行实际 C 函数和静态检查。
 
+## 启动诊断构建
+
+普通发布组合沿用 `--cpu-selftest` 配置，但默认不执行启动和 PGM 载入后的完整自检。完整诊断通过下面的独立构建方式开启。
+需要检查原生 CPU、MXU、绘图和音频路径时，给 `tools/build.py` 增加 `--startup-selftest`；该选项要求同时使用 `--cpu-selftest`。
+例如，使用当前发布组合并显式启用诊断：
+
+```powershell
+python -X utf8 tools/build.py --core a68k --idle --dirty-present --cpu-selftest --startup-selftest --optimize 3 --lto --fast-bus --bus-reads-only --tile-direct --mxu --mxu-render --audio-fast --visible-render --speed-core --scale-output --cpu-mhz 408 --pgm --toolchain "你的工具链/bin" --host-cc "你的gcc.exe"
+```
+
+诊断构建目录名在 `-selftest` 后增加 `-startuptest`，与普通构建分别缓存；日志用 `STARTUP_SELFTEST enabled=0/1` 记录是否执行。
+完整自检包含上千次全缓冲差分比较，在显示文件选择器前可能持续数十秒，只用于专门的真机验证。
+诊断构建与普通构建的 BDA 散列、符号及测试证据分别记录；历史自检通过记录不自动证明新构建已完成真机验证。
+
 ## 设备端 ZIP 转换
 
 把自备 `kof97.zip` 和 `neogeo.zip` 复制到 `ARCADE`，测试时暂时移动已有同名 `.h1neo`，

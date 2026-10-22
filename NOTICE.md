@@ -15,6 +15,23 @@ This executable combines components with different licenses. In particular,
 the historic MAME-derived Z80 and YM2610 components have noncommercial terms.
 Do not describe the complete combined executable as uniformly MIT or GPL-only.
 
+The v0.2.2 release separates automatic startup diagnostics from normal use.
+H1_STARTUP_SELFTEST defaults to 0; only an explicit diagnostic build using
+--cpu-selftest --startup-selftest runs the full native suite before the file
+picker and after PGM loading. The older v0.2.1 image was observed spending
+tens of seconds in these developer checks before showing the picker.
+The new BDA is 1,240,380 bytes, SHA256
+4663b6c25059c31b5a05820292d1fc6572235a2a965023200b09a24a2c34cae2.
+At the user's request, this session installs it through H1Debug with run=False
+and does not execute the new image, test either game system, or claim new
+startup, native-check, rendering or performance verification. Physical-H1
+validation by the user remains pending. The installation and release records
+are docs/evidence/arcade-startup-installation-20261022.json and
+docs/evidence/v0.2.2-release-verification.json. Screenshots and physical
+check/performance results below belong to their stated historical BDA hashes
+and do not verify this new hash. Both BIOS archives introduced in v0.2.1
+remain included in the v0.2.2 installer.
+
 - GnGeo: Peponas Mathieu, Steward Fu and contributors; pinned Apaczer fork.
   The upstream COPYING and file notices are retained. Its README describes
   the combination of GPL code and independently licensed MAME components.

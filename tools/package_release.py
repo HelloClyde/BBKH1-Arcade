@@ -19,7 +19,9 @@ def main():
     gfx_library()
     data=(ROOT/'dist/H1Arcade.bda').read_bytes()
     check=json.loads((ROOT/'build/verification/release-verification.json').read_text())
-    assert check['ok'] and sha(data)==check['sha256'] and check['exact_physical_bda_match']
+    assert check['ok'] and sha(data)==check['sha256'] and check['exact_device_file_match']
+    assert check['exact_physical_bda_match'] is False and check['runtime_hardware_verified'] is False
+    assert check['user_runtime_validation_pending'] is True
     bios_entries,bios_manifest=bios_install_entries()
     deps=json.loads((ROOT/'UPSTREAM.json').read_text())
     out=ROOT/'dist/release';out.mkdir(parents=True,exist_ok=True)
@@ -56,8 +58,9 @@ def main():
     source=out/f'BBKH1-Arcade-v{version}-source.zip';source_info=complete_source(source,commit,a.tag)
     info={'version':version,'tag':a.tag,'application_commit':commit,'dependencies':deps,
           'bda':{'filename':bda.name,'sha256':sha(data),'size':len(data),
-                 'exact_physical_bda_match':True,'evidence':check['release_evidence'],
-                 'physical_evidence':check['physical_evidence']},
+                 'exact_physical_bda_match':False,'exact_device_file_match':True,
+                 'evidence':check['release_evidence'],
+                 'installation_evidence':check['installation_evidence']},
           'installer':{'filename':installer.name,'sha256':sha(installer.read_bytes()),'files':len(manifest)},
           'source':source_info,'BIOS_distributed':True,'game_ROM_distributed':False,'bios':bios_manifest,
           'verification':check,'runtime_preset':{'cpu_mhz':408,'display':'4:3','skip':1,'sound_hz':8000}}
@@ -71,7 +74,7 @@ def main():
 
 下载 H1Arcade-v{version}-install.zip 后，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
 单独 BDA 放到 A:\\应用\\程序\\H1Arcade.bda。
-v0.2.1 仅更新安装包和 CI，新增随包 BIOS。PGM 与 Neo Geo 共用同一应用，支持《三国战纪》一代 kov V117。
+v0.2.2 修复普通启动会自动执行整套原生诊断、长时间停在文件选择器之前的问题。正常启动直接进入游戏选择器；CPU/MXU 等诊断代码保留，通过单独的 --startup-selftest 诊断构建选项开启，不在普通入口执行。PGM 与 Neo Geo 共用同一应用，支持《三国战纪》一代 kov V117。
 安装包 ARCADE 内已包含 pgm.zip 和 neogeo.zip。把自己的 kof97.zip 或 kov.zip 复制到 ARCADE，直接选择游戏 ZIP，H1 首次转换后进入游戏；之后复用缓存。两个 BIOS ZIP 保持原样，不要解压。
 转换有进度和取消按钮，保留原始 ZIP，兼容已有 .h1neo / .h1pgm。PGM 缓存约64.2 MiB，A盘写入失败并清理临时文件后可回退 B:\\ARCADE；下次仍选原ZIP自动复用。
 PC工具仅转换Neo Geo，作为可选工具附带；PGM直接使用设备端转换。
@@ -80,11 +83,10 @@ PC工具仅转换Neo Geo，作为可选工具附带；PGM直接使用设备端�
 本版依用户明确发布要求原样附带其提供的 pgm.zip 和 neogeo.zip；后续 CI 同样从固定仓库输入打包并逐项校验。安装包 BIOS-MANIFEST.json 及完整源码 assets/bios/manifest.json 记录档案和成员校验值。
 BIOS 保留原版权与适用条款，不重新许可为 GPL；该清单不代表已独立确认 BIOS 的再分发许可。游戏 ROM、固件和个人存档不分发。
 
-PGM逐行合成后立即缩放输出，配合MIPS/MXU精灵合成、CPU等待循环HLE和8 kHz音频。
-真实H1上同一冻结画面完整绘图与输出从约22.14 ms降至14.32 ms（减少35.3%）。
-在408 MHz、4:3、跳1帧、8 kHz下，20.3秒玩家战斗操作窗口达到60逻辑/30显示FPS；首次加载新资源仍会短暂掉速，不保证所有关卡恒定满速。
-发布 BDA 与上述PGM真机验收的构建逐字节相同：{sha(data)}。
-本次未对确切最终BDA重跑Neo Geo完整游戏回归；旧版拳皇97验证记录单独保留，不作为本次重新验收。
+本次仅安装新 BDA 到用户 H1，没有启动应用；上传 CRC 回执与发布 BDA 对应，SHA256：{sha(data)}。
+按用户要求，文件选择器、两款游戏、暂停菜单与退出的真机验收由用户自行完成，目前仍待验证。本版为开发预览版，不能把安装成功视为运行通过。
+PGM逐行合成、MIPS/MXU精灵合成、CPU等待循环HLE和8 kHz音频优化保留。
+历史 v0.2.0 真机数据：同一冻结画面完整绘图与输出约22.14 ms降至14.32 ms；408 MHz、4:3、跳1帧、8 kHz下，20.3秒战斗窗口达到60逻辑/30显示FPS。此数据及旧 CPU/MXU 原生检查仅属于旧 BDA，不是本次新构建的运行验收或满速保证；首次加载新资源仍可能短暂掉速。
 CI 做实际 C 函数测试和重建校验，没有运行真机或游戏 CPU 模拟器。
 历史实测窗口及限制见 README 和完整源码中的真机记录。
 

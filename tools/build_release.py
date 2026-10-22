@@ -1,4 +1,4 @@
-"""Build the physically tested Neo Geo/PGM preset from fixed dependencies."""
+"""Build the pinned Neo Geo/PGM release preset from fixed dependencies."""
 from pathlib import Path
 import argparse
 import os

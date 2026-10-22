@@ -22,7 +22,8 @@ def main():
     ap.add_argument('--core',choices=('musashi','a68k'),default='musashi',help='CPU backend; the release preset selects the A68K MIPS32r1 core')
     ap.add_argument('--idle',action='store_true',help='batch verified RAM-polling TST/BEQ idle loops within one scanline')
     ap.add_argument('--dirty-present',action='store_true',help='preserve exact LCD pixels while eliding unchanged source rows')
-    ap.add_argument('--cpu-selftest',action='store_true',help='run CPU batching differential checks on the physical H1 before opening game picker')
+    ap.add_argument('--cpu-selftest',action='store_true',help='compile native CPU/graphics/audio checks and diagnostic hooks')
+    ap.add_argument('--startup-selftest',action='store_true',help='run the full native diagnostic suite before the game picker and after PGM loading; requires cpu-selftest')
     ap.add_argument('--optimize',choices=('2','3'),default='2',help='C compiler optimization level; physical measurements decide')
     ap.add_argument('--lto',action='store_true',help='link-time optimization across C CPU, bus, graphics and sound core (keep frontend diagnostics addressable)')
     ap.add_argument('--fast-bus',action='store_true',help='inline plain RAM reads/writes in the generated MIPS A68K handlers')
@@ -40,6 +41,7 @@ def main():
     args=ap.parse_args()
     os.environ["HOST_CC"]=str(Path(args.host_cc).resolve()) if Path(args.host_cc).is_file() else args.host_cc
     if (args.idle or args.cpu_selftest or args.fast_bus) and args.core!='a68k':ap.error('idle/bus/selftest requires A68K')
+    if args.startup_selftest and not args.cpu_selftest:ap.error('startup-selftest requires cpu-selftest')
     if args.bus_reads_only and not args.fast_bus:ap.error('bus-reads-only requires fast-bus')
     if args.mxu_render and (not args.mxu or args.fast_render):ap.error('mxu-render requires mxu and excludes the old fast-render experiment')
     if args.palette32 and not (args.mxu_render and args.cpu_selftest):ap.error('palette32 requires mxu-render and cpu-selftest')
@@ -55,6 +57,7 @@ def main():
     if args.idle:name+='-idle'
     if args.dirty_present:name+='-dirty'
     if args.cpu_selftest:name+='-selftest'
+    if args.startup_selftest:name+='-startuptest'
     if args.optimize!='2':name+='-o'+args.optimize
     if args.lto:name+='-lto'
     if args.fast_bus:name+='-bus'
@@ -88,6 +91,7 @@ def main():
            f'-DH1_A68K={int(args.core=="a68k")}',
            f'-DH1_IDLE={int(args.idle)}',f'-DH1_DIRTY_PRESENT={int(args.dirty_present)}',
            f'-DH1_CPU_SELFTEST={int(args.cpu_selftest)}',
+           f'-DH1_STARTUP_SELFTEST={int(args.startup_selftest)}',
            f'-DH1_FAST_BUS={int(args.fast_bus)}',
            f'-DH1_FAST_RENDER={int(args.fast_render)}',
            f'-DH1_MXU={int(args.mxu)}',

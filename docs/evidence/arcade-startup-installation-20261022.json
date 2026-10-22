@@ -1,0 +1,115 @@
+{
+  "format_version": 1,
+  "date": "2026-10-22",
+  "firmware": "physical BBK H1/Y100 V1.41",
+  "bda_sha256": "4663b6c25059c31b5a05820292d1fc6572235a2a965023200b09a24a2c34cae2",
+  "bda_size": 1240380,
+  "installation_verified": true,
+  "runtime_verified": false,
+  "hardware_verified": false,
+  "user_runtime_validation_pending": true,
+  "deployment": {
+    "operation": "deploy",
+    "target": "A:\\应用\\程序\\H1Arcade.bda",
+    "completed": true,
+    "application_started": false,
+    "upload": {
+      "completed": true,
+      "size": 1240380,
+      "crc32": 4244463049,
+      "sha256": "4663b6c25059c31b5a05820292d1fc6572235a2a965023200b09a24a2c34cae2",
+      "status": {
+        "version": 1,
+        "state": 5,
+        "token": 4,
+        "size": 1240380,
+        "received": 1240380,
+        "expected_crc": 4244463049,
+        "actual_crc": 4244463049,
+        "verify_offset": 1240380,
+        "error": 0,
+        "fs_errno": 0,
+        "flags": 9,
+        "old_size": 1295948,
+        "old_crc": 1004840795,
+        "last_activity_tick": 27601,
+        "step_count": 932,
+        "reserved": 0,
+        "state_name": "done",
+        "error_name": "ok"
+      },
+      "device_crc_verified": true,
+      "elapsed_seconds": 87.64099999982864
+    },
+    "refresh": {
+      "operation": "desktop_refresh",
+      "before": {
+        "job_id": 1,
+        "kind": 2,
+        "state": 4,
+        "error": 0,
+        "menu_idle": 1,
+        "app_index": 84,
+        "entry_count": 1,
+        "return_code": 0,
+        "state_name": "done"
+      },
+      "completed": true,
+      "request_sent": true,
+      "job_id": 2,
+      "status": {
+        "job_id": 2,
+        "kind": 1,
+        "state": 4,
+        "error": 0,
+        "menu_idle": 1,
+        "app_index": 4294967295,
+        "entry_count": 1,
+        "return_code": 0,
+        "state_name": "done"
+      },
+      "payload_started": false,
+      "elapsed_seconds": 0.1720000000204891
+    },
+    "run_requested": false
+  },
+  "build_options": {
+    "cpu_selftest": true,
+    "startup_selftest": false
+  },
+  "historical_native_evidence": {
+    "path": "docs/evidence/pgm-stream-hardware-20261021.json",
+    "sha256": "826d2200b8b7a5d569dd0ff9d8efb7707db991b37c663271991dc92c8edbc5d6",
+    "applies_to_current_bda": false
+  },
+  "desktop_after": {
+    "job_id": 2,
+    "kind": 1,
+    "state": 4,
+    "error": 0,
+    "menu_idle": 1,
+    "app_index": 4294967295,
+    "entry_count": 1,
+    "return_code": 0,
+    "state_name": "done"
+  },
+  "debug_after": {
+    "version": 1,
+    "state": 1,
+    "usb_configured": 1,
+    "usb_fault": 0,
+    "usb_resets": 2,
+    "commands": 4398,
+    "bad_frames": 0,
+    "tick": 28604,
+    "poll_count": 1313345,
+    "last_poll_tick": 28604,
+    "resident_base": 2185878624,
+    "resident_size": 727104,
+    "keys_low": 0,
+    "keys_high": 0,
+    "exec_state": 0,
+    "last_error": 0
+  },
+  "scope": "Only transfer and device-file CRC verification, BDA header/resources, desktop refresh and idle state were checked for this new BDA. The user asked to perform startup and game validation personally; the new BDA was not launched and no native runtime/selftest, screenshots or game performance checks were performed on it."
+}

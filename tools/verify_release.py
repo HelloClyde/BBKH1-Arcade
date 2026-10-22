@@ -1,4 +1,4 @@
-"""Check the release BDA against immutable physical-H1 evidence and build inputs."""
+"""Check the release BDA against its device-install receipt and fixed build inputs."""
 import argparse
 import hashlib
 import json
@@ -23,7 +23,7 @@ def main():
         assert args.check_tag == 'v' + version, 'Tag differs from VERSION'
         print(args.check_tag)
         return
-    record, physical = load_release_evidence(ROOT)
+    record, installation = load_release_evidence(ROOT)
     assert version == record['release_version']
     bda = ROOT / 'dist/H1Arcade.bda'
     data = bda.read_bytes()
@@ -44,6 +44,7 @@ def main():
     options = {key: value for key, value in metadata['options'].items() if key not in ('toolchain', 'host_cc')}
     assert options == record['build_option_values']
     assert options['pgm'] and options['core'] == 'a68k' and options['cpu_mhz'] == 408
+    assert options['cpu_selftest'] is True and options['startup_selftest'] is False
     assert not options['test_frames'] and not options['benchmark'] and not options['profile']
     expected = record['runtime_source_sha256']
     current_src = {p.relative_to(ROOT).as_posix() for p in (ROOT / 'src').rglob('*')
@@ -55,14 +56,22 @@ def main():
         assert sha(path.read_bytes()) == digest == metadata['source_sha256'][name], name
     report = {
         'ok': True, 'version': version, 'sha256': sha(data),
-        'payload_sha256': sha(data[PAYLOAD_OFFSET:]), 'exact_physical_bda_match': True,
+        'payload_sha256': sha(data[PAYLOAD_OFFSET:]), 'exact_physical_bda_match': False,
+        'exact_device_file_match': True, 'installation_verified': True,
+        'runtime_hardware_verified': False,
+        'user_runtime_validation_pending': True,
         'runtime_source_match': True, 'sdk_commit': metadata['sdk_commit'],
         'release_evidence': RELEASE_EVIDENCE,
-        'physical_evidence': record['physical_evidence']['path'],
-        'pgm_hardware_verified': physical['hardware_verified'],
+        'installation_evidence': record['installation_evidence']['path'],
+        'historical_native_evidence': installation['historical_native_evidence'],
+        'pgm_hardware_verified': False,
+        'pgm_gameplay_regression_rerun': False,
         'neogeo_gameplay_regression_rerun': False,
+        'startup_picker_regression_rerun': False,
+        'native_selftests_rerun': False,
+        'startup_selftest': False, 'cpu_selftest': True,
         'validation_scope': record['verification_scope'],
-        'scope': 'Local static checks, fixed build-input hashes and byte equality to the recorded physical H1 PGM candidate; this invocation does not run a device or CPU emulator.',
+        'scope': 'Local static checks, fixed build-input hashes and equality to the H1 upload/CRC receipt. The current BDA was installed without launching it; startup, gameplay and native checks remain for the user to validate. Earlier physical CPU/MXU and FPS evidence applies only to the older BDA.',
         'distribution': 'BDA, installation ZIP and complete corresponding source snapshots, with original third-party notices.'
     }
     out = ROOT / 'build/verification'

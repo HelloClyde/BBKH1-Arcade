@@ -51,7 +51,7 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python tests/release_bios_host.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-      - name: Build exact physically verified preset
+      - name: Build preset matching the installed BDA
         run: |
           python tools/build_release.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
