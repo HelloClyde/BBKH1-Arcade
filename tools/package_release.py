@@ -19,7 +19,10 @@ def main():
     gfx_library()
     data=(ROOT/'dist/H1Arcade.bda').read_bytes()
     check=json.loads((ROOT/'build/verification/release-verification.json').read_text())
-    assert check['ok'] and sha(data)==check['sha256'] and check['exact_device_file_match']
+    assert check['ok'] and sha(data)==check['sha256'] and check['runtime_source_match']
+    installed=check['installation_verified']
+    assert isinstance(installed,bool) and check['exact_device_file_match'] is installed
+    assert check['installation_pending'] is (not installed)
     assert check['exact_physical_bda_match'] is False and check['runtime_hardware_verified'] is False
     assert check['user_runtime_validation_pending'] is True
     bios_entries,bios_manifest=bios_install_entries()
@@ -58,7 +61,8 @@ def main():
     source=out/f'BBKH1-Arcade-v{version}-source.zip';source_info=complete_source(source,commit,a.tag)
     info={'version':version,'tag':a.tag,'application_commit':commit,'dependencies':deps,
           'bda':{'filename':bda.name,'sha256':sha(data),'size':len(data),
-                 'exact_physical_bda_match':False,'exact_device_file_match':True,
+                 'exact_physical_bda_match':False,'exact_device_file_match':installed,
+                 'installation_verified':installed,'installation_pending':not installed,
                  'evidence':check['release_evidence'],
                  'installation_evidence':check['installation_evidence']},
           'installer':{'filename':installer.name,'sha256':sha(installer.read_bytes()),'files':len(manifest)},
@@ -67,6 +71,8 @@ def main():
     (out/'BUILD-INFO.json').write_text(json.dumps(info,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     files=[bda,installer,source,out/'BUILD-INFO.json']
     (out/'SHA256SUMS.txt').write_text(''.join(sha(p.read_bytes())+'  '+p.name+'\n' for p in files))
+    installation_note=('本次仅安装新 BDA 到用户 H1，没有启动应用；上传 CRC 回执与发布 BDA 对应。'
+                       if installed else '本次尚未安装新 BDA 到用户 H1，也未启动应用；等待 H1Debug 重新连接后安装。当前发布不声明设备文件匹配或真机运行通过。')
     (out/'RELEASE-NOTES.md').write_text(f'''# 街机游戏 v{version} — H1 / Y100 开发预览
 
 本次提供原生 BDA、安装包、完整对应源码和 SHA256 校验文件。
@@ -74,7 +80,8 @@ def main():
 
 下载 H1Arcade-v{version}-install.zip 后，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
 单独 BDA 放到 A:\\应用\\程序\\H1Arcade.bda。
-v0.2.2 修复普通启动会自动执行整套原生诊断、长时间停在文件选择器之前的问题。正常启动直接进入游戏选择器；CPU/MXU 等诊断代码保留，通过单独的 --startup-selftest 诊断构建选项开启，不在普通入口执行。PGM 与 Neo Geo 共用同一应用，支持《三国战纪》一代 kov V117。
+v0.2.3 新增 FPS 显示：触屏打开暂停菜单，在“显示”中切换“FPS显示”开/关。开启后左上角显示逻辑/显示 FPS，每秒更新；设置按游戏保存，默认关闭。
+保留 v0.2.2 启动修复：普通启动直接进入游戏选择器，不自动执行整套原生诊断。CPU/MXU 等诊断代码保留，通过单独的 --startup-selftest 诊断构建选项开启。PGM 与 Neo Geo 共用同一应用，支持《三国战纪》一代 kov V117。
 安装包 ARCADE 内已包含 pgm.zip 和 neogeo.zip。把自己的 kof97.zip 或 kov.zip 复制到 ARCADE，直接选择游戏 ZIP，H1 首次转换后进入游戏；之后复用缓存。两个 BIOS ZIP 保持原样，不要解压。
 转换有进度和取消按钮，保留原始 ZIP，兼容已有 .h1neo / .h1pgm。PGM 缓存约64.2 MiB，A盘写入失败并清理临时文件后可回退 B:\\ARCADE；下次仍选原ZIP自动复用。
 PC工具仅转换Neo Geo，作为可选工具附带；PGM直接使用设备端转换。
@@ -83,8 +90,9 @@ PC工具仅转换Neo Geo，作为可选工具附带；PGM直接使用设备端�
 本版依用户明确发布要求原样附带其提供的 pgm.zip 和 neogeo.zip；后续 CI 同样从固定仓库输入打包并逐项校验。安装包 BIOS-MANIFEST.json 及完整源码 assets/bios/manifest.json 记录档案和成员校验值。
 BIOS 保留原版权与适用条款，不重新许可为 GPL；该清单不代表已独立确认 BIOS 的再分发许可。游戏 ROM、固件和个人存档不分发。
 
-本次仅安装新 BDA 到用户 H1，没有启动应用；上传 CRC 回执与发布 BDA 对应，SHA256：{sha(data)}。
-按用户要求，文件选择器、两款游戏、暂停菜单与退出的真机验收由用户自行完成，目前仍待验证。本版为开发预览版，不能把安装成功视为运行通过。
+{installation_note}
+发布 BDA SHA256：{sha(data)}。
+按用户要求，文件选择器、两款游戏、FPS 显示、暂停菜单与退出的真机验收由用户自行完成，目前仍待验证。本版为开发预览版，不能把安装成功视为运行通过。
 PGM逐行合成、MIPS/MXU精灵合成、CPU等待循环HLE和8 kHz音频优化保留。
 历史 v0.2.0 真机数据：同一冻结画面完整绘图与输出约22.14 ms降至14.32 ms；408 MHz、4:3、跳1帧、8 kHz下，20.3秒战斗窗口达到60逻辑/30显示FPS。此数据及旧 CPU/MXU 原生检查仅属于旧 BDA，不是本次新构建的运行验收或满速保证；首次加载新资源仍可能短暂掉速。
 CI 做实际 C 函数测试和重建校验，没有运行真机或游戏 CPU 模拟器。

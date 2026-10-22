@@ -11,6 +11,7 @@
 #include "profile.h"
 #include "present.h"
 #include "arcade_menu.h"
+#include "fps_overlay.h"
 #include "import_game.h"
 #include "touch.h"
 #if H1_PGM
@@ -71,7 +72,16 @@ static unsigned pace_start,pace_frames;
 static char logs[16384],path[240];
 static unsigned logsize;
 static unsigned clear_lcd=1;
+static uint32_t *fps_output_target;
 static uint32_t *lcd(void);
+static void fps_sample_reset(void){
+ h1_fps_overlay_reset();fps_output_target=0;
+ h1_fps_overlay_sample(h1_raw_tick_80hz(),h1_arcade_stats.tick_hz,h1_arcade_stats.frames,h1_arcade_stats.displayed);
+}
+static void fps_frame_complete(void){
+ h1_fps_overlay_sample(h1_raw_tick_80hz(),h1_arcade_stats.tick_hz,h1_arcade_stats.frames,h1_arcade_stats.displayed);
+ if(fps_output_target){h1_fps_overlay_draw(fps_output_target,h1_arcade_settings.show_fps);fps_output_target=0;}
+}
 volatile struct {unsigned magic,version,active,done,total,start,end,result;} h1_import_stats={0x31504d49,1};
 static unsigned import_last_tick;
 static const char *import_last_stage;
@@ -156,14 +166,15 @@ void screen_flip(void){
  if(h1_render_bench_only)return;
 #endif
  unsigned prof=h1_profile_set(HP_LCD);
+ uint32_t *target=lcd();h1_fps_overlay_before_present(target);
 #if H1_PALETTE32
- if(surface.pitch==1408)h1_present_rgb32(lcd(),framebuffer32+16*352+16,surface.pitch,display_mode,clear_lcd);
+ if(surface.pitch==1408)h1_present_rgb32(target,framebuffer32+16*352+16,surface.pitch,display_mode,clear_lcd);
  else
 #endif
- h1_present_rgb565(lcd(),(const uint16_t*)((const uint8_t*)surface.pixels+16*surface.pitch)+16,
+ h1_present_rgb565(target,(const uint16_t*)((const uint8_t*)surface.pixels+16*surface.pitch)+16,
                    surface.pitch,display_mode,clear_lcd);
  clear_lcd=0;
- ++h1_arcade_stats.displayed;
+ ++h1_arcade_stats.displayed;fps_output_target=target;
  h1_profile_set(prof);
 }
 #if H1_MXU && H1_CPU_SELFTEST
@@ -384,11 +395,13 @@ static int select_game(void){
 #if H1_PGM
 static void run_pgm(void){
  pace_start=h1_raw_tick_80hz();pace_frames=0;h1_arcade_stats.raw_start=pace_start;h1_arcade_stats.rtc_start=h1_arcade_rtc();
+ fps_sample_reset();
  for(;;){
   h1_pgm_profile_phase(12);
   h1_arcade_check_stop();
   h1_pgm_profile_phase(0);
   if(paused){unsigned start=h1_raw_tick_80hz();h1_arcade_log_flush();
+   h1_fps_overlay_before_present(lcd());fps_sample_reset();
    while(paused){
     if(menu_requested){
      h1_arcade_settings.mode=display_mode;h1_arcade_settings.skip=skip;h1_arcade_settings.muted=muted;
@@ -398,12 +411,14 @@ static void run_pgm(void){
      for(unsigned k=1;k<=42;k++)held[k]=h1_game_code_down(h1_game_key_code(k));input_release_gate=1;
      h1_pgm_refresh(lcd(),display_mode);paused=0;if(audio_ready)gba_audio_resume();break;
     }h1_arcade_check_stop();++h1_arcade_stats.paused_frames;
-   }pace_start+=h1_raw_tick_80hz()-start;
+   }pace_start+=h1_raw_tick_80hz()-start;fps_sample_reset();
   }
   unsigned interval=h1_pgm_stats.game_started?skip+1:60,draw=h1_arcade_stats.frames%interval==0;
   h1_arcade_settings.muted=muted;
-  h1_pgm_frame(draw);if(draw){h1_pgm_present(lcd(),display_mode);++h1_arcade_stats.displayed;}
+  h1_pgm_frame(draw);if(draw){uint32_t *target=lcd();h1_fps_overlay_before_present(target);
+   h1_pgm_present(target,display_mode);++h1_arcade_stats.displayed;fps_output_target=target;}
   ++h1_arcade_stats.frames;++pace_frames;h1_arcade_stats.pc=cpu_68k_getpc();
+  fps_frame_complete();
   h1_arcade_stats.raw_end=h1_raw_tick_80hz();h1_arcade_stats.rtc_end=h1_arcade_rtc();
   if(H1_TEST_FRAMES&&h1_arcade_stats.frames>=H1_TEST_FRAMES)return;
 #if !H1_BENCHMARK
@@ -422,11 +437,13 @@ static void run_frames(void){
 #endif
  pace_start=h1_raw_tick_80hz();pace_frames=0;
  h1_arcade_stats.raw_start=pace_start;h1_arcade_stats.rtc_start=h1_arcade_rtc();
+ fps_sample_reset();
  h1_profile_start();
  for(;;){
   h1_profile_set(HP_INPUT);
   h1_arcade_check_stop();
   if(paused){unsigned start=h1_raw_tick_80hz();h1_neo_save();h1_arcade_log_flush();
+   h1_fps_overlay_before_present(lcd());fps_sample_reset();
    h1_profile_set(HP_WAIT);
    while(paused){
     if(menu_requested){
@@ -456,7 +473,7 @@ static void run_frames(void){
     if(h1_audio_bench.request)h1_audio_benchmark();
 #endif
    }
-   pace_start+=h1_raw_tick_80hz()-start;
+   pace_start+=h1_raw_tick_80hz()-start;fps_sample_reset();
   }
   /* BIOS VRAM tests contain arbitrary sprite numbers. Draw them sparingly;
    * all CPU, sound and RTC work still runs. Restore the user's draw interval
@@ -505,6 +522,7 @@ static void run_frames(void){
   cpu_68k_interrupt(1);
   if(++memory.watchdog>8){h1_arcade_log("WATCHDOG pc=%08x",cpu_68k_getpc());cpu_68k_reset();memory.watchdog=0;}
   ++h1_arcade_stats.frames;++pace_frames;
+  fps_frame_complete();
   h1_arcade_stats.pc=cpu_68k_getpc();h1_arcade_stats.checksum=*(uint16_t*)memory.ram;
   h1_arcade_stats.raw_end=h1_raw_tick_80hz();h1_arcade_stats.rtc_end=h1_arcade_rtc();
   if(H1_TEST_FRAMES&&h1_arcade_stats.frames>=H1_TEST_FRAMES)return;

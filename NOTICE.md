@@ -15,22 +15,35 @@ This executable combines components with different licenses. In particular,
 the historic MAME-derived Z80 and YM2610 components have noncommercial terms.
 Do not describe the complete combined executable as uniformly MIT or GPL-only.
 
-The v0.2.2 release separates automatic startup diagnostics from normal use.
+The v0.2.3 release adds an optional FPS overlay in the display settings.
+It is off by default, saved per game, and shows logic/displayed frames per
+second at the top left, for example FPS 60.0/30.0. These are measured counts,
+not a fixed speed guarantee. Legacy settings load with the FPS switch off.
+The current BDA build is 1,243,468 bytes, SHA256
+aa31b95ed187f90f4773746a26d191b34f98129eb924434a5dd12c25d53d8ba2.
+The user requested personal physical-H1 validation. H1Debug is not currently
+connected, so this new image has not been installed or executed in this
+session. No new startup, FPS overlay, native-check, game or performance
+verification is claimed. A future installation will not auto-run the BDA;
+docs/evidence/arcade-fps-installation-20261022.json and
+docs/evidence/v0.2.3-release-verification.json explicitly record the pending
+installation with installation_verified=false and deployment=null. Screenshots and
+physical check/performance results below belong to their stated historical
+BDA hashes and do not verify this new hash. Both BIOS archives introduced
+in v0.2.1 remain included in the v0.2.3 installer.
+
+The historical v0.2.2 release separated startup diagnostics from normal use;
+v0.2.3 retains this behavior.
 H1_STARTUP_SELFTEST defaults to 0; only an explicit diagnostic build using
 --cpu-selftest --startup-selftest runs the full native suite before the file
 picker and after PGM loading. The older v0.2.1 image was observed spending
 tens of seconds in these developer checks before showing the picker.
-The new BDA is 1,240,380 bytes, SHA256
+The v0.2.2 historical BDA is 1,240,380 bytes, SHA256
 4663b6c25059c31b5a05820292d1fc6572235a2a965023200b09a24a2c34cae2.
-At the user's request, this session installs it through H1Debug with run=False
-and does not execute the new image, test either game system, or claim new
-startup, native-check, rendering or performance verification. Physical-H1
-validation by the user remains pending. The installation and release records
+At the user's request, that session installed it through H1Debug with run=False
+without executing that image or testing either game system. Its historical records
 are docs/evidence/arcade-startup-installation-20261022.json and
-docs/evidence/v0.2.2-release-verification.json. Screenshots and physical
-check/performance results below belong to their stated historical BDA hashes
-and do not verify this new hash. Both BIOS archives introduced in v0.2.1
-remain included in the v0.2.2 installer.
+docs/evidence/v0.2.2-release-verification.json; they do not verify v0.2.3.
 
 - GnGeo: Peponas Mathieu, Steward Fu and contributors; pinned Apaczer fork.
   The upstream COPYING and file notices are retained. Its README describes

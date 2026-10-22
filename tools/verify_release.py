@@ -1,4 +1,4 @@
-"""Check the release BDA against its device-install receipt and fixed build inputs."""
+"""Check fixed release build inputs and the recorded device-installation status."""
 import argparse
 import hashlib
 import json
@@ -24,6 +24,7 @@ def main():
         print(args.check_tag)
         return
     record, installation = load_release_evidence(ROOT)
+    installed = installation['installation_verified']
     assert version == record['release_version']
     bda = ROOT / 'dist/H1Arcade.bda'
     data = bda.read_bytes()
@@ -57,7 +58,8 @@ def main():
     report = {
         'ok': True, 'version': version, 'sha256': sha(data),
         'payload_sha256': sha(data[PAYLOAD_OFFSET:]), 'exact_physical_bda_match': False,
-        'exact_device_file_match': True, 'installation_verified': True,
+        'exact_device_file_match': installed, 'installation_verified': installed,
+        'installation_pending': not installed,
         'runtime_hardware_verified': False,
         'user_runtime_validation_pending': True,
         'runtime_source_match': True, 'sdk_commit': metadata['sdk_commit'],
@@ -71,7 +73,10 @@ def main():
         'native_selftests_rerun': False,
         'startup_selftest': False, 'cpu_selftest': True,
         'validation_scope': record['verification_scope'],
-        'scope': 'Local static checks, fixed build-input hashes and equality to the H1 upload/CRC receipt. The current BDA was installed without launching it; startup, gameplay and native checks remain for the user to validate. Earlier physical CPU/MXU and FPS evidence applies only to the older BDA.',
+        'scope': ('Local static checks and fixed build-input hashes. '
+                  + ('The BDA matches the H1 upload/CRC receipt and was installed without launching it. '
+                     if installed else 'The BDA has not been installed; installation is pending an H1Debug connection. ')
+                  + 'Startup, gameplay and native checks remain for the user to validate. Earlier physical CPU/MXU and FPS evidence applies only to the older BDA.'),
         'distribution': 'BDA, installation ZIP and complete corresponding source snapshots, with original third-party notices.'
     }
     out = ROOT / 'build/verification'

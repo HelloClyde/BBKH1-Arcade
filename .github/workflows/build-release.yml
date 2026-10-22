@@ -51,7 +51,7 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python tests/release_bios_host.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-      - name: Build preset matching the installed BDA
+      - name: Build the pinned release preset
         run: |
           python tools/build_release.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
@@ -62,6 +62,8 @@ jobs:
           python tests/import_host.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python tests/menu_host.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tests/fps_overlay_host.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python tests/present_host.py --optimize 3 --mxu
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
@@ -119,6 +121,7 @@ jobs:
           path: |
             build/verification/*.json
             build/menu-host/verification.json
+            build/fps-overlay-host/report.json
             build/import-host/verification.json
             build/present-host/verification-mxu-o3.json
             build/render-host-mxu/verification.json

@@ -49,7 +49,7 @@ static const char *key_names[45]={"未设置","Q","W","E","R","T","Y","U","A","S
  "Z","X","C","V","B","N","下页","空格","退出","回车","左ALT","下","右ALT","I","O","P","K","L","符号","右","M","上","删除","确认","左","返回","SHIFT","FN","电源"};
 static const char *button_names[10]={"上","下","左","右","A","B","C","D","投币","开始"};
 static unsigned mapped_key(const arcade_settings *s,unsigned b){for(unsigned k=1;k<45;k++)if(s->mapping[k]==b+1)return k;return 0;}
-static int count(unsigned page){return page==0?6:page==1?12:page==4?1:4;}
+static int count(unsigned page){return page==0?6:page==1?12:page==2?5:page==4?1:4;}
 static void box(unsigned page,int i,int *x,int *y,int *w,int *h){
  if(page==4){*x=338;*y=240;*w=104;*h=28;}
  else if(page==0){*x=18+(i%2)*230;*y=56+(i/2)*56;*w=214;*h=44;}
@@ -59,6 +59,14 @@ static void box(unsigned page,int i,int *x,int *y,int *w,int *h){
 static int hit(unsigned page,int x,int y){
  for(int i=0;i<count(page);i++){int bx,by,w,h;box(page,i,&bx,&by,&w,&h);if(x>=bx&&x<bx+w&&y>=by&&y<by+h)return i;}
  return -1;
+}
+/* Display actions are shared by touch and keyboard activation. */
+static int display_action(arcade_settings *s,unsigned item){
+ if(item==0)s->mode=(s->mode+1)%3;
+ if(item==1)s->skip=(s->skip+1)%3;
+ if(item==2)s->show_fps=!s->show_fps;
+ if(item==3){s->mode=0;s->skip=1;s->show_fps=0;}
+ return item==4;
 }
 static int volume_hit(int x,int y){return x>=26&&x<454&&y>=214&&y<250;}
 static unsigned volume_at(int x){int p=x-38;if(p<0)p=0;if(p>403)p=403;return ((p*20+201)/403)*5;}
@@ -93,7 +101,8 @@ static void draw(unsigned page,int cursor,int capture,const char *status,const a
   else if(page==2){
    if(i==0)snprintf(label,sizeof label,"画面：%s",modes[s->mode]);
    if(i==1)snprintf(label,sizeof label,"跳帧：%u（0 为关闭）",s->skip);
-   if(i==2)title="恢复默认显示";if(i==3)title="返回";
+   if(i==2)snprintf(label,sizeof label,"FPS显示：%s",s->show_fps?"开":"关");
+   if(i==3)title="恢复默认显示";if(i==4)title="返回";
   }else if(page==3){
    if(i==0)snprintf(label,sizeof label,"声音：%s",s->muted?"关":"开");
    if(i==1)title="减小音量（-5%）";if(i==2)title="增大音量（+5%）";if(i==3)title="返回";
@@ -177,8 +186,7 @@ int arcade_pause_menu(arcade_settings *s,uint32_t *(*target)(void),unsigned open
    else if(cursor==10){arcade_mapping_defaults(s);status="已恢复默认按键";++h1_menu_stats.edits;}
    else{page=0;cursor=1;}
   }else if(page==2){
-   if(cursor==0)s->mode=(s->mode+1)%3;if(cursor==1)s->skip=(s->skip+1)%3;
-   if(cursor==2){s->mode=0;s->skip=1;}if(cursor==3){page=0;cursor=2;}
+   if(display_action(s,(unsigned)cursor)){page=0;cursor=2;}
   }else if(page==3){
    if(cursor==0)s->muted=!s->muted;
    if(cursor==1)s->volume=s->volume>5?s->volume-5:0;if(cursor==2)s->volume=s->volume<95?s->volume+5:100;
@@ -187,6 +195,6 @@ int arcade_pause_menu(arcade_settings *s,uint32_t *(*target)(void),unsigned open
  }
  h1_menu_stats.save_ok=result==2?0:(unsigned)arcade_config_save(s);
  h1_menu_stats.action=(unsigned)result;h1_menu_stats.active=0;++h1_menu_stats.closed;
- h1_arcade_log("PAUSE_MENU_END action=%u mode=%u skip=%u volume=%u muted=%u",result,s->mode,s->skip,s->volume,s->muted);
+ h1_arcade_log("PAUSE_MENU_END action=%u mode=%u skip=%u volume=%u muted=%u fps=%u",result,s->mode,s->skip,s->volume,s->muted,s->show_fps);
  return result;
 }

@@ -10,10 +10,10 @@ import zipfile
 from release_bios import ARCHIVES, MANIFEST_PATH, bios_install_entries, validate_archive
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_EVIDENCE = 'docs/evidence/v0.2.2-release-verification.json'
-INSTALLATION_EVIDENCE = 'docs/evidence/arcade-startup-installation-20261022.json'
-TESTED_BDA_SHA256 = '4663b6c25059c31b5a05820292d1fc6572235a2a965023200b09a24a2c34cae2'
-TESTED_BDA_SIZE = 1240380
+RELEASE_EVIDENCE = 'docs/evidence/v0.2.3-release-verification.json'
+INSTALLATION_EVIDENCE = 'docs/evidence/arcade-fps-installation-20261022.json'
+TESTED_BDA_SHA256 = 'aa31b95ed187f90f4773746a26d191b34f98129eb924434a5dd12c25d53d8ba2'
+TESTED_BDA_SIZE = 1243468
 HISTORICAL_EVIDENCE = 'docs/evidence/pgm-stream-hardware-20261021.json'
 HISTORICAL_EVIDENCE_SHA256 = '826d2200b8b7a5d569dd0ff9d8efb7707db991b37c663271991dc92c8edbc5d6'
 
@@ -46,27 +46,37 @@ def checked_members(archive):
 
 def load_release_evidence(root=ROOT):
     record = json.loads((root / RELEASE_EVIDENCE).read_text(encoding='utf-8'))
-    assert record['format_version'] == 1 and record['release_version'] == '0.2.2'
+    assert record['format_version'] == 1 and record['release_version'] == '0.2.3'
     assert record['bda_sha256'] == TESTED_BDA_SHA256 and record['bda_size'] == TESTED_BDA_SIZE
     assert 'physical_evidence' not in record, 'Current release records installation, not runtime acceptance'
     assert record['installation_evidence']['path'] == INSTALLATION_EVIDENCE
-    assert record['installation_evidence']['installed_bda_sha256'] == TESTED_BDA_SHA256
+    assert record['installation_evidence']['bda_sha256'] == TESTED_BDA_SHA256
+    assert 'installed_bda_sha256' not in record['installation_evidence']
     raw = (root / safe_relative(record['installation_evidence']['path'])).read_bytes()
     assert sha(raw) == record['installation_evidence']['sha256'], 'Installation evidence changed'
     installation = json.loads(raw)
     assert installation['format_version'] == 1
-    assert installation['installation_verified'] is True
+    installed = installation['installation_verified']
+    assert isinstance(installed, bool)
+    assert installation['exact_device_file_match'] is installed
+    assert installation['installation_pending'] is (not installed)
     assert installation['runtime_verified'] is False and installation['hardware_verified'] is False
     assert installation['user_runtime_validation_pending'] is True
     assert installation['bda_sha256'] == TESTED_BDA_SHA256 and installation['bda_size'] == TESTED_BDA_SIZE
-    assert installation['deployment']['completed'] and installation['deployment']['upload']['device_crc_verified']
-    assert installation['deployment']['upload']['sha256'] == TESTED_BDA_SHA256
-    assert installation['deployment']['run_requested'] is False
-    assert installation['deployment']['application_started'] is False
+    if installed:
+        assert installation['deployment']['completed'] is True
+        assert installation['deployment']['upload']['device_crc_verified'] is True
+        assert installation['deployment']['upload']['sha256'] == TESTED_BDA_SHA256
+        assert installation['deployment']['run_requested'] is False
+        assert installation['deployment']['application_started'] is False
+        assert installation['desktop_after']['menu_idle'] == 1
+        assert installation['desktop_after']['error'] == 0
+    else:
+        assert installation['deployment'] is None and installation['desktop_after'] is None
+        assert installation['debug_after'] is None
     assert installation['build_options'] == {'cpu_selftest': True, 'startup_selftest': False}
     assert record['build_option_values']['cpu_selftest'] is True
     assert record['build_option_values']['startup_selftest'] is False
-    assert installation['desktop_after']['menu_idle'] == 1 and installation['desktop_after']['error'] == 0
     # Earlier CPU/MXU checks and the 60/30 FPS window describe the older BDA only.
     historical = installation['historical_native_evidence']
     assert historical['path'] == HISTORICAL_EVIDENCE
@@ -87,6 +97,7 @@ def verify(directory, tag=None, commit=None):
     directory = directory.resolve()
     info = json.loads((directory / 'BUILD-INFO.json').read_text(encoding='utf-8'))
     record, installation = load_release_evidence()
+    installed = installation['installation_verified']
     bios_entries, bios_manifest = bios_install_entries()
     assert info['version'] == record['release_version']
     if tag:
@@ -118,15 +129,18 @@ def verify(directory, tag=None, commit=None):
     # Both evidence references are declared by BUILD-INFO and checked against the fixed record.
     assert safe_relative(info['bda']['evidence']) == RELEASE_EVIDENCE
     assert safe_relative(info['bda']['installation_evidence']) == record['installation_evidence']['path']
-    assert info['bda']['exact_device_file_match'] is True
+    assert info['bda']['exact_device_file_match'] is installed
+    assert info['bda']['installation_verified'] is installed
+    assert info['bda']['installation_pending'] is (not installed)
     assert info['bda']['exact_physical_bda_match'] is False
     assert 'physical_evidence' not in info['bda']
     check = info['verification']
     assert check['ok'] and check['version'] == info['version']
     assert check['sha256'] == sha(bda) and check['payload_sha256'] == record['payload_sha256']
     assert check['exact_physical_bda_match'] is False and check['runtime_source_match'] is True
-    assert check['exact_device_file_match'] is True and check['runtime_hardware_verified'] is False
-    assert check['installation_verified'] is True and 'physical_evidence' not in check
+    assert check['exact_device_file_match'] is installed and check['runtime_hardware_verified'] is False
+    assert check['installation_verified'] is installed and 'physical_evidence' not in check
+    assert check['installation_pending'] is (not installed)
     assert check['user_runtime_validation_pending'] is True
     assert check['release_evidence'] == info['bda']['evidence']
     assert check['installation_evidence'] == info['bda']['installation_evidence']
@@ -210,7 +224,8 @@ def verify(directory, tag=None, commit=None):
     return {'ok': True, 'version': info['version'], 'commit': info['application_commit'],
             'bda_sha256': sha(bda), 'assets': sorted(names), 'complete_source_snapshots': True,
             'release_evidence': info['bda']['evidence'], 'installation_evidence': info['bda']['installation_evidence'],
-            'exact_device_file_match': True, 'installation_verified': True,
+            'exact_device_file_match': installed, 'installation_verified': installed,
+            'installation_pending': not installed,
             'runtime_hardware_verified': False,
             'user_runtime_validation_pending': True,
             'pgm_hardware_verified': False, 'neogeo_gameplay_regression_rerun': False,

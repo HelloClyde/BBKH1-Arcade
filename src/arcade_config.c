@@ -31,8 +31,8 @@ int arcade_map_button(arcade_settings *s,unsigned button,unsigned key){
  s->mapping[key]=(uint8_t)(button+1);return 1;
 }
 static int valid(const config_disk *d){
- if(d->magic!=0x32434741||d->version!=1||!d->sequence||d->mode>2||d->skip>2||d->volume>100||d->muted>1||d->mapping[0]||
-    d->padding[0]||d->padding[1]||d->padding[2]||checksum(d,sizeof(*d)-4)!=d->crc)return 0;
+ if(d->magic!=0x32434741||(d->version!=1&&d->version!=2)||!d->sequence||d->mode>2||d->skip>2||d->volume>100||d->muted>1||d->mapping[0]||
+    (d->version==1?d->padding[0]!=0:d->padding[0]>1)||d->padding[1]||d->padding[2]||checksum(d,sizeof(*d)-4)!=d->crc)return 0;
  uint32_t codes[8]={0};unsigned buttons=0;
  for(unsigned k=1;k<45;k++)if(d->mapping[k]){
   unsigned b=d->mapping[k]-1,code=h1_game_key_code(k);
@@ -52,17 +52,17 @@ void arcade_config_load(arcade_settings *s,const char *rom,unsigned default_mode
   FILE *f=fopen(name,"rb");if(!f)continue;existed=1;
   config_disk d;int ok=fread(&d,1,sizeof d,f)==sizeof d&&fgetc(f)==EOF;fclose(f);
   if(ok&&valid(&d)&&(!h1_config_sequence||(int32_t)(d.sequence-h1_config_sequence)>0)){
-   h1_config_sequence=d.sequence;s->mode=d.mode;s->skip=d.skip;s->volume=d.volume;s->muted=d.muted;
+   h1_config_sequence=d.sequence;s->mode=d.mode;s->skip=d.skip;s->volume=d.volume;s->muted=d.muted;s->show_fps=d.version>=2?d.padding[0]:0;
    memcpy(s->mapping,d.mapping,sizeof s->mapping);
   }
  }
  h1_config_writable=!existed||h1_config_sequence!=0;
 }
 int arcade_config_save(const arcade_settings *s){
- if(!h1_config_writable||!config_path[0])return 0;
- config_disk d;memset(&d,0,sizeof d);d.magic=0x32434741;d.version=1;d.sequence=h1_config_sequence+1;
+ if(!h1_config_writable||!config_path[0]||s->show_fps>1)return 0;
+ config_disk d;memset(&d,0,sizeof d);d.magic=0x32434741;d.version=2;d.sequence=h1_config_sequence+1;
  if(!d.sequence)d.sequence=1;
- d.mode=s->mode;d.skip=s->skip;d.volume=s->volume;d.muted=s->muted;memcpy(d.mapping,s->mapping,sizeof d.mapping);
+ d.mode=s->mode;d.skip=s->skip;d.volume=s->volume;d.muted=s->muted;d.padding[0]=(uint8_t)s->show_fps;memcpy(d.mapping,s->mapping,sizeof d.mapping);
  d.crc=checksum(&d,sizeof d-4);if(!valid(&d))return 0;
  char name[264];snprintf(name,sizeof name,"%s%u",config_path,d.sequence&1);
  FILE *f=fopen(name,"wb");int ok=f&&fwrite(&d,1,sizeof d,f)==sizeof d;

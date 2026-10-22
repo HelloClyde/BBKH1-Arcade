@@ -1,0 +1,27 @@
+{
+  "format_version": 1,
+  "date": "2026-10-22",
+  "firmware": "physical BBK H1/Y100 V1.41 (target; currently not connected)",
+  "bda_sha256": "aa31b95ed187f90f4773746a26d191b34f98129eb924434a5dd12c25d53d8ba2",
+  "bda_size": 1243468,
+  "installation_verified": false,
+  "exact_device_file_match": false,
+  "installation_pending": true,
+  "runtime_verified": false,
+  "hardware_verified": false,
+  "user_runtime_validation_pending": true,
+  "deployment": null,
+  "desktop_after": null,
+  "debug_after": null,
+  "build_options": {
+    "cpu_selftest": true,
+    "startup_selftest": false
+  },
+  "historical_native_evidence": {
+    "path": "docs/evidence/pgm-stream-hardware-20261021.json",
+    "sha256": "826d2200b8b7a5d569dd0ff9d8efb7707db991b37c663271991dc92c8edbc5d6",
+    "applies_to_current_bda": false
+  },
+  "connection_observation": "H1Debug client enumeration returned no matching USB port after the v0.2.3 build. No deployment was attempted. User was asked to return to the desktop and reconnect H1Debug.",
+  "scope": "This is an explicit pending-installation record, not a hardware installation or runtime result. The BDA has been built twice with identical bytes and actual host C menu/config/FPS checks passed. H1 installation awaits reconnection. At the user's request, no startup, gameplay, native selftest or FPS hardware test was performed."
+}
