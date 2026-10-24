@@ -15,25 +15,28 @@ This executable combines components with different licenses. In particular,
 the historic MAME-derived Z80 and YM2610 components have noncommercial terms.
 Do not describe the complete combined executable as uniformly MIT or GPL-only.
 
-The v0.2.3 release adds an optional FPS overlay in the display settings.
-It is off by default, saved per game, and shows logic/displayed frames per
-second at the top left, for example FPS 60.0/30.0. These are measured counts,
-not a fixed speed guarantee. Legacy settings load with the FPS switch off.
-The current BDA build is 1,243,468 bytes, SHA256
-aa31b95ed187f90f4773746a26d191b34f98129eb924434a5dd12c25d53d8ba2.
-The user requested personal physical-H1 validation. H1Debug is not currently
-connected, so this new image has not been installed or executed in this
-session. No new startup, FPS overlay, native-check, game or performance
-verification is claimed. A future installation will not auto-run the BDA;
-docs/evidence/arcade-fps-installation-20261022.json and
-docs/evidence/v0.2.3-release-verification.json explicitly record the pending
-installation with installation_verified=false and deployment=null. Screenshots and
-physical check/performance results below belong to their stated historical
-BDA hashes and do not verify this new hash. Both BIOS archives introduced
-in v0.2.1 remain included in the v0.2.3 installer.
+The v0.2.4 release makes pause-menu opening touch-only. Exit/Back and P
+no longer trigger frontend pause or exit during gameplay; P is bindable.
+Back/Escape (shared firmware scancode) or touch cancels key capture while
+retaining the old binding. The actual host C menu event loop and settings
+checks cover P binding, cancellation, touch release consumption and persistence.
+The BDA is 1,243,084 bytes, SHA256
+1221a96e1ae22d87025e3fc93df81ba76fd05f02f9af1a224568d7aae16a6401.
+The user requested publication without installing to H1. No device installation,
+startup, native checks, games or performance tests were performed for this image.
+docs/evidence/arcade-input-release-20261024.json and
+docs/evidence/v0.2.4-release-verification.json explicitly record
+installation_verified=false and deployment=null. Historical screenshots and
+physical results only verify their stated older BDA hashes.
+Both BIOS archives introduced in v0.2.1 remain included in this installer.
+
+The optional FPS overlay introduced in v0.2.3 is retained. It is off by default,
+saved per game, and shows logic/displayed frames per second. Legacy settings
+load with the FPS switch off. Its earlier publication evidence is separately
+retained in docs/evidence/v0.2.3-release-verification.json.
 
 The historical v0.2.2 release separated startup diagnostics from normal use;
-v0.2.3 retains this behavior.
+v0.2.4 retains this behavior.
 H1_STARTUP_SELFTEST defaults to 0; only an explicit diagnostic build using
 --cpu-selftest --startup-selftest runs the full native suite before the file
 picker and after PGM loading. The older v0.2.1 image was observed spending
@@ -43,7 +46,7 @@ The v0.2.2 historical BDA is 1,240,380 bytes, SHA256
 At the user's request, that session installed it through H1Debug with run=False
 without executing that image or testing either game system. Its historical records
 are docs/evidence/arcade-startup-installation-20261022.json and
-docs/evidence/v0.2.2-release-verification.json; they do not verify v0.2.3.
+docs/evidence/v0.2.2-release-verification.json; they do not verify v0.2.4.
 
 - GnGeo: Peponas Mathieu, Steward Fu and contributors; pinned Apaczer fork.
   The upstream COPYING and file notices are retained. Its README describes

@@ -96,13 +96,14 @@ def main():
    tap(240,193,0);before=stats()['frames'];tap(100,78);wait(lambda:stats()['frames']>before+10 and menu()['active']==0)
    checkpoint('defaults-resumed',True)
   elif a.phase=='keyboard':
-   before=stats()['frames'];press('P');wait(lambda:menu()['active']==1 and menu()['page']==0)
+   before=stats()['frames'];press('P');wait(lambda:stats()['frames']>before+3);assert menu()['active']==0
+   tap(240,130,0)
    press('DOWN');assert menu()['cursor']==2;press('ENTER');wait(lambda:menu()['page']==2)
    press('ESCAPE');wait(lambda:menu()['page']==0)
    tap(350,78,1);tap(100,132);wait(lambda:menu()['capture']==4)
    press('F');assert menu()['capture']==4 and settings()['mapping'][16]==5
-   checkpoint('reserved-key',True);press('P');wait(lambda:menu()['capture']==0xffffffff)
-   press('ESCAPE');wait(lambda:menu()['page']==0);press('P')
+   checkpoint('reserved-key',True);tap(350,241);wait(lambda:menu()['capture']==0xffffffff)
+   press('ESCAPE');wait(lambda:menu()['page']==0);tap(100,78)
    wait(lambda:menu()['active']==0 and stats()['frames']>before+10);checkpoint('keyboard-resumed',True)
   elif a.phase=='ready':
    tap(240,130,0);checkpoint('final-menu',True)

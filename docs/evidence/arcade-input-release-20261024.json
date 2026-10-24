@@ -1,0 +1,59 @@
+{
+  "format_version": 1,
+  "date": "2026-10-24",
+  "firmware": "BBK H1/Y100 V1.41 target; no device access in this release session",
+  "bda_sha256": "1221a96e1ae22d87025e3fc93df81ba76fd05f02f9af1a224568d7aae16a6401",
+  "bda_size": 1243084,
+  "installation_verified": false,
+  "exact_device_file_match": false,
+  "installation_pending": true,
+  "runtime_verified": false,
+  "hardware_verified": false,
+  "user_runtime_validation_pending": true,
+  "deployment": null,
+  "desktop_after": null,
+  "debug_after": null,
+  "installation_status_reason": "user_requested_release_without_H1_installation",
+  "build_options": {
+    "cpu_selftest": true,
+    "startup_selftest": false
+  },
+  "historical_native_evidence": {
+    "path": "docs/evidence/pgm-stream-hardware-20261021.json",
+    "sha256": "826d2200b8b7a5d569dd0ff9d8efb7707db991b37c663271991dc92c8edbc5d6",
+    "applies_to_current_bda": false
+  },
+  "host_checks": {
+    "environment": "actual host C preferences and drawing only; no CPU/device emulation",
+    "checks": [
+      "defaults",
+      "reserved key rejection",
+      "reassignment clears old key",
+      "native aliases cannot conflict",
+      "exit/back/P mapping persists with shared-code exclusion",
+      "actual menu P capture and back/escape/touch cancellation without binding changes or pen-up activation",
+      "V2 FPS two-slot roundtrip and independent CRC",
+      "bad newest slot falls back",
+      "checksummed invalid settings rejected",
+      "V1 settings migrate with FPS off",
+      "FPS and unused padding are strictly validated",
+      "FPS is per cartridge",
+      "invalid FPS rejects before byte narrowing",
+      "five display touch targets and shared display actions",
+      "display defaults preserve audio and mapping",
+      "FPS on/off drawing changes only its row",
+      "duplicate native code rejected",
+      "two corrupt slots preserve files",
+      "five menu pages draw within bounds",
+      "eight import stages draw within bounds"
+    ],
+    "runtime_source_sha256": {
+      "arcade_config.c": "13a78c016a1e13901df8d51669350c62d2d39afe872e8b621596cad4268b1388",
+      "arcade_config.h": "8b6783a478bf0dae6c1921b4a1390a5c3e8a2e9675a0af5bf8368594428cb1ec",
+      "arcade_menu.c": "d41bc14e2c65df44f3eb8a49a9c7753ae1597b508133ec1198625962ac1f43fd",
+      "arcade_menu.h": "f740e7527cf671134d70a707d0791cff9f7d225a127592b2c5f82d1be54e7103",
+      "menu_font.h": "25dc0c12036dabfb5f85b75f2e751dacc457828b8e7ca124c326d705b58c8267"
+    }
+  },
+  "scope": "The user explicitly requested pushing main and publishing a release without installing it to H1. No hardware enumeration, file deployment, application startup, gameplay, native selftest or performance test was performed. Actual host C menu/input/configuration checks passed and two local builds produced identical BDA bytes. Installation and runtime validation remain deferred."
+}

@@ -10,10 +10,10 @@ import zipfile
 from release_bios import ARCHIVES, MANIFEST_PATH, bios_install_entries, validate_archive
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_EVIDENCE = 'docs/evidence/v0.2.3-release-verification.json'
-INSTALLATION_EVIDENCE = 'docs/evidence/arcade-fps-installation-20261022.json'
-TESTED_BDA_SHA256 = 'aa31b95ed187f90f4773746a26d191b34f98129eb924434a5dd12c25d53d8ba2'
-TESTED_BDA_SIZE = 1243468
+RELEASE_EVIDENCE = 'docs/evidence/v0.2.4-release-verification.json'
+INSTALLATION_EVIDENCE = 'docs/evidence/arcade-input-release-20261024.json'
+TESTED_BDA_SHA256 = '1221a96e1ae22d87025e3fc93df81ba76fd05f02f9af1a224568d7aae16a6401'
+TESTED_BDA_SIZE = 1243084
 HISTORICAL_EVIDENCE = 'docs/evidence/pgm-stream-hardware-20261021.json'
 HISTORICAL_EVIDENCE_SHA256 = '826d2200b8b7a5d569dd0ff9d8efb7707db991b37c663271991dc92c8edbc5d6'
 
@@ -46,7 +46,7 @@ def checked_members(archive):
 
 def load_release_evidence(root=ROOT):
     record = json.loads((root / RELEASE_EVIDENCE).read_text(encoding='utf-8'))
-    assert record['format_version'] == 1 and record['release_version'] == '0.2.3'
+    assert record['format_version'] == 1 and record['release_version'] == '0.2.4'
     assert record['bda_sha256'] == TESTED_BDA_SHA256 and record['bda_size'] == TESTED_BDA_SIZE
     assert 'physical_evidence' not in record, 'Current release records installation, not runtime acceptance'
     assert record['installation_evidence']['path'] == INSTALLATION_EVIDENCE

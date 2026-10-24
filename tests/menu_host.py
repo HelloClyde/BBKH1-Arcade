@@ -19,6 +19,35 @@ int menu_items(unsigned page){return count(page);}
 int menu_hit(unsigned page,int x,int y){return hit(page,x,y);}
 int menu_display_action(arcade_settings *s,unsigned item){return display_action(s,item);}
 ''',encoding='utf-8')
+ # Dependency injection exercises the actual menu event loop on host.
+ fixture=r"""#include "h1_sdk.h"
+#include "h1_port.h"
+#include "game_input.h"
+#include "touch.h"
+#include <string.h>
+typedef struct {int code,key,x,y;} host_event;
+static host_event script[32],current_event;
+static unsigned script_count,script_cursor;
+static int host_fetch(int *code,int *key){
+ if(script_cursor>=script_count){*code=*key=-1;h1_arcade_stats.stop=1;return 0;}
+ current_event=script[script_cursor++];*code=current_event.code;*key=current_event.key;return 1;
+}
+static int host_down(unsigned code){(void)code;return 0;}
+static unsigned host_tick(void){static unsigned ticks;return ++ticks;}
+static int host_touch(int *x,int *y){*x=current_event.x;*y=current_event.y;return 1;}
+#define h1_event_fetch host_fetch
+#define h1_game_code_down host_down
+#define h1_raw_tick_80hz host_tick
+#define h1_touch_position host_touch
+"""
+ runner=r"""
+int menu_run_script(uint32_t *p,arcade_settings *s,const host_event *events,unsigned n){
+ if(n>32)return -1;memcpy(script,events,n*sizeof(*events));script_count=n;script_cursor=0;
+ host_pixels=p;h1_arcade_stats.stop=0;return arcade_pause_menu(s,host_target,0);
+}
+unsigned menu_script_used(void){return script_cursor;}
+"""
+ wrapper.write_text(fixture+wrapper.read_text(encoding='utf-8')+runner,encoding='utf-8')
  cc=Path(os.environ.get('HOST_CC','gcc'));env=dict(os.environ);env['PATH']=str(cc.parent)+os.pathsep+env.get('PATH','')
  dllpath=out/'menu.dll'
  subprocess.run([str(cc),'-O3','-shared','-static-libgcc','-Wno-int-to-pointer-cast','-I'+str(ROOT/'src'),
@@ -37,7 +66,7 @@ int menu_display_action(arcade_settings *s,unsigned item){return display_action(
  s=Settings();d.arcade_config_load(ctypes.byref(s),rom,0)
  assert (s.mode,s.skip,s.volume,s.muted,s.show_fps)==(0,1,10,0,0)
  assert s.mapping[16]==5 and s.mapping[19]==8 and s.mapping[23]==9 and s.mapping[25]==10
- original=bytes(s);assert not d.arcade_map_button(ctypes.byref(s),4,31) and bytes(s)==original
+ original=bytes(s);assert not d.arcade_map_button(ctypes.byref(s),4,11) and bytes(s)==original
  assert d.arcade_map_button(ctypes.byref(s),4,2) and s.mapping[2]==5 and not s.mapping[16]
  assert d.arcade_map_button(ctypes.byref(s),5,2) and s.mapping[2]==6 and not s.mapping[17]
  assert d.arcade_map_button(ctypes.byref(s),4,39) and not s.mapping[25] and s.mapping[39]==5
@@ -79,7 +108,44 @@ int menu_display_action(arcade_settings *s,unsigned item){return display_action(
  for p in other_paths:
   if p.exists():p.unlink()
  d.arcade_config_load(ctypes.byref(t),other_rom,1);assert (t.mode,t.show_fps)==(1,0)
+ # Exit/back can be bound and round-trip, while their shared native code
+ # cannot remain assigned to two different buttons. P is also bindable.
+ assert all(not d.arcade_key_reserved(k) for k in (24,41,31)) and d.arcade_key_reserved(11)
+ assert d.arcade_map_button(ctypes.byref(t),4,24) and t.mapping[24]==5 and not t.mapping[16]
  assert d.arcade_config_save(ctypes.byref(t))
+ d.arcade_config_load(ctypes.byref(t),other_rom,1);assert t.mapping[24]==5 and not t.mapping[41]
+ assert d.arcade_map_button(ctypes.byref(t),5,41) and t.mapping[41]==6 and not t.mapping[24] and not t.mapping[17]
+ assert d.arcade_config_save(ctypes.byref(t))
+ d.arcade_config_load(ctypes.byref(t),other_rom,1);assert t.mapping[41]==6 and not t.mapping[24]
+ assert d.arcade_map_button(ctypes.byref(t),4,31) and t.mapping[31]==5
+ assert d.arcade_config_save(ctypes.byref(t))
+ d.arcade_config_load(ctypes.byref(t),other_rom,1);assert t.mapping[31]==5 and t.mapping[41]==6
+ original=bytes(t);assert not d.arcade_map_button(ctypes.byref(t),4,11) and bytes(t)==original
+ # Real menu input: bind P, then cancel another capture by touch. The
+ # cancelling pen-up must not activate the underlying Return button.
+ class Event(ctypes.Structure):
+  _fields_=[('code',ctypes.c_int),('key',ctypes.c_int),('x',ctypes.c_int),('y',ctypes.c_int)]
+ d.menu_run_script.argtypes=[ctypes.POINTER(u),ctypes.POINTER(Settings),ctypes.POINTER(Event),u]
+ pixels=(u*(480*272))()
+ def touch(x,y):return [(11,-1,x,y),(8,-1,x,y)]
+ def key(k):return [(9,k,0,0),(10,k,0,0)]
+ def run_script(events):
+  seq=(Event*len(events))(*(Event(*e) for e in events))
+  assert d.menu_run_script(pixels,ctypes.byref(t),seq,len(events))==0
+  assert d.menu_script_used()==len(events)
+ d.arcade_mapping_defaults(ctypes.byref(t))
+ run_script(touch(350,78)+touch(100,132)+key(31)+key(24)+touch(100,78))
+ assert t.mapping[31]==5 and not t.mapping[16]
+ d.arcade_config_load(ctypes.byref(t),other_rom,1);assert t.mapping[31]==5
+ before_mapping=bytes(t.mapping)
+ run_script(touch(350,78)+touch(100,132)+touch(350,241)+key(24)+touch(100,78))
+ assert bytes(t.mapping)==before_mapping
+ # Back and Escape cancel only the current capture, without binding them
+ # or discarding the existing P/game mapping; another Back returns to root.
+ for cancel_key in (41,24):
+  run_script(touch(350,78)+touch(100,132)+key(cancel_key)+key(24)+touch(100,78))
+  assert bytes(t.mapping)==before_mapping
+  d.arcade_config_load(ctypes.byref(t),other_rom,1);assert bytes(t.mapping)==before_mapping
  d.arcade_config_load(ctypes.byref(t),rom,0);assert (t.mode,t.show_fps)==(2,1)
  for p in other_paths:
   if p.exists():p.unlink()
@@ -124,7 +190,7 @@ int menu_display_action(arcade_settings *s,unsigned item){return display_action(
    image=Image.new('RGB',(480,272));image.putdata([((p>>16)&255,(p>>8)&255,p&255) for p in canv[4:-4]])
    dest=out/'import-progress.png';image.save(dest);screens.append(str(dest))
  report={'ok':True,'environment':'actual host C preferences and drawing only; no CPU/device emulation',
-  'checks':['defaults','reserved key rejection','reassignment clears old key','native aliases cannot conflict',
+  'checks':['defaults','reserved key rejection','reassignment clears old key','native aliases cannot conflict','exit/back/P mapping persists with shared-code exclusion','actual menu P capture and back/escape/touch cancellation without binding changes or pen-up activation',
    'V2 FPS two-slot roundtrip and independent CRC','bad newest slot falls back','checksummed invalid settings rejected',
    'V1 settings migrate with FPS off','FPS and unused padding are strictly validated','FPS is per cartridge','invalid FPS rejects before byte narrowing',
    'five display touch targets and shared display actions','display defaults preserve audio and mapping','FPS on/off drawing changes only its row',

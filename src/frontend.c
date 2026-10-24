@@ -259,15 +259,13 @@ void pad_update(void){
  input_events();
  // Native game mode does not reliably enqueue matrix-key transitions.
  // Use the same authoritative scan query as the game controls for hotkeys.
- static const unsigned hotkeys[]={H1_KEY_ESCAPE,H1_KEY_BACK,H1_KEY_P,H1_KEY_F,H1_KEY_G,H1_KEY_H
+ static const unsigned hotkeys[]={H1_KEY_F,H1_KEY_G,H1_KEY_H
 #if H1_AUDIO_FAST
  ,H1_KEY_T
 #endif
  };
  for(unsigned i=0;i<sizeof hotkeys/sizeof hotkeys[0];i++){
    unsigned k=hotkeys[i],pressed=down(k),edge=pressed&&!held[k];held[k]=pressed;
-   if(edge&&(k==H1_KEY_ESCAPE||k==H1_KEY_BACK))h1_arcade_stats.stop=1;
-   if(edge&&k==H1_KEY_P){paused=!paused;if(paused&&h1_pause_menu_enabled)menu_requested=1;if(audio_ready){if(paused)gba_audio_pause();else gba_audio_resume();}}
    if(edge&&k==H1_KEY_F){
 #if H1_SPEED_CORE
     if(h1_auto_frameskip){h1_auto_frameskip=0;skip=0;}

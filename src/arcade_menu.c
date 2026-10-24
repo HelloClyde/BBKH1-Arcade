@@ -83,8 +83,8 @@ static void draw(unsigned page,int cursor,int capture,const char *status,const a
   snprintf(label,sizeof label,"音量：%u%%  左右键／触摸调节",s->volume);text(label,18,32,0x00b8bcbc);
   rect(38,226,404,12,0x00202440);rect(38,226,404*s->volume/100,12,0x0000b4a0);
   rect(38+403*s->volume/100-4,222,9,20,0x00ffffff);
- }else text(capture>=0?"请按实体键，返回取消":status&&*status?status:page==4?"确认／返回回到暂停菜单":"触摸选择，方向键／确认，返回继续",18,32,0x00b8bcbc);
- if(page==0)text("触屏／P 打开菜单，返回继续",18,232,0x00b8bcbc);
+ }else text(capture>=0?"请按实体键，返回／触屏取消":status&&*status?status:page==4?"确认／返回回到暂停菜单":"触摸选择，方向键／确认，返回继续",18,32,0x00b8bcbc);
+ if(page==0)text("触屏打开菜单，返回继续",18,232,0x00b8bcbc);
  if(page==4){
   text("作者：HelloClyde",38,64,0x00ffffff);
 #if H1_PGM
@@ -134,6 +134,11 @@ int arcade_pause_menu(arcade_settings *s,uint32_t *(*target)(void),unsigned open
    if(h1_touch_position(&x,&y)){unsigned v=volume_at(x);if(v!=s->volume){s->volume=v;gba_audio_set_volume(v);dirty=1;}}
    if(code==8){drag=0;pen=-1;}continue;
   }
+  if(code==11&&capture>=0){
+   /* Consume the cancelling touch release before normal menu activation. */
+   ++h1_menu_stats.touches;capture=-1;status="已取消";dirty=1;
+   discard_pen=1;pen=-1;continue;
+  }
   if(code==11){
    ++h1_menu_stats.touches;
    if(h1_touch_position(&last_x,&last_y)){
@@ -160,8 +165,9 @@ int arcade_pause_menu(arcade_settings *s,uint32_t *(*target)(void),unsigned open
    }
   }
   if(pressed){
-   back=key==H1_KEY_BACK||key==H1_KEY_ESCAPE||key==H1_KEY_P;
+   back=key==H1_KEY_BACK||key==H1_KEY_ESCAPE;
    if(capture>=0){
+    /* Back and Escape share the firmware scancode; both cancel here only. */
     if(back){capture=-1;status="已取消";}
     else if(arcade_map_button(s,(unsigned)capture,(unsigned)key)){capture=-1;status="按键已修改";++h1_menu_stats.edits;}
     else status="此键用于菜单，请选择其他键";

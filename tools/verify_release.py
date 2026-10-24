@@ -75,7 +75,7 @@ def main():
         'validation_scope': record['verification_scope'],
         'scope': ('Local static checks and fixed build-input hashes. '
                   + ('The BDA matches the H1 upload/CRC receipt and was installed without launching it. '
-                     if installed else 'The BDA has not been installed; installation is pending an H1Debug connection. ')
+                     if installed else record['verification_scope']['installation'] + ' ')
                   + 'Startup, gameplay and native checks remain for the user to validate. Earlier physical CPU/MXU and FPS evidence applies only to the older BDA.'),
         'distribution': 'BDA, installation ZIP and complete corresponding source snapshots, with original third-party notices.'
     }

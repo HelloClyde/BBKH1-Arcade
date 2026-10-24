@@ -16,8 +16,7 @@ static uint32_t checksum(const void *data,unsigned n){
  return ~c;
 }
 int arcade_key_reserved(unsigned k){
- return !h1_game_key_code(k)||k==H1_KEY_ESCAPE||k==H1_KEY_BACK||k==H1_KEY_P||
-        k==H1_KEY_F||k==H1_KEY_G||k==H1_KEY_H||k==H1_KEY_T;
+ return !h1_game_key_code(k)||k==H1_KEY_F||k==H1_KEY_G||k==H1_KEY_H||k==H1_KEY_T;
 }
 void arcade_mapping_defaults(arcade_settings *s){
  static const uint8_t keys[ARCADE_BUTTONS]={H1_KEY_UP,H1_KEY_DOWN,H1_KEY_LEFT,H1_KEY_RIGHT,H1_KEY_Z,H1_KEY_X,H1_KEY_C,H1_KEY_V,H1_KEY_SPACE,H1_KEY_ENTER};

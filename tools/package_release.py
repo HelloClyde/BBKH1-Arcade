@@ -72,7 +72,7 @@ def main():
     files=[bda,installer,source,out/'BUILD-INFO.json']
     (out/'SHA256SUMS.txt').write_text(''.join(sha(p.read_bytes())+'  '+p.name+'\n' for p in files))
     installation_note=('本次仅安装新 BDA 到用户 H1，没有启动应用；上传 CRC 回执与发布 BDA 对应。'
-                       if installed else '本次尚未安装新 BDA 到用户 H1，也未启动应用；等待 H1Debug 重新连接后安装。当前发布不声明设备文件匹配或真机运行通过。')
+                       if installed else '按用户要求，本次只发布，不安装到 H1，也不启动应用。当前发布只记录主机检查和构建校验，不声明真机运行通过。')
     (out/'RELEASE-NOTES.md').write_text(f'''# 街机游戏 v{version} — H1 / Y100 开发预览
 
 本次提供原生 BDA、安装包、完整对应源码和 SHA256 校验文件。
@@ -80,7 +80,8 @@ def main():
 
 下载 H1Arcade-v{version}-install.zip 后，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
 单独 BDA 放到 A:\\应用\\程序\\H1Arcade.bda。
-v0.2.3 新增 FPS 显示：触屏打开暂停菜单，在“显示”中切换“FPS显示”开/关。开启后左上角显示逻辑/显示 FPS，每秒更新；设置按游戏保存，默认关闭。
+v0.2.4 调整游戏输入：暂停菜单只通过触屏打开；游戏中退出／返回键和 P 不再触发前端暂停或退出，P 可映射为游戏按键。等待改键时按返回键或触屏取消并保留原绑定；退出与返回共用底层键码，在改键界面均用于取消。结束模拟器请在暂停菜单选择“退出游戏”。
+v0.2.3 新增的 FPS 显示继续保留：触屏打开暂停菜单，在“显示”中切换“FPS显示”开/关。开启后左上角显示逻辑/显示 FPS，每秒更新；设置按游戏保存，默认关闭。
 保留 v0.2.2 启动修复：普通启动直接进入游戏选择器，不自动执行整套原生诊断。CPU/MXU 等诊断代码保留，通过单独的 --startup-selftest 诊断构建选项开启。PGM 与 Neo Geo 共用同一应用，支持《三国战纪》一代 kov V117。
 安装包 ARCADE 内已包含 pgm.zip 和 neogeo.zip。把自己的 kof97.zip 或 kov.zip 复制到 ARCADE，直接选择游戏 ZIP，H1 首次转换后进入游戏；之后复用缓存。两个 BIOS ZIP 保持原样，不要解压。
 转换有进度和取消按钮，保留原始 ZIP，兼容已有 .h1neo / .h1pgm。PGM 缓存约64.2 MiB，A盘写入失败并清理临时文件后可回退 B:\\ARCADE；下次仍选原ZIP自动复用。
