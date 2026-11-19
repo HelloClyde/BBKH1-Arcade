@@ -1,6 +1,6 @@
 # 街机游戏 · BBKH1-Arcade
 
-作者：**HelloClyde**。面向步步高 **H1 / Y100 V1.41、JZ4740、480×272 屏幕**的 **Neo Geo MVS / PGM 街机模拟器**，版本 **0.2.4**，开发预览。
+作者：**HelloClyde**。面向步步高 **H1 / Y100 V1.41、JZ4740、480×272 屏幕**的 **Neo Geo MVS / PGM 街机模拟器**，版本 **0.2.5**，开发预览。
 
 公开 H1 移植层、A68K/MXU/HLE 优化、触屏菜单和 PC 转换工具，固定所有上游提交。
 默认采用 **408 MHz、4:3 放大、固定跳1帧（目标约30显示帧/秒）、8 kHz 声音合成**。
@@ -9,16 +9,18 @@
 
 ## 快速开始
 
-下载 Release 的 **`H1Arcade-v0.2.4-install.zip`**，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
-安装包已包含 `ARCADE/pgm.zip` 和 `ARCADE/neogeo.zip`，只需另放自己的游戏 ZIP。
+下载 Release 的 **`H1Arcade-v0.2.5-install.zip`**，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
+安装包已包含 `ARCADE/BIOS/pgm.zip` 和 `ARCADE/BIOS/neogeo.zip`，只需另放自己的游戏 ZIP。
 也可以只下载 `H1Arcade.bda`，此时仍需自己配置对应 BIOS；本地构建输出为 `dist/H1Arcade.bda`。
 通过 USB U 盘把它复制到设备 **`A:\应用\程序\H1Arcade.bda`**，刷新桌面后打开“**街机游戏**”。
 游戏文件放在 **`A:\ARCADE\`**，直接选择原始游戏 ZIP，首次在 H1 上分块转换并显示进度，之后复用缓存：
 
-| 系统 / 游戏 | 同目录需要的文件 | 设备生成的缓存 |
+| 系统 / 游戏 | 游戏 ZIP 示例及所需 BIOS | 设备生成的缓存 |
 | --- | --- | --- |
 | PGM《三国战纪》一代 `kov` V117 | 自己的 `kov.zip`、安装包已带的 `pgm.zip` | `.h1pgm`，约64.2 MiB |
-| Neo Geo，例如《拳皇97》 | 自己的 `kof97.zip`、安装包已带的 `neogeo.zip` | `.h1neo`，拳皇97约58 MiB |
+| Neo Geo，例如《拳皇97》 | 自己的 `拳皇97.zip`、安装包已带的 `neogeo.zip` | `.h1neo`，拳皇97约58 MiB |
+
+v0.2.5 按 ZIP 内 ROM 的大小和 CRC 自动识别 Neo Geo 游戏，ZIP 可以叫 `拳皇97.zip` 或其他名字。驱动目录扩至 149 个 ROM 集（含不同版本），包括《饿狼传说3》《龙虎之拳》《风云默示录》《泡泡龙》与《Shock Troopers》，需要完整的兼容 ROM 集。PGM 仍使用 `kov.zip` 或 `kov三国战记.zip`。安装包将 BIOS 放入 `ARCADE/BIOS/`，让游戏目录列表不显示这两个 BIOS 文件。旧目录中的 BIOS 仍可读取；升级后可以把它们移入 `A:\ARCADE\BIOS\`。
 
 PGM 目前只支持 `kov` V117；其他版本、其他 PGM 游戏及 PGM2/PGM3 尚不支持。
 PGM 缓存优先写在原 ZIP 旁，A 盘写入失败且临时文件清理成功时回退到 `B:\ARCADE`；之后仍选择原 ZIP 即可复用。
@@ -31,7 +33,7 @@ BIOS 的版权与许可独立于 H1 代码的 GPL；本项目没有独立核实�
 
 **v0.2.3 新增的 FPS 显示继续保留**。游戏中触屏暂停，进入“显示设置”，把“FPS显示”切换为“开”，继续游戏后左上角显示逻辑帧率／显示帧率。该选项默认关，按游戏保存。
 v0.2.2 已修复启动时长时间不出现文件选择器的问题：v0.2.1 会在选择器前执行完整开发自检，真机排查确认这会占用几十秒；普通构建从 v0.2.2 起默认关闭这组自动检查，只有显式诊断构建才执行。安装包继续附带两个 BIOS。
-v0.2.4 本次按用户要求只发布，不安装到 H1，也不运行真机验证。主机输入／配置／绘图检查与可复现构建不代表新版已通过真机游戏回归，旧版性能数据不能作为本版实测结果。
+v0.2.5 按用户要求只发布，不安装到 H1。主机转换检查与可复现构建不代表新版已通过真机游戏回归，旧版性能数据不能作为本版实测结果。
 
 Neo Geo 若希望在电脑上预先转换，安装包仍附带可选“PC工具”，包含 Windows x64 图形解码 DLL，只需 Python 3.12+，无需 GCC；
 在该目录运行下列命令时，将 `tools/convert.py` 换成 `convert.py`。工具只处理本地提供的原始 ZIP：
@@ -44,7 +46,7 @@ python -X utf8 tools/convert.py "你的/kof97.zip" --set kof97 --bios "你的/ne
 支持驱动：`kof94`、`kof95`、`kof96`、`kof97`、`mslug`、`mslug2`、`samsho`、`samsho2`、`samsho3`、`samsho4`、`lastblad`。
 Neo Geo 的用户自备《拳皇97》在 v0.1.2 及更早版本完成真机功能验证；本次确切 BDA 未再次运行 Neo Geo 游戏回归，列出驱动不等于所有游戏已测通过。
 
-**v0.2.0 将 PGM 加入默认发布构建**。该历史 BDA 的《三国战纪》V117 已用 H1Debug 真机确认投币、选人及玩家移动/攻击；408 MHz、4:3、跳1帧、8 kHz下，20.3秒实际战斗窗口达到 **60逻辑帧/秒、30显示帧/秒**。逐行合成后立即缩放输出，冻结帧完整绘图与输出由约22.14 ms降至14.32 ms。首次新资源加载仍会短暂掉速，不能保证所有关卡始终满速。这些数据仅对应 v0.2.0 的确切散列，不作为 v0.2.4 的游戏验证。详见[PGM 说明与原始真机记录](docs/pgm.md)。
+**v0.2.0 将 PGM 加入默认发布构建**。该历史 BDA 的《三国战纪》V117 已用 H1Debug 真机确认投币、选人及玩家移动/攻击；408 MHz、4:3、跳1帧、8 kHz下，20.3秒实际战斗窗口达到 **60逻辑帧/秒、30显示帧/秒**。逐行合成后立即缩放输出，冻结帧完整绘图与输出由约22.14 ms降至14.32 ms。首次新资源加载仍会短暂掉速，不能保证所有关卡始终满速。这些数据仅对应 v0.2.0 的确切散列，不作为 v0.2.5 的游戏验证。详见[PGM 说明与原始真机记录](docs/pgm.md)。
 
 | 操作 | 默认按键 |
 | --- | --- |
@@ -88,7 +90,7 @@ Git 检出运行 `python -X utf8 tools/fetch.py` 初始化固定依赖。
 ## 截图
 
 以下均为 **H1Debug 采集的物理 H1、480×272 原尺寸截图**。
-《三国战纪》玩家战斗图来自 **v0.2.0 历史 BDA**，与 v0.2.4 的 BDA 不同；本次没有运行新版采集截图，以下历史图片也没有展示新增 FPS 功能：
+《三国战纪》玩家战斗图来自 **v0.2.0 历史 BDA**，与 v0.2.5 的 BDA 不同；本次没有运行新版采集截图，以下历史图片也没有展示 FPS 功能：
 
 ![v0.2.0 三国战纪第一关玩家战斗](docs/evidence/pgm-stream-gameplay-20261021.png)
 
@@ -112,24 +114,24 @@ Git 检出运行 `python -X utf8 tools/fetch.py` 初始化固定依赖。
 
 ## 验证范围
 
-### v0.2.4 仅发布，安装与真机验证未执行
+### v0.2.5 主机验证，未安装到 H1
 
-本次只做主机检查、构建与打包校验，按用户要求没有安装到 H1、运行应用或执行真机游戏回归。实际 C 菜单事件循环已检查 P 键绑定、返回／退出键取消改键、触屏取消与防止抬笔误激活、配置保存及原绑定保留。这些检查不替代真机验证。
-确切 BDA 为 **1,243,084字节**，SHA256：`1221a96e1ae22d87025e3fc93df81ba76fd05f02f9af1a224568d7aae16a6401`。详见[未安装记录](docs/evidence/arcade-input-release-20261024.json)与[发布关联记录](docs/evidence/v0.2.4-release-verification.json)。
+主机检查覆盖 149 个 Neo Geo ROM 集签名，16 个代表集合使用生成的数据经实际 C 转换后与 PC 工具结果一致；用户提供的《拳皇97》ZIP 也通过本地转换。安装包验证两个 BIOS 的路径、归档及成员校验。按用户要求没有安装或运行新版 H1 应用。
+确切 BDA 为 **1,310,252 字节**，SHA256：`12de5ff9543cf4765b566e19c836187b9859dc3fd02faabf474041bafcaf7868`。详见[未安装记录](docs/evidence/arcade-zip-release-20261119.json)与[发布关联记录](docs/evidence/v0.2.5-release-verification.json)。[v0.2.4 输入改动的历史记录](docs/evidence/v0.2.4-release-verification.json)单独保留。
 
 ### 历史 v0.2.3 FPS 显示
 
-v0.2.3 的 BDA 共1,243,468字节，SHA256：`aa31b95ed187f90f4773746a26d191b34f98129eb924434a5dd12c25d53d8ba2`。其[发布关联记录](docs/evidence/v0.2.3-release-verification.json)描述发布当时的构建与待安装状态，不能验证当前 v0.2.4 的改动。
+v0.2.3 的 BDA 共1,243,468字节，SHA256：`aa31b95ed187f90f4773746a26d191b34f98129eb924434a5dd12c25d53d8ba2`。其[发布关联记录](docs/evidence/v0.2.3-release-verification.json)描述发布当时的构建与待安装状态。
 
 ### 历史 v0.2.2 启动修复与安装记录
 
 v0.2.2 的 BDA 共 **1,240,380字节**，SHA256：`4663b6c25059c31b5a05820292d1fc6572235a2a965023200b09a24a2c34cae2`。
 该版本通过 H1Debug 安装到原应用路径，部署使用 `run=False`，当次没有运行该版、进入选择器或测试 PGM / Neo Geo 游戏。
-详见[v0.2.2 安装记录](docs/evidence/arcade-startup-installation-20261022.json)与[v0.2.2 发布关联记录](docs/evidence/v0.2.2-release-verification.json)。这些记录只对应该历史 BDA，不验证 v0.2.4。
+详见[v0.2.2 安装记录](docs/evidence/arcade-startup-installation-20261022.json)与[v0.2.2 发布关联记录](docs/evidence/v0.2.2-release-verification.json)。这些记录只对应该历史 BDA。
 
 ### 历史 PGM v0.2.0 / v0.2.1
 
-v0.2.1 沿用 v0.2.0 的 BDA，共 **1,295,948字节**，SHA256：`0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0`。以下为这份历史 BDA 的既有真机测试，不是 v0.2.4 的测试。
+v0.2.1 沿用 v0.2.0 的 BDA，共 **1,295,948字节**，SHA256：`0f3bfd95fe53f331308102a34a64be0218b39054871d73e2af1a72cbae39b2e0`。以下为这份历史 BDA 的既有真机测试。
 该 BDA 已通过 H1Debug 在物理 H1 上运行用户自备的《三国战纪》V117，确认玩家投币、选人、移动与攻击、触屏暂停/继续及正常退出，退出恢复原336 MHz并释放输入。
 408 MHz、4:3、跳1帧、8 kHz、音量10%下，20.325秒采样窗口为59.83/29.91逻辑/显示FPS，随后20.3秒关闭采样窗口为60/30 FPS；两个窗口均未回退到旧绘图路径。
 新资源热身的10.175秒窗口为55.72/27.91 FPS，冷载入和新精灵解码仍可停顿。实时窗口不是确定性重放，也不保证所有关卡或长时超频始终满速。
@@ -178,7 +180,7 @@ python -X utf8 tests/audio_fast_host.py --build release-a68k-idle-dirty-selftest
 
 普通构建默认直接进入文件选择器，不自动执行完整原生自检。诊断构建使用 `--cpu-selftest --startup-selftest`，
 启动和 PGM 载入后才执行 CPU、MXU、绘图及音频检查；构建目录额外包含 `-startuptest`。
-旧版 MXU 指令检查来自各自确切 BDA 的真机诊断记录；本次没有运行 v0.2.4 的诊断构建。主机测试中的标量替身仅验证 C 调度与像素运算。
+旧版 MXU 指令检查来自各自确切 BDA 的真机诊断记录；本次没有运行 v0.2.5 的诊断构建。主机测试中的标量替身仅验证 C 调度与像素运算。
 手工 H1Debug 测试说明见 [docs/hardware-testing.md](docs/hardware-testing.md)。
 
 ## 依赖

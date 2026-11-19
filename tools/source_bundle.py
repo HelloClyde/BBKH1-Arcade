@@ -66,10 +66,10 @@ def write_zip(path,entries,prefix=''):
     with zipfile.ZipFile(path) as z:assert not z.testzip()
 
 def selected_driver_archive(data):
-    from convert import SUPPORTED
+    from convert import supported_drivers
     stream=io.BytesIO()
     with zipfile.ZipFile(io.BytesIO(data)) as source,zipfile.ZipFile(stream,'w') as output:
-        for game in sorted(SUPPORTED):
+        for game in supported_drivers():
             name='rom/'+game+'.drv'
             info=zipfile.ZipInfo(name,date_time=(2026,10,20,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED
             output.writestr(info,source.read(name),compresslevel=9)
@@ -85,7 +85,7 @@ def complete_source(path,commit,tag):
             name='gngeo.dat/gngeo_data.zip';original=files[name]
             files[name]=selected_driver_archive(original)
             transformations[name]={'original_sha256':sha(original),
-                'change':'Only the 11 supported .drv metadata files are included. Unused UI and XOR data are omitted.'}
+                'change':'Only compatible .drv metadata files are included. Unused UI and XOR data are omitted.'}
         files={info['path']+'/'+name:data for name,data in files.items()}
         entries.update(files)
         snapshots[key]={'url':info['url'],'commit':info['commit'],'path':info['path'],

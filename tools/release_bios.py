@@ -12,7 +12,7 @@ MANIFEST_PATH = 'assets/bios/manifest.json'
 ARCHIVES = ('pgm.zip', 'neogeo.zip')
 BIOS_NOTICE = '''# 随包 BIOS
 
-安装包已包含 ARCADE/pgm.zip 和 ARCADE/neogeo.zip，解压后随 ARCADE 目录复制到 H1 的 A 盘根目录即可。
+安装包已包含 ARCADE/BIOS/pgm.zip 和 ARCADE/BIOS/neogeo.zip，解压后随 ARCADE 目录复制到 H1 的 A 盘根目录即可。
 这两个原始 ZIP 由用户提供，并依用户明确的发布要求随本版安装包及后续 CI 构建分发；不需要从网络下载，也不需要解压 BIOS ZIP。
 BIOS-MANIFEST.json 记录原始档案与每个成员的大小、SHA256 和 CRC32，用于离线校验。
 这些 BIOS 的原版权与原适用条款保留，不重新许可为 GPL；该清单不代表已经独立确认 BIOS 的再分发许可。
@@ -82,7 +82,7 @@ def load_bios(root=ROOT):
         spec = manifest['files'][name]
         assert set(spec) == {'source_path', 'install_target', 'size', 'sha256', 'members'}, name
         assert spec['source_path'] == f'assets/bios/{name}', name
-        assert spec['install_target'] == f'ARCADE/{name}', name
+        assert spec['install_target'] == f'ARCADE/BIOS/{name}', name
         path = root / safe_relative(spec['source_path'])
         assert path.resolve().is_relative_to(root) and not path.is_symlink(), name
         data = path.read_bytes()

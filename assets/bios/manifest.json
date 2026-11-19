@@ -3,7 +3,7 @@
   "files": {
     "pgm.zip": {
       "source_path": "assets/bios/pgm.zip",
-      "install_target": "ARCADE/pgm.zip",
+      "install_target": "ARCADE/BIOS/pgm.zip",
       "size": 2047189,
       "sha256": "7df47eb0956aae9bbeb3fdae59ea02b3443720cd61b55072494f54ae2a1e6d41",
       "members": {
@@ -26,7 +26,7 @@
     },
     "neogeo.zip": {
       "source_path": "assets/bios/neogeo.zip",
-      "install_target": "ARCADE/neogeo.zip",
+      "install_target": "ARCADE/BIOS/neogeo.zip",
       "size": 1859335,
       "sha256": "bf05cc848e403f8ae457bfe26faa8135cf4725cfff956fa030f5c0a00a26adcc",
       "members": {

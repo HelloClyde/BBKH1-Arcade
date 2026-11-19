@@ -25,7 +25,7 @@ def main():
     blobs, manifest = load_bios()
     entries, same_manifest = bios_install_entries()
     assert manifest == same_manifest
-    assert set(blobs) == {'ARCADE/pgm.zip', 'ARCADE/neogeo.zip'}
+    assert set(blobs) == {'ARCADE/BIOS/pgm.zip', 'ARCADE/BIOS/neogeo.zip'}
     assert set(entries) == set(blobs) | {'BIOS-MANIFEST.json', 'BIOS说明.md'}
     assert json.loads(entries['BIOS-MANIFEST.json']) == manifest
     # These are the actual additional entries consumed by package_release.py.

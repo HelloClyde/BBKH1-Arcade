@@ -3,9 +3,11 @@
 No game or BIOS is downloaded. Driver sizes and CRCs come from pinned GnGeo.
 """
 from pathlib import Path
+from functools import lru_cache
 import argparse,ctypes,hashlib,json,os,shutil,struct,subprocess,zipfile,zlib
 ROOT=Path(__file__).resolve().parents[1]
-SUPPORTED={'kof94','kof95','kof96','kof97','mslug','mslug2','samsho','samsho2','samsho3','samsho4','lastblad'}
+BASELINE_SETS={'kof94','kof95','kof96','kof97','mslug','mslug2','samsho','samsho2','samsho3','samsho4','lastblad'}
+SPECIAL_HARDWARE={'fatfury2','irrmaze','kof98','kof98k','kof98n','kog','lans2004','popbounc'}
 MAGIC=b'H1NEO1\0\0'
 PAGE=4096
 
@@ -80,10 +82,11 @@ def native_words(data):
     if len(candidates)!=1:raise ValueError('unrecognized or ambiguous 68000 reset vectors; check original ROM/BIOS byte order')
     return candidates[0]
 
-def driver(name):
+def driver_archive():
     datafile=Path(__file__).with_name('gngeo_data.zip')
-    if not datafile.exists():datafile=ROOT/'third_party/gngeo/gngeo.dat/gngeo_data.zip'
-    with zipfile.ZipFile(datafile) as z:data=z.read('rom/'+name+'.drv')
+    return datafile if datafile.exists() else ROOT/'third_party/gngeo/gngeo.dat/gngeo_data.zip'
+
+def parse_driver(data):
     sizes=struct.unpack_from('<10I',data,196);count=struct.unpack_from('<I',data,236)[0]
     if count>32 or len(data)!=240+49*count:raise ValueError('invalid upstream driver')
     entries=[]
@@ -92,31 +95,105 @@ def driver(name):
         entries.append((filename,*struct.unpack_from('<B4I',data,p+32)))
     return sizes,entries
 
+@lru_cache(maxsize=None)
+def driver(name):
+    with zipfile.ZipFile(driver_archive()) as z:return parse_driver(z.read('rom/'+name+'.drv'))
+
+def members_required(entries):
+    lengths={}
+    for filename,region,source,_,size,expected in entries:
+        key=(filename.lower(),expected)
+        lengths[key]=max(lengths.get(key,0),(source//2 if region==9 else source)+size)
+    return lengths
+
+def compatible_layout(sizes,entries):
+    allowed={1,3,4,6,8,9}
+    if any(size and i not in allowed for i,size in enumerate(sizes)):return False
+    if not (0<sizes[1]<=0x80000 and 0<sizes[3]<=0x1000000 and sizes[4]<=0x1000000 and
+            sizes[6]==0x20000 and 0<sizes[8]<=0x800000 and 0<sizes[9]<=0x4000000 and sizes[9]%4096==0):return False
+    by_region={i:{} for i in allowed}
+    for filename,region,source,dest,size,expected in entries:
+        if not filename or not expected or not size or region not in allowed:return False
+        if dest in by_region[region]:return False
+        by_region[region][dest]=size
+        if region==9:
+            if source%2 or (dest&~1)%4096 or size%2048 or (dest&~1)+size*2>sizes[9]:return False
+        elif dest+size>sizes[region] or (region==8 and (dest|size)%2) or (region==6 and (dest|size)%32):return False
+    for region,parts in by_region.items():
+        if bool(parts)!=bool(sizes[region]):return False
+        if region==9:
+            if any(parts.get(dest^1)!=size for dest,size in parts.items()):return False
+            intervals=sorted((dest,dest+size*2) for dest,size in parts.items() if not dest%2)
+        else:
+            intervals=sorted((dest,dest+size) for dest,size in parts.items())
+            if region==8 and intervals[0][0]!=0:return False
+        if any(end>start for (_,end),(start,_) in zip(intervals,intervals[1:])):return False
+    return True
+
+@lru_cache(maxsize=1)
+def supported_drivers():
+    candidates={}
+    with zipfile.ZipFile(driver_archive()) as archive:
+        for entry in archive.namelist():
+            if not entry.startswith('rom/') or not entry.endswith('.drv'):continue
+            name=entry[4:-4]
+            data=archive.read(entry)
+            internal,parent=(data[start:start+32].split(b'\0',1)[0].decode('ascii') for start in (0,32))
+            year=struct.unpack_from('<I',data,192)[0]
+            if not (1990<=year<=1998) or {name,internal,parent}&SPECIAL_HARDWARE:continue
+            if not name.isalnum() or len(name)>15:continue
+            sizes,entries=parse_driver(data)
+            if compatible_layout(sizes,entries):candidates[name]=(sizes,entries,parent)
+    by_signature={}
+    for name,(sizes,entries,parent) in candidates.items():
+        signature=frozenset((crc,length) for (_,crc),length in members_required(entries).items())
+        by_signature.setdefault(signature,[]).append(name)
+    result=[]
+    for names in by_signature.values():
+        layouts={ (candidates[name][0],tuple(sorted(entry[1:] for entry in candidates[name][1]))) for name in names }
+        if len(layouts)==1:
+            result.append(min(names,key=lambda name:(name not in BASELINE_SETS,candidates[name][2]!='neogeo',name)))
+    return tuple(sorted(result))
+
 def read_zip(path):
     with zipfile.ZipFile(path) as z:
         entries={}
         for entry in z.infolist():
             if entry.is_dir():continue
             if entry.file_size>64*1024*1024:raise ValueError('oversized ZIP member')
-            key=Path(entry.filename).name.lower()
+            key=entry.filename.replace('\\','/').rsplit('/',1)[-1].lower()
             if key in entries:raise ValueError('duplicate ZIP member: '+key)
             entries[key]=(entry.filename,entry.CRC,entry.file_size)
         return entries
 
+def match_member(members,filename,expected,length):
+    match=members.get(filename.lower())
+    if match and match[1:]==(expected,length):return match
+    matches=[member for member in members.values() if member[1:]==(expected,length)]
+    return matches[0] if len(matches)==1 else None
+
+def identify_driver(members):
+    matches=[]
+    for name in supported_drivers():
+        _,entries=driver(name)
+        if all(match_member(members,filename,crc,length) for (filename,crc),length in members_required(entries).items()):
+            matches.append(name)
+    if len(matches)!=1:
+        raise ValueError('ZIP matches multiple Neo Geo sets' if matches else 'Unknown or incomplete Neo Geo ROM set')
+    return matches[0]
+
 def convert(game,bios,output,name=None,bios_name=None):
-    name=name or Path(game).stem.lower()
-    if name not in SUPPORTED:raise ValueError('unsupported set; supported: '+', '.join(sorted(SUPPORTED)))
+    members=read_zip(game)
+    if name is None:name=identify_driver(members)
+    elif name not in supported_drivers():raise ValueError('unsupported Neo Geo set: '+name)
     sizes,entries=driver(name)
+    lengths=members_required(entries)
     regions={i:bytearray(size) for i,size in enumerate(sizes) if size}
     if any(i not in (1,3,4,6,8,9) for i in regions):raise ValueError('driver needs an unsupported hardware feature')
-    members=read_zip(game)
     with zipfile.ZipFile(game) as z:
         for filename,id,src,dest,size,expected in entries:
-            match=members.get(filename.lower())
-            if not match or match[1]!=expected:
-                matches=[m for m in members.values() if m[1]==expected]
-                if len(matches)!=1:raise ValueError(f'missing or incorrect ROM: {filename}, CRC {expected:08x}')
-                match=matches[0]
+            match=match_member(members,filename,expected,lengths[filename.lower(),expected])
+            if not match:raise ValueError(f'missing or incorrect ROM: {filename}, CRC {expected:08x}')
             data=z.read(match[0]);source=src//2 if id==9 else src
             if source+size>len(data):raise ValueError('short ROM: '+filename)
             chunk=data[source:source+size]

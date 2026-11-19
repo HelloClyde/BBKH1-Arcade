@@ -4,11 +4,11 @@ PGM 已加入 **v0.2.0 开发预览的默认发布构建**，与 Neo Geo 共用 
 
 **v0.2.3 新增 FPS 显示开关**。游戏中触屏暂停，进入“显示设置”，把“FPS显示”切为“开”，继续后左上角显示逻辑帧率／显示帧率，例如 `FPS 60.0/30.0`。数值约每秒更新，是实际帧计数，不保证满速；开关默认关，按游戏保存，旧设置首次读取也默认关。
 **v0.2.4 改为仅触屏暂停**。游戏中退出／返回键和 P 不触发前端暂停或退出；P 可映射游戏按键。等待改键时按返回键或触屏取消，保留原绑定。退出与返回共用底层键码，在改键界面均用于取消。
-当前构建 BDA 为1,243,084字节，SHA256为 `1221a96e1ae22d87025e3fc93df81ba76fd05f02f9af1a224568d7aae16a6401`。按用户要求本次只发布，没有安装到 H1 或运行真机回归。[未安装记录](evidence/arcade-input-release-20261024.json)与[发布关联记录](evidence/v0.2.4-release-verification.json)保存 `installation_verified=false`、`deployment=null`，不声明已部署。
+v0.2.5 的 PGM 游戏范围保持不变。当前 BDA 为 1,310,252 字节，SHA256 为 `12de5ff9543cf4765b566e19c836187b9859dc3fd02faabf474041bafcaf7868`。按用户要求本次只发布，没有安装到 H1 或运行真机回归。[未安装记录](evidence/arcade-zip-release-20261119.json)与[发布关联记录](evidence/v0.2.5-release-verification.json)保存 `installation_verified=false`、`deployment=null`。
 
 **v0.2.2 的启动修复保留为历史**：普通构建不自动运行完整开发自检，诊断构建需显式使用 `--cpu-selftest --startup-selftest`，才在启动与 PGM 载入后执行检查。v0.2.2 历史 BDA 为1,240,380字节，SHA256为 `4663b6c25059c31b5a05820292d1fc6572235a2a965023200b09a24a2c34cae2`；当时仅使用 `run=False` 安装，没有运行或验证两套游戏。对应[历史安装记录](evidence/arcade-startup-installation-20261022.json)与[v0.2.2 发布关联记录](evidence/v0.2.2-release-verification.json)不验证 v0.2.4。v0.2.1 更早仅更新安装包，BDA 与 v0.2.0 相同。
 
-安装包继续附带 v0.2.1 加入的 `ARCADE/pgm.zip` 和 `ARCADE/neogeo.zip`。
+安装包继续附带 v0.2.1 加入的 `pgm.zip` 和 `neogeo.zip`；v0.2.5 起将两者放在 `ARCADE/BIOS/`。
 随包 BIOS 的固定归档、成员散列和发布依据见 [BIOS 清单](../assets/bios/manifest.json)。
 
 历史 v0.2.0 BDA 的《三国战纪》V117在408 MHz、4:3、跳1帧、8 kHz下，实际玩家战斗20.3秒窗口达到60逻辑/30显示FPS；新资源加载仍可能短暂掉速，不代表全关卡恒定满速。历史确切BDA与完整限制见下方“逐行合成后的满速战斗窗口”；该窗口不是 v0.2.4 的实测，本文旧版画面也不展示新增 FPS 功能。
@@ -23,7 +23,7 @@ python -X utf8 tools/build_release.py --toolchain "你的工具链/bin" --host-c
 
 首批目标是《三国战纪》一代 `kov` V117。其他 PGM 游戏、改版以及 PGM2/PGM3 尚不支持；不能只重命名 ZIP 来变成受支持版本。
 
-将自己提供的 `kov.zip` 放在 H1 的 `A:\ARCADE`，同目录的 `pgm.zip` 由 v0.2.1 及后续安装包附带；只下载 BDA 时需另行配置 BIOS。打开街机应用选择游戏 ZIP。首次在设备上生成同目录 `.h1pgm` 文件，后续复用缓存。若 A 盘写缓存失败且临时文件已成功清理，会尝试建立 `B:\ARCADE` 并把缓存写入 B 盘；下次仍选择原 ZIP 即可复用它。原 ZIP 保留。已有缓存或临时文件不会被覆盖。
+将自己提供的 `kov.zip` 放在 H1 的 `A:\ARCADE`；v0.2.5 也支持 `kov三国战记.zip`。默认从 `A:\ARCADE\BIOS\pgm.zip` 或旧位置读取 BIOS；只下载 BDA 时需另行配置。打开街机应用选择游戏 ZIP。首次在设备上生成同目录 `.h1pgm` 文件，后续复用缓存。若 A 盘写缓存失败且临时文件已成功清理，会尝试建立 `B:\ARCADE` 并把缓存写入 B 盘；下次仍选择原 ZIP 即可复用它。原 ZIP 保留。已有缓存或临时文件不会被覆盖。
 
 缓存约 64.2 MiB，包括原始程序、图形、声音及每个 4 KiB 页的 CRC。转换按块解压、验证成员 CRC，写完后读回检查数据和页校验表，再以同目录改名提交。转换失败或取消会清理本次临时文件。
 

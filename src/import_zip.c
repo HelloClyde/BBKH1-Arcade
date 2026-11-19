@@ -62,6 +62,15 @@ int h1_zip_find(h1_zip *z,const char *name,uint32_t crc,int by_crc){
   if(by_crc&&m->crc==crc){candidate=(int)i;++matches;}
  }return matches==1?candidate:-1;
 }
+int h1_zip_find_rom(h1_zip *z,const char *name,uint32_t crc,unsigned size){
+ int candidate=-1;unsigned matches=0;
+ for(unsigned i=0;i<z->count;i++){
+  const member *m=z->members+i;if(!m->name[0]||m->crc!=crc||m->size!=size)continue;
+  if(!strcmp(m->name,name))return (int)i;
+  candidate=(int)i;++matches;
+ }
+ return matches==1?candidate:-1;
+}
 unsigned h1_zip_size(h1_zip *z,int i){return z&&i>=0&&(unsigned)i<z->count?z->members[i].size:0;}
 h1_zip_stream *h1_zip_start(h1_zip *z,int i){
  unsigned char h[30],name[256];char base[96];if(!z||i<0||(unsigned)i>=z->count)return 0;

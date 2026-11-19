@@ -2,6 +2,7 @@
  * ROM layout/CRCs from pinned FBA-A320 d_pgm.cpp; no ROMs included. */
 #include "pgm.h"
 #include "pgm_format.h"
+#include "import_path.h"
 #include "import_zip.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,12 +26,10 @@ static const rom layout[]={
 static const unsigned sizes[]={0x20000,0x400000,0xc00000,0x1c00000,0xc00000,0x800000};
 static uint32_t checksum(const void *p,unsigned n){return ~h1_import_crc(~0u,p,n);}
 int h1_pgm_paths(const char *p,char cache[240],char bios[240],char set[16]){
- unsigned n=strlen(p),base=0;if(n<8||n+7>240||p[1]!=':'||(p[2]!='\\'&&p[2]!='/'))return 0;
- for(unsigned i=0;i<n;i++){unsigned c=(uint8_t)p[i];if(c>=0x81&&c<=0xfe){unsigned t=(uint8_t)p[++i];if(i>=n||t<0x40||t>0xfe||t==0x7f)return 0;}else if(c=='\\'||c=='/')base=i+1;}
- if(n-base!=7)return 0;
- char name[8];for(unsigned i=0;i<7;i++){unsigned c=(uint8_t)p[base+i];name[i]=c>='A'&&c<='Z'?c+32:c;}name[7]=0;
- if(strcmp(name,"kov.zip"))return 0;
- memcpy(cache,p,n-4);strcpy(cache+n-4,".h1pgm");memcpy(bios,p,base);strcpy(bios+base,"pgm.zip");strcpy(set,"kov");return 1;
+ unsigned base;char name[16];
+ unsigned end=h1_zip_path_name(p,&base,name);
+ if(!end||strcmp(name,"kov"))return 0;
+ memcpy(cache,p,end);strcpy(cache+end,".h1pgm");memcpy(bios,p,base);strcpy(bios+base,"pgm.zip");strcpy(set,"kov");return 1;
 }
 int h1_pgm_header(const uint8_t *h,unsigned size,const char *name){
  if(memcmp(h,"H1PGM1\0",8)||pgm_u32(h+8)!=1||pgm_u32(h+12)!=size||pgm_u32(h+16)!=PGM_REGIONS||
@@ -49,7 +48,7 @@ int h1_pgm_import(const char *game,const char *bios,const char *output,const cha
  error[0]=0;
  #define FAIL(msg) do{snprintf(error,128,"%s",msg);goto done;}while(0)
  #define NOTIFY(stage,d,t) do{if(notify&&!notify(user,stage,d,t)){result=0;goto done;}}while(0)
- if(strcmp(set,"kov")||strlen(output)>234)FAIL("Unsupported PGM set or path");
+ if(strcmp(set,"kov")||strlen(output)+sizeof ".tmp">sizeof temp)FAIL("Unsupported PGM set or path");
  snprintf(temp,sizeof temp,"%s.tmp",output);f=fopen(output,"rb");if(f){fclose(f);f=0;FAIL("PGM cache exists; keep or rename it");}
  f=fopen(temp,"rb");if(f){fclose(f);f=0;FAIL("Incomplete .h1pgm.tmp exists; rename it to retry");}
  NOTIFY("inspect",0,1);z[0]=h1_zip_open(game);z[1]=h1_zip_open(bios);if(!z[0]||!z[1])FAIL("Cannot read kov.zip / pgm.zip");

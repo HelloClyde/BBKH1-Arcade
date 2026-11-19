@@ -7,7 +7,7 @@ static int notify(void *user,const char *stage,unsigned done,unsigned total){
  (void)done;(void)total;return !user||strcmp(stage,(const char *)user);
 }
 int main(int argc,char **argv){
- char error[128];if(argc<5)return 2;
- int result=h1_import_game(argv[1],argv[2],argv[3],argv[4],notify,argc>5?argv[5]:0,error);
- printf("result=%d error=%s\n",result,error);return result==1?0:result==0?3:1;
+ char error[128];if(argc<4)return 2;
+ int result=h1_import_game(argv[1],argv[2],argv[3],notify,argc>4?argv[4]:0,error);
+ printf("result=%d error=%s\n",result,error);return result>0?0:result==0?3:1;
 }

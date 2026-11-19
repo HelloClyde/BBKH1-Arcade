@@ -10,10 +10,10 @@ import zipfile
 from release_bios import ARCHIVES, MANIFEST_PATH, bios_install_entries, validate_archive
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_EVIDENCE = 'docs/evidence/v0.2.4-release-verification.json'
-INSTALLATION_EVIDENCE = 'docs/evidence/arcade-input-release-20261024.json'
-TESTED_BDA_SHA256 = '1221a96e1ae22d87025e3fc93df81ba76fd05f02f9af1a224568d7aae16a6401'
-TESTED_BDA_SIZE = 1243084
+RELEASE_EVIDENCE = 'docs/evidence/v0.2.5-release-verification.json'
+INSTALLATION_EVIDENCE = 'docs/evidence/arcade-zip-release-20261119.json'
+TESTED_BDA_SHA256 = '12de5ff9543cf4765b566e19c836187b9859dc3fd02faabf474041bafcaf7868'
+TESTED_BDA_SIZE = 1310252
 HISTORICAL_EVIDENCE = 'docs/evidence/pgm-stream-hardware-20261021.json'
 HISTORICAL_EVIDENCE_SHA256 = '826d2200b8b7a5d569dd0ff9d8efb7707db991b37c663271991dc92c8edbc5d6'
 
@@ -46,7 +46,7 @@ def checked_members(archive):
 
 def load_release_evidence(root=ROOT):
     record = json.loads((root / RELEASE_EVIDENCE).read_text(encoding='utf-8'))
-    assert record['format_version'] == 1 and record['release_version'] == '0.2.4'
+    assert record['format_version'] == 1 and record['release_version'] == '0.2.5'
     assert record['bda_sha256'] == TESTED_BDA_SHA256 and record['bda_size'] == TESTED_BDA_SIZE
     assert 'physical_evidence' not in record, 'Current release records installation, not runtime acceptance'
     assert record['installation_evidence']['path'] == INSTALLATION_EVIDENCE
@@ -167,19 +167,24 @@ def verify(directory, tag=None, commit=None):
         for name, data in bios_entries.items():
             assert archive.read(name) == data, name
         assert {name for name in members if name.startswith('ARCADE/')} == {
-            'ARCADE/放置游戏文件.txt', 'ARCADE/pgm.zip', 'ARCADE/neogeo.zip'
+            'ARCADE/放置游戏文件.txt', 'ARCADE/BIOS/pgm.zip', 'ARCADE/BIOS/neogeo.zip'
         }, 'Unexpected game data in installer'
         assert {name for name in members if name.lower().endswith(('.zip', '.7z', '.rar', '.tar', '.gz', '.tgz'))} == {
-            'ARCADE/pgm.zip', 'ARCADE/neogeo.zip', 'PC工具/gngeo_data.zip'
+            'ARCADE/BIOS/pgm.zip', 'ARCADE/BIOS/neogeo.zip', 'PC工具/gngeo_data.zip'
         }, 'Unexpected archive in installer'
         assert not any(name.lower().endswith(('.h1neo', '.h1pgm', '.rom', '.raw', '.nand', '.bin')) for name in members)
         for name in ARCHIVES:
             spec = bios_manifest['files'][name]
             validate_archive(archive.read(spec['install_target']), spec)
         assert archive.read('PC工具/gfx.dll')[:2] == b'MZ'
-        with zipfile.ZipFile(io.BytesIO(archive.read('PC工具/gngeo_data.zip'))) as drivers:
+        packaged_drivers = archive.read('PC工具/gngeo_data.zip')
+        driver_table = (ROOT / 'src/import_drivers.h').read_bytes()
+        assert sha(driver_table) == record['runtime_source_sha256']['src/import_drivers.h']
+        driver_sets = re.findall(rb'^\{"([a-z0-9]+)",\{', driver_table, re.MULTILINE)
+        assert len(driver_sets) == len(set(driver_sets)) == 149
+        with zipfile.ZipFile(io.BytesIO(packaged_drivers)) as drivers:
             driver_names = checked_members(drivers)
-            assert len(driver_names) == 11 and all(name.endswith('.drv') for name in driver_names)
+            assert driver_names == {f'rom/{name.decode()}.drv' for name in driver_sets}
     with zipfile.ZipFile(directory / info['source']['filename']) as archive:
         members = checked_members(archive)
         manifests = [name for name in members if name.endswith('/SOURCE-MANIFEST.json')]
@@ -199,6 +204,7 @@ def verify(directory, tag=None, commit=None):
         assert json.loads(archive.read(prefix + 'UPSTREAM.json')) == record['dependencies']
         assert archive.read(prefix + 'VERSION').decode().strip() == info['version']
         assert archive.read(prefix + MANIFEST_PATH) == bios_entries['BIOS-MANIFEST.json']
+        assert archive.read(prefix + 'third_party/gngeo/gngeo.dat/gngeo_data.zip') == packaged_drivers
         for name in ARCHIVES:
             spec = bios_manifest['files'][name]
             data = archive.read(prefix + spec['source_path'])

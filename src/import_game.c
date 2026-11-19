@@ -1,6 +1,7 @@
 /* Streaming ZIP -> H1NEO conversion. GPL-2.0-or-later.
  * ZIP entries and complete graphics never reside in memory together. */
 #include "import_game.h"
+#include "import_path.h"
 #include "import_zip.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -15,32 +16,55 @@ typedef struct {
  part parts[15];unsigned sizes[15],count,total,written;
  uint8_t *buffer,*lane,*usage,*pages;uint8_t fix[2][4096];
  const import_driver *driver;h1_import_progress notify;void *user;char *error;
+ int members[32];
  int canceled;
 } context;
 static uint32_t read32(const uint8_t *p){return p[0]|p[1]<<8|p[2]<<16|(uint32_t)p[3]<<24;}
 static void put32(uint8_t *p,uint32_t v){p[0]=v;p[1]=v>>8;p[2]=v>>16;p[3]=v>>24;}
 static uint32_t checksum(const void *p,unsigned n){return ~h1_import_crc(~0u,p,n);}
-int h1_import_paths(const char *zip,char output[240],char bios[240],char set[16]){
- unsigned n=(unsigned)strlen(zip),start=0;char name[16];
- if(n<8||n+7>240||zip[1]!=':'||(zip[2]!='\\'&&zip[2]!='/'))return 0;
- for(unsigned i=0;i<n;i++){
-  unsigned ch=(uint8_t)zip[i];
-  if(ch>=0x81&&ch<=0xfe){
-   unsigned trail=(uint8_t)zip[++i];if(i>=n||trail<0x40||trail>0xfe||trail==0x7f)return 0;
-  }else if(ch=='\\'||ch=='/')start=i+1;
+int h1_import_paths(const char *zip,char output[240],char bios[240]){
+ unsigned start;
+ unsigned end=h1_zip_path_stem(zip,&start);
+ if(!end||start+sizeof "neogeo.zip">240)return 0;
+ memcpy(output,zip,end);strcpy(output+end,".h1neo");
+ memcpy(bios,zip,start);strcpy(bios+start,"neogeo.zip");return 1;
+}
+static int bios_readable(const char *path){
+ FILE *file=fopen(path,"rb");if(!file)return 0;fclose(file);return 1;
+}
+void h1_import_find_bios(char path[240],int pgm){
+ const char *name=pgm?"pgm.zip":"neogeo.zip";
+ unsigned base=(unsigned)(strlen(path)-strlen(name));
+ char candidate[240];
+ if(strlen(path)+sizeof "BIOS\\"<=sizeof candidate){
+  memcpy(candidate,path,base);memcpy(candidate+base,"BIOS",4);
+  candidate[base+4]=path[base-1];strcpy(candidate+base+5,name);
+  if(bios_readable(candidate)){strcpy(path,candidate);return;}
  }
- if(n-start<5||zip[n-4]!='.'||(zip[n-3]!='z'&&zip[n-3]!='Z')||(zip[n-2]!='i'&&zip[n-2]!='I')||(zip[n-1]!='p'&&zip[n-1]!='P'))return 0;
- unsigned length=n-start-4;if(length>15||start+sizeof "neogeo.zip">240)return 0;
- for(unsigned i=0;i<length;i++){unsigned ch=(uint8_t)zip[start+i];name[i]=(char)(ch>='A'&&ch<='Z'?ch+32:ch);}name[length]=0;
- unsigned supported=0;for(unsigned i=0;i<IMPORT_DRIVER_COUNT;i++)if(!strcmp(name,import_drivers[i].name))supported=1;
- if(!supported)return 0;
- memcpy(output,zip,n-4);strcpy(output+n-4,".h1neo");
- memcpy(bios,zip,start);strcpy(bios+start,"neogeo.zip");strcpy(set,name);return 1;
+ if(bios_readable(path))return;
+ snprintf(path,240,"A:\\ARCADE\\BIOS\\%s",name);
+ if(!bios_readable(path))snprintf(path,240,"A:\\ARCADE\\%s",name);
 }
 static int progress(context *c,const char *stage,unsigned done,unsigned total){
  if(c->notify&&!c->notify(c->user,stage,done,total)){c->canceled=1;return 0;}return 1;
 }
 static int fail(context *c,const char *s){snprintf(c->error,128,"%s",s);return 0;}
+static int identify(context *c){
+ int indices[32];
+ for(unsigned game=0;game<IMPORT_DRIVER_COUNT;game++){
+  const import_driver *driver=import_drivers+game;
+  unsigned i=0;
+  for(;i<driver->count;i++){
+   const import_rom *rom=driver->roms+i;
+   indices[i]=h1_zip_find_rom(c->game,rom->name,rom->crc,rom->bytes);
+   if(indices[i]<0)break;
+  }
+  if(i<driver->count)continue;
+  if(c->driver)return fail(c,"ZIP matches multiple Neo Geo sets. Use a single game ZIP.");
+  c->driver=driver;memcpy(c->members,indices,i*sizeof indices[0]);
+ }
+ return c->driver!=0||fail(c,"Unknown or incomplete Neo Geo ROM set.");
+}
 static int write_bytes(context *c,const void *p,unsigned n,uint32_t *crc){
  if(fwrite(p,1,n,c->out)!=n)return fail(c,"Cannot write cache: check free space");
  if(crc)*crc=h1_import_crc(*crc,p,n);c->written+=n;return 1;
@@ -90,7 +114,7 @@ static int regular(context *c,unsigned id,uint32_t *crc){
    if(r->dest>dest){if(!zeros(c,r->dest-dest,crc))return 0;dest=r->dest;}
   }
   unsigned n=r?r->size:0x20000,source=r?r->src:0;
-  int index=r?h1_zip_find(c->game,r->name,r->crc,1):bios_index;h1_zip *z=r?c->game:c->bios;
+  int index=r?c->members[r-c->driver->roms]:bios_index;h1_zip *z=r?c->game:c->bios;
   if(index<0){snprintf(c->error,128,"Missing or incorrect ROM: %s",r?r->name:"BIOS");return 0;}
   if(source>h1_zip_size(z,index)||n>h1_zip_size(z,index)-source||n>c->sizes[id]-dest)return fail(c,"ROM exceeds region");
   c->a=h1_zip_start(z,index);if(!c->a||!skip(c->a,source,c->buffer))return fail(c,"Invalid compressed ROM");
@@ -129,7 +153,7 @@ static int sprites(context *c,uint32_t *crc){
   }
   if(!r[0]||!r[1]||r[0]->size!=r[1]->size||r[0]->size>(c->sizes[9]-dest)/2||r[0]->size%2048)return fail(c,"Unsupported sprite layout");
   for(unsigned lane=0;lane<2;lane++){
-   int index=h1_zip_find(c->game,r[lane]->name,r[lane]->crc,1);unsigned start=r[lane]->src/2;
+   int index=c->members[r[lane]-c->driver->roms];unsigned start=r[lane]->src/2;
    if(index<0||start>h1_zip_size(c->game,index)||r[lane]->size>h1_zip_size(c->game,index)-start){snprintf(c->error,128,"Missing or incorrect ROM: %s",r[lane]->name);return 0;}
    h1_zip_stream *s=h1_zip_start(c->game,index);if(lane)c->b=s;else c->a=s;
    if(!s||!skip(s,start,c->buffer))return fail(c,"Invalid compressed sprite ROM");
@@ -150,17 +174,21 @@ static int header_ok(FILE *f,const char *name){
  return !memcmp(h,"H1NEO1\0",8)&&read32(h+8)==1&&read32(h+12)>0&&read32(h+12)<=15&&read32(h+16)==(unsigned)n&&read32(h+20)==0&&
    memchr(h+24,0,16)&&!strcmp((char*)h+24,name)&&read32(h+60)==checksum(h,60);
 }
-int h1_import_cached(const char *path,const char *name){FILE *f=fopen(path,"rb");if(!f)return 0;int ok=header_ok(f,name);fclose(f);return ok;}
-int h1_import_game(const char *game,const char *bios,const char *output,const char *set,h1_import_progress notify,void *user,char error[128]){
+int h1_import_game(const char *game,const char *bios,const char *output,h1_import_progress notify,void *user,char error[128]){
  context *c=calloc(1,sizeof(*c));char temporary[256]={0};int result=-1,owns_temp=0;FILE *existing=0;uint8_t h[64]={0};
  error[0]=0;if(!c){snprintf(error,128,"Not enough memory");return -1;}c->notify=notify;c->user=user;c->error=error;
- if(strlen(output)+5>=sizeof temporary||!set||strlen(set)>15){fail(c,"Path too long");goto done;}
- for(unsigned i=0;i<IMPORT_DRIVER_COUNT;i++)if(!strcmp(set,import_drivers[i].name))c->driver=import_drivers+i;
- if(!c->driver){fail(c,"Unsupported game ZIP name");goto done;}
+ if(strlen(output)+sizeof ".tmp">sizeof temporary){fail(c,"Path too long");goto done;}
  if(!progress(c,"inspect",0,1))goto done;
- existing=fopen(output,"rb");if(existing){fclose(existing);fail(c,"Cache already exists; keep or rename it");goto done;}
+ c->game=h1_zip_open(game);if(!c->game){fail(c,"Cannot read game ZIP");goto done;}
+ if(!identify(c))goto done;
+ const char *set=c->driver->name;
+ existing=fopen(output,"rb");if(existing){
+  int same=header_ok(existing,set);fclose(existing);
+  if(same)result=2;else fail(c,"Existing cache does not match. Rename or move it to retry.");
+  goto done;
+ }
  snprintf(temporary,sizeof temporary,"%s.tmp",output);existing=fopen(temporary,"rb");if(existing){fclose(existing);fail(c,"Incomplete .h1neo.tmp exists; remove it to retry");goto done;}
- c->game=h1_zip_open(game);c->bios=h1_zip_open(bios);if(!c->game||!c->bios){fail(c,"Cannot read game ZIP / neogeo.zip");goto done;}
+ c->bios=h1_zip_open(bios);if(!c->bios){fail(c,"Cannot read neogeo.zip BIOS");goto done;}
  for(unsigned i=0;i<10;i++)c->sizes[i]=c->driver->sizes[i];
  c->sizes[5]=c->sizes[7]=c->sizes[12]=0x20000;c->sizes[8]=(c->sizes[8]+0xfffff)&~0xfffffu;
  if(c->sizes[6]!=0x20000||!c->sizes[9]||c->sizes[9]%4096||c->sizes[9]>0x4000000){fail(c,"Unsupported graphics layout");goto done;}

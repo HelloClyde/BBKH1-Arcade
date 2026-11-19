@@ -34,7 +34,7 @@ def main():
     bda=out/'H1Arcade.bda';bda.write_bytes(data)
     entries={
         '应用/程序/H1Arcade.bda':data,
-        'ARCADE/放置游戏文件.txt':'本安装包已包含 neogeo.zip 和 pgm.zip，无需解压这两个 BIOS ZIP。把自己的 kof97.zip 或三国战纪 V117 kov.zip 放在此目录，H1 首次打开会自动转换；也可放已有 .h1neo / .h1pgm。游戏 ROM 和个人存档不随安装包提供。\n'.encode(),
+        'ARCADE/放置游戏文件.txt':'BIOS 子目录已包含 neogeo.zip 和 pgm.zip，无需解压。把自己的游戏 ZIP 放在此目录。Neo Geo 按 ROM 内容自动识别，文件名可含中文；三国战纪 V117 仍用 kov.zip 或 kov三国战记.zip。H1 首次打开会自动转换；也可放已有 .h1neo / .h1pgm。游戏 ROM 和个人存档不随安装包提供。\n'.encode(),
         '设备端转换说明.md':(ROOT/'docs/device-import.md').read_bytes(),
         'PGM三国战纪说明.md':(ROOT/'docs/pgm.md').read_bytes(),
         '使用说明.md':(ROOT/'README.md').read_bytes(),
@@ -78,12 +78,15 @@ def main():
 本次提供原生 BDA、安装包、完整对应源码和 SHA256 校验文件。
 默认 408 MHz、4:3、固定跳1帧、8 kHz 声音，带触屏暂停菜单、按键映射、显示与音量设置。
 
+**v0.2.5：** Neo Geo 按 ZIP 内 ROM 大小和 CRC 自动识别，`拳皇97.zip` 这类中文文件名无需改名。转换目录由 11 个拓展至 149 个 ROM 集（含不同版本）；每个 ZIP 应包含一款完整的游戏。缺件、未知或混装集合会提示，PGM 游戏范围不变。
+安装包把两个 BIOS 放在 `ARCADE/BIOS/pgm.zip` 和 `ARCADE/BIOS/neogeo.zip`，后续 CI 也使用该目录。旧位置仍可读取；升级时可把旧的两个 BIOS 移入 `A:\\ARCADE\\BIOS\\`，从游戏目录列表移走。
+
 下载 H1Arcade-v{version}-install.zip 后，把“应用”和“ARCADE”目录复制到设备 A 盘根目录。
 单独 BDA 放到 A:\\应用\\程序\\H1Arcade.bda。
 v0.2.4 调整游戏输入：暂停菜单只通过触屏打开；游戏中退出／返回键和 P 不再触发前端暂停或退出，P 可映射为游戏按键。等待改键时按返回键或触屏取消并保留原绑定；退出与返回共用底层键码，在改键界面均用于取消。结束模拟器请在暂停菜单选择“退出游戏”。
 v0.2.3 新增的 FPS 显示继续保留：触屏打开暂停菜单，在“显示”中切换“FPS显示”开/关。开启后左上角显示逻辑/显示 FPS，每秒更新；设置按游戏保存，默认关闭。
 保留 v0.2.2 启动修复：普通启动直接进入游戏选择器，不自动执行整套原生诊断。CPU/MXU 等诊断代码保留，通过单独的 --startup-selftest 诊断构建选项开启。PGM 与 Neo Geo 共用同一应用，支持《三国战纪》一代 kov V117。
-安装包 ARCADE 内已包含 pgm.zip 和 neogeo.zip。把自己的 kof97.zip 或 kov.zip 复制到 ARCADE，直接选择游戏 ZIP，H1 首次转换后进入游戏；之后复用缓存。两个 BIOS ZIP 保持原样，不要解压。
+安装包 ARCADE/BIOS 已包含 pgm.zip 和 neogeo.zip。把自己的游戏 ZIP 复制到 ARCADE，Neo Geo 根据 ROM 内容自动识别；三国战纪 V117 可用 kov.zip 或 kov三国战记.zip。选择游戏 ZIP，H1 首次转换后进入游戏；之后复用缓存。两个 BIOS ZIP 保持原样，不要解压。
 转换有进度和取消按钮，保留原始 ZIP，兼容已有 .h1neo / .h1pgm。PGM 缓存约64.2 MiB，A盘写入失败并清理临时文件后可回退 B:\\ARCADE；下次仍选原ZIP自动复用。
 PC工具仅转换Neo Geo，作为可选工具附带；PGM直接使用设备端转换。
 源码 ZIP 包含固定 SDK、GnGeo、Musashi 和 A68K 源码快照，无需另取子模块即可重建。

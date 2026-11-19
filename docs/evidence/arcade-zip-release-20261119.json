@@ -1,0 +1,67 @@
+{
+  "format_version": 1,
+  "date": "2026-11-19",
+  "firmware": "BBK H1/Y100 V1.41 target; no device access in this release session",
+  "bda_sha256": "12de5ff9543cf4765b566e19c836187b9859dc3fd02faabf474041bafcaf7868",
+  "bda_size": 1310252,
+  "installation_verified": false,
+  "exact_device_file_match": false,
+  "installation_pending": true,
+  "runtime_verified": false,
+  "hardware_verified": false,
+  "user_runtime_validation_pending": true,
+  "deployment": null,
+  "desktop_after": null,
+  "debug_after": null,
+  "installation_status_reason": "user_requested_release_without_H1_installation",
+  "build_options": {
+    "cpu_selftest": true,
+    "startup_selftest": false
+  },
+  "historical_native_evidence": {
+    "path": "docs/evidence/pgm-stream-hardware-20261021.json",
+    "sha256": "826d2200b8b7a5d569dd0ff9d8efb7707db991b37c663271991dc92c8edbc5d6",
+    "applies_to_current_bda": false
+  },
+  "host_checks": {
+    "environment": "Actual C import code on Windows host; no game CPU, firmware emulator or device execution",
+    "neo_geo_catalog_signatures": 149,
+    "neo_geo_synthetic_conversions_byte_identical_to_pc": [
+      "aof",
+      "kof94",
+      "kof95",
+      "kof96",
+      "kof97",
+      "lastblad",
+      "maglord",
+      "mslug",
+      "mslug2",
+      "pbobblen",
+      "pulstar",
+      "samsho",
+      "samsho2",
+      "samsho3",
+      "samsho4",
+      "shocktro"
+    ],
+    "actual_kof97_zip_conversion_passed": true,
+    "checked": [
+      "arbitrary GBK/ASCII path names",
+      "renamed ZIP and ROM members",
+      "incomplete and ambiguous ROM sets rejected",
+      "cache reused only after matching ROM set",
+      "PGM import regression",
+      "both original BIOS archives at the new installer paths"
+    ],
+    "runtime_source_sha256": {
+      "src/import_drivers.h": "1cfc7baf5eaced8a6fa8adbfd204f069993bbd12bb207af60415c56457f77856",
+      "src/import_game.c": "524cd8cabdfeaca225e4197b090f539e19eecef36cbff55607f93fd84bec313e",
+      "src/import_game.h": "e58ca82daa8ee1c05af24d7993847d901b09472350f5a99f89a6f41ffab611e7",
+      "src/import_gfx.h": "3bf800222d257025a5726966afe3565bb7a0cf6447ed0f9319db324c1d8b3be0",
+      "src/import_path.h": "a58ea3edd6e0495bb1d20fd581aa1a5b09e438148ade43708f633e662144b805",
+      "src/import_zip.c": "d8ed306cf3cc37a58e116aaaff53cc0c98ca8b26c580ac3719f0e8cb4adb742d",
+      "src/import_zip.h": "e9fd41d3fe6365c974feed9caaf8db92e98d35d8405a5e531b2c9632a5cd7c4f"
+    }
+  },
+  "scope": "User requested publication without H1 installation. No device access, installation, startup, native diagnostics, gameplay or performance tests. Host C conversion and archive checks passed. Two builds from identical runtime inputs produced identical BDA bytes."
+}

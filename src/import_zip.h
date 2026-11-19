@@ -7,6 +7,7 @@ typedef struct h1_zip_stream h1_zip_stream;
 h1_zip *h1_zip_open(const char *path);
 void h1_zip_close(h1_zip *zip);
 int h1_zip_find(h1_zip *,const char *name,uint32_t crc,int match_crc);
+int h1_zip_find_rom(h1_zip *,const char *name,uint32_t crc,unsigned size);
 unsigned h1_zip_size(h1_zip *,int member);
 h1_zip_stream *h1_zip_start(h1_zip *,int member);
 int h1_zip_read(h1_zip_stream *,void *out,unsigned bytes);

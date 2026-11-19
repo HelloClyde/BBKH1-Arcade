@@ -15,6 +15,15 @@ This executable combines components with different licenses. In particular,
 the historic MAME-derived Z80 and YM2610 components have noncommercial terms.
 Do not describe the complete combined executable as uniformly MIT or GPL-only.
 
+The v0.2.5 release identifies Neo Geo ZIPs by ROM sizes and CRCs, and includes
+metadata for 149 ROM sets. PGM game support is unchanged. The installer keeps
+the existing BIOS archives in ARCADE/BIOS/; no game ROMs are distributed.
+Host import and package checks do not verify game execution on H1. The BDA
+is 1,310,252 bytes, SHA256
+12de5ff9543cf4765b566e19c836187b9859dc3fd02faabf474041bafcaf7868.
+The user deferred installation; see docs/evidence/arcade-zip-release-20261119.json
+and docs/evidence/v0.2.5-release-verification.json.
+
 The v0.2.4 release makes pause-menu opening touch-only. Exit/Back and P
 no longer trigger frontend pause or exit during gameplay; P is bindable.
 Back/Escape (shared firmware scancode) or touch cancels key capture while
@@ -22,7 +31,7 @@ retaining the old binding. The actual host C menu event loop and settings
 checks cover P binding, cancellation, touch release consumption and persistence.
 The BDA is 1,243,084 bytes, SHA256
 1221a96e1ae22d87025e3fc93df81ba76fd05f02f9af1a224568d7aae16a6401.
-The user requested publication without installing to H1. No device installation,
+For v0.2.4, the user requested publication without installing to H1. No device installation,
 startup, native checks, games or performance tests were performed for this image.
 docs/evidence/arcade-input-release-20261024.json and
 docs/evidence/v0.2.4-release-verification.json explicitly record

@@ -28,9 +28,10 @@ def main():
         char=bytearray(range(32));u=bytearray(1)
         lib.chars((ctypes.c_ubyte*32).from_buffer(char),32,(ctypes.c_ubyte*1).from_buffer(u))
         assert char==bytes(v for y in range(8) for v in (16+y,24+y,y,8+y)) and u[0]
-        for game in m['SUPPORTED']:assert m['driver'](game)[1]
+        drivers=m['supported_drivers']()
+        for game in drivers:assert m['driver'](game)[1]
     finally:os.environ['PATH']=old_path
-    report.update(installed_converter_without_gcc_or_msys_path=True,driver_sets=11,
+    report.update(installed_converter_without_gcc_or_msys_path=True,driver_sets=len(drivers),
                   decoder_single_bit_and_swizzle=True,no_guest_CPU_execution=True)
     dest=ROOT/'build/verification/packaging-host.json';dest.parent.mkdir(parents=True,exist_ok=True)
     dest.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
